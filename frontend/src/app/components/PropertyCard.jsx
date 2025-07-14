@@ -84,7 +84,7 @@ export default function PropertyCard({ property, onUpdate }) {
           className="p-1 border border-gray-300 rounded w-full"
         />
       ) : (
-        <span>
+        <span className="break-all inline-block align-bottom">
           {name === "coe" ? formatDate(property[name]) : property[name]}
         </span>
       )}
@@ -111,13 +111,12 @@ export default function PropertyCard({ property, onUpdate }) {
       </div>
       {property.prop_photo && !editing && (
         <img 
-					src={property.prop_photo} 
-					alt="Property" 
+					src={property.prop_photo} alt="Property" 
 					className="mb-2 mx-auto w-full max-w-2xl h-64 object-cover rounded"
 					style={{ display: 'block' }}
  				/>
       )}
-      <div className="mt-4 grid grid-cols-4 space-x-2 text-sm">
+      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 space-x-2 text-xs md:text-sm">
         {renderField("Yardi", "yardi")}
         {renderField("City", "city")}
         {renderField("State", "state")}

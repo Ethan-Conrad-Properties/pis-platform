@@ -62,7 +62,7 @@ const SubItem = React.memo(function SubItem({
       </div>
       <div className="grid grid-cols-2 space-x-4">
         {fields.map(field => (
-          <div key={field.id} className="mb-2 text-sm">
+          <div key={field.id} className="mb-2 text-xs md:text-sm">
             <label className="font-semibold">{field.label}:</label>{" "}
             {isEditing ? (
               <AutoExpandTextarea
@@ -70,7 +70,7 @@ const SubItem = React.memo(function SubItem({
                 onChange={e => onChange(type, idx, field.id, e.target.value)}
               />
             ) : (
-              <span>{item[field.id]}</span>
+              <span className="break-all whitespace-normal max-w-full inline-block align-bottom">{item[field.id]}</span>
             )}
           </div>
         ))}

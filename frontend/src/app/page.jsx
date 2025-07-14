@@ -3,13 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from "next-auth/react"
 import axios from 'axios';
+import PropertyList from './components/PropertyList';
 import PropertyCard from './components/PropertyCard'
+import PropertyDropdown from './components/PropertyDropdown';
+import PropertySearch from './components/PropertySearch';
+import PaginationControls from './components/PaginationControls';
 import LoginForm from './Login'
 
 export default function Home() {
   const [properties, setProperties] = useState([]);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage ] = useState(1);
+  const [selectedPropertyId, setSelectedPropertyId] = useState('');
   // const { data: session } = useSession();
   const PropertiesPerPage = 18;
   const searchLower = search.toLowerCase();
@@ -60,94 +65,68 @@ export default function Home() {
     setCurrentPage(1);
   }, [search]);
 
+  // Get selected property object (from filtered list, so search applies)
+  const selectedProperty = filteredProperties.find(p => p.yardi === selectedPropertyId);
+
   // check if user is authenticated
   // if (!session) {
   //   return <LoginForm />;
   // }
 
   return (
-    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 min-h-screen px-8 pt-16 pb-6">
-      <h1 className="text-4xl font-bold mb-4">Welcome to the PIS Platform</h1>
-      <input 
-        type="text"
-        placeholder="Search properties..."
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        className="mb-4 p-2 border border-black rounded w-full md:w-1/4"
-      />
+    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-16 pb-4 md:pb-6">
+      <h1 className="text-3xl md:text-4xl text-center md:text-left font-bold mb-4">Welcome to the PIS Platform</h1>
+      <div className="flex justify-between">
+        <PropertySearch
+          value={search}
+          onChange={e => {
+            setSearch(e.target.value);
+            setSelectedPropertyId(''); 
+          }}
+        />
+        <PropertyDropdown
+          properties={currentProperties}
+          selectedPropertyId={selectedPropertyId}
+          onSelect={setSelectedPropertyId}
+        />
+      </div>
       <div
         className={`properties-list grid ${
-          currentProperties.length === 1
+          (selectedPropertyId || currentProperties.length === 1)
             ? "grid-cols-1"
             : "grid-cols-1 md:grid-cols-2"
         } gap-4`}
       >
-      {currentProperties.map(property => {
-        const isEditing = editingYardi === property.yardi;
-        const filteredSuites = !isEditing && search 
-          ? property.suites?.filter(suite =>
-              String(suite.name || '').toLowerCase().includes(searchLower)
-            ) || []
-          : property.suites;
-        const filteredServices = !isEditing && search 
-          ? property.services?.filter(service =>
-              String(service.vendor || '').toLowerCase().includes(searchLower)
-            ) || []
-          : property.services;
-        const filteredUtilities = !isEditing && search 
-          ? property.utilities?.filter(util =>
-              String(util.vendor || '').toLowerCase().includes(searchLower)
-            ) || []
-          : property.utilities;
-        const filteredCodes = !isEditing && search 
-          ? property.codes?.filter(code =>
-              String(code.description || '').toLowerCase().includes(searchLower)
-            ) || []
-          : property.codes;
-
-        return (
-          <PropertyCard
-            key={property.yardi}
-            property={{
-              ...property,
-              suites: filteredSuites,
-              services: filteredServices,
-              utilities: filteredUtilities,
-              codes: filteredCodes,
-            }}
-            editing={isEditing}
-            onEdit={() => setEditingYardi(property.yardi)}
-            onCancelEdit={() => setEditingYardi(null)}
-            onUpdate={updatedProp => {
-              setProperties(props =>
-                props.map(p => (p.yardi === updatedProp.yardi ? updatedProp : p))
-              );
+      {selectedPropertyId ? (
+        <PropertyCard
+          key={selectedProperty.yardi}
+          property={selectedProperty}
+          editing={editingYardi === selectedProperty.yardi}
+          onEdit={() => setEditingYardi(selectedProperty.yardi)}
+          onCancelEdit={() => setEditingYardi(null)}
+          onUpdate={updatedProp => {
+            setProperties(props =>
+              props.map(p => (p.yardi === updatedProp.yardi ? updatedProp : p))
+            );
             setEditingYardi(null);
-            }}
-          />
-        );
-      })}
+          }}
+        />
+      ) : (
+        <PropertyList
+          properties={currentProperties}
+          editingYardi={editingYardi}
+          setEditingYardi={setEditingYardi}
+          setProperties={setProperties}
+          searchLower={searchLower}
+        />
+      )}
       </div>
-      {/* Pagination controls */}
-      <div className="flex justify-center items-center mt-6 gap-2">
-        <button
-          onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-          disabled={currentPage === 1}
-          className="px-3 py-1 bg-gray-300 rounded disabled:opacity-50 hover:cursor-pointer"
-        >
-          Prev
-        </button>
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-          disabled={currentPage === totalPages}
-          className="px-3 py-1 bg-gray-300 rounded disabled:opacity-50 hover:cursor-pointer"
-        >
-          Next
-        </button>
-      </div>
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPrev={() => setCurrentPage(p => Math.max(p - 1, 1))}
+        onNext={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+      />
     </div>
   );
 }
