@@ -1,0 +1,14 @@
+# Node.js
+node_modules/
+.env
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
