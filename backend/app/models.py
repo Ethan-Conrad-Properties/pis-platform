@@ -37,7 +37,7 @@ class Suite(Base):
     __tablename__ = 'suites'
 
     suite_id = Column(Integer, primary_key=True, autoincrement=True)
-    property_yardi = Column(String, ForeignKey('properties.yardi'))
+    property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
     suite = Column(String)
     sqft = Column(String)
     name = Column(String, index=True)
@@ -59,7 +59,7 @@ class Service(Base):
     __tablename__ = 'services'
 
     service_id = Column(Integer, primary_key=True, autoincrement=True)
-    property_yardi = Column(String, ForeignKey('properties.yardi'))
+    property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
     service_type = Column(String)
     vendor = Column(String, index=True)
     contact = Column(Text)
@@ -72,7 +72,7 @@ class Utility(Base):
     __tablename__ = 'utilities'
 
     utility_id = Column(Integer, primary_key=True, autoincrement=True)
-    property_yardi = Column(String, ForeignKey('properties.yardi'))
+    property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
     service = Column(String)
     vendor = Column(String, index=True)
     contact_info = Column(Text)
@@ -85,7 +85,7 @@ class Code(Base):
     __tablename__ = 'codes'
 
     code_id = Column(Integer, primary_key=True, autoincrement=True)
-    property_yardi = Column(String, ForeignKey('properties.yardi'))
+    property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
     description = Column(String, index=True)
     code = Column(String)
     notes = Column(Text)

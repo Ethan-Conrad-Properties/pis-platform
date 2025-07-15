@@ -57,6 +57,30 @@ async def get_properties(db: Session = Depends(get_db)):
         })
     return {"properties": result}
 
+# Get all suites for a property
+@router.get("/suites")
+async def get_suites(property_id: str, db: Session = Depends(get_db)):
+    suites = db.query(Suite).filter(Suite.property_yardi == property_id).all()
+    return [s.__dict__ for s in suites]
+
+# Get all services for a property
+@router.get("/services")
+async def get_services(property_id: str, db: Session = Depends(get_db)):
+    services = db.query(Service).filter(Service.property_yardi == property_id).all()
+    return [s.__dict__ for s in services]
+
+# Get all utilities for a property
+@router.get("/utilities")
+async def get_utilities(property_id: str, db: Session = Depends(get_db)):
+    utilities = db.query(Utility).filter(Utility.property_yardi == property_id).all()
+    return [u.__dict__ for u in utilities]
+
+# Get all codes for a property
+@router.get("/codes")
+async def get_codes(property_id: str, db: Session = Depends(get_db)):
+    codes = db.query(Code).filter(Code.property_yardi == property_id).all()
+    return [c.__dict__ for c in codes]
+
 # update a property
 @router.put("/properties/{yardi}")
 async def update_property(yardi: str, updated: dict = Body(...), db: Session = Depends(get_db)):
@@ -122,6 +146,51 @@ async def update_code(code_id: int, updated: dict = Body(...), db: Session = Dep
     db.commit()
     db.refresh(code)
     return {"message": "Code updated successfully", "code": code}
+    
+# create a new property
+@router.post("/properties")
+async def create_property(property: dict = Body(...), db: Session = Depends(get_db)):
+    # Optionally, check for required fields here
+    new_property = Property(**property)
+    db.add(new_property)
+    db.commit()
+    db.refresh(new_property)
+    return {k: v for k, v in new_property.__dict__.items() if not k.startswith('_')}
 
+# Create a new suite
+@router.post("/suites")
+async def create_suite(suite: dict = Body(...), db: Session = Depends(get_db)):
+    new_suite = Suite(**suite)
+    db.add(new_suite)
+    db.commit()
+    db.refresh(new_suite)
+    return {k: v for k, v in new_suite.__dict__.items() if not k.startswith('_')}
+
+# Create a new service
+@router.post("/services")
+async def create_service(service: dict = Body(...), db: Session = Depends(get_db)):
+    new_service = Service(**service)
+    db.add(new_service)
+    db.commit()
+    db.refresh(new_service)
+    return {k: v for k, v in new_service.__dict__.items() if not k.startswith('_')}
+
+# Create a new utility
+@router.post("/utilities")
+async def create_utility(utility: dict = Body(...), db: Session = Depends(get_db)):
+    new_utility = Utility(**utility)
+    db.add(new_utility)
+    db.commit()
+    db.refresh(new_utility)
+    return {k: v for k, v in new_utility.__dict__.items() if not k.startswith('_')}
+
+# Create a new code
+@router.post("/codes")
+async def create_code(code: dict = Body(...), db: Session = Depends(get_db)):
+    new_code = Code(**code)
+    db.add(new_code)
+    db.commit()
+    db.refresh(new_code)
+    return {k: v for k, v in new_code.__dict__.items() if not k.startswith('_')}
     
 
