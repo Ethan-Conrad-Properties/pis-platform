@@ -8,6 +8,8 @@ import PropertyCard from './components/PropertyCard'
 import PropertyDropdown from './components/PropertyDropdown';
 import PropertySearch from './components/PropertySearch';
 import PaginationControls from './components/PaginationControls';
+import ViewToggle from './components/ViewToggle';
+import PropertyGridView from './components/PropertyGridView';
 import LoginForm from './Login'
 
 export default function Home() {
@@ -19,6 +21,7 @@ export default function Home() {
   const PropertiesPerPage = 18;
   const searchLower = search.toLowerCase();
   const [editingYardi, setEditingYardi] = useState(null);
+  const [view, setView] = useState('card')
 
   const filteredProperties = properties.filter( prop => {
     const fieldsToSearch = [
@@ -84,12 +87,18 @@ export default function Home() {
             setSelectedPropertyId(''); 
           }}
         />
-        <PropertyDropdown
-          properties={currentProperties}
-          selectedPropertyId={selectedPropertyId}
-          onSelect={setSelectedPropertyId}
-        />
+        <div className="flex gap-2">
+          <ViewToggle view={view} onToggle={setView} />
+          <PropertyDropdown
+            properties={currentProperties}
+            selectedPropertyId={selectedPropertyId}
+            onSelect={setSelectedPropertyId}
+          />
+        </div>
       </div>
+      {view === 'grid' ? (
+        <PropertyGridView property={selectedProperty || currentProperties[0]} />
+      ) : (
       <div
         className={`properties-list grid ${
           (selectedPropertyId || currentProperties.length === 1)
@@ -119,8 +128,9 @@ export default function Home() {
           setProperties={setProperties}
           searchLower={searchLower}
         />
-      )}
+        )}
       </div>
+      )}
       <PaginationControls
         currentPage={currentPage}
         totalPages={totalPages}

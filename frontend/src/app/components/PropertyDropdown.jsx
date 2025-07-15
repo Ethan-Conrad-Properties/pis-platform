@@ -3,7 +3,7 @@ import React from "react";
 export default function PropertyDropdown({ properties, selectedPropertyId, onSelect }) {
   return (
     <select
-      className="border rounded px-2 py-1 mb-4"
+      className="border bg-white rounded px-2 py-1 mb-4"
       value={selectedPropertyId}
       onChange={e => onSelect(e.target.value)}
     >
