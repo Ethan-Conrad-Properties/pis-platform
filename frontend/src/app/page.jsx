@@ -26,8 +26,6 @@ export default function Home() {
   const [showAddModal, setShowAddModal] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-
-
   const filteredProperties = properties.filter( prop => {
     const fieldsToSearch = [
       prop.address,

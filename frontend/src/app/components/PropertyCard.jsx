@@ -14,6 +14,7 @@ export default function PropertyCard({ property, onUpdate }) {
   });
 	
 	const [showModal, setShowModal] = useState(false);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 	useEffect(() => {
 		setForm({
@@ -44,19 +45,19 @@ export default function PropertyCard({ property, onUpdate }) {
   const handleSave = async (section, idx = null) => {
     try {
     if (section === "property") {
-      await axios.put(`http://localhost:8000/properties/${property.yardi}`, form);
+      await axios.put(`${apiUrl}/properties/${property.yardi}`, form);
     } else if (section === "suites" && idx !== null) {
       const suite = form.suites[idx];
-      await axios.put(`http://localhost:8000/suites/${suite.suite_id}`, suite);
+      await axios.put(`${apiUrl}/suites/${suite.suite_id}`, suite);
     } else if (section === "services" && idx !== null) {
       const service = form.services[idx];
-      await axios.put(`http://localhost:8000/services/${service.service_id}`, service);
+      await axios.put(`${apiUrl}/services/${service.service_id}`, service);
     } else if (section === "utilities" && idx !== null) {
       const utility = form.utilities[idx];
-      await axios.put(`http://localhost:8000/utilities/${utility.utility_id}`, utility);
+      await axios.put(`${apiUrl}/utilities/${utility.utility_id}`, utility);
     } else if (section === "codes" && idx !== null) {
       const code = form.codes[idx];
-      await axios.put(`http://localhost:8000/codes/${code.code_id}`, code);
+      await axios.put(`${apiUrl}/codes/${code.code_id}`, code);
     }
     setEditing(false);
     setShowModal(true);
