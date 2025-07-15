@@ -10,6 +10,7 @@ import PropertySearch from './components/PropertySearch';
 import PaginationControls from './components/PaginationControls';
 import ViewToggle from './components/ViewToggle';
 import PropertyGridView from './components/PropertyGridView';
+import AddPropertyForm from './components/AddPropertyForm';
 import LoginForm from './Login'
 
 export default function Home() {
@@ -22,6 +23,8 @@ export default function Home() {
   const searchLower = search.toLowerCase();
   const [editingYardi, setEditingYardi] = useState(null);
   const [view, setView] = useState('card')
+  const [showAddModal, setShowAddModal] = useState(false);
+
 
   const filteredProperties = properties.filter( prop => {
     const fieldsToSearch = [
@@ -53,7 +56,7 @@ export default function Home() {
   const currentProperties = sortedProperties.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.ceil(filteredProperties.length / PropertiesPerPage);
 
-  useEffect(() => {
+  const fetchProperties = () => {
     axios.get('http://localhost:8000/properties')
       .then(response => {
         setProperties(response.data.properties);
@@ -61,6 +64,10 @@ export default function Home() {
       .catch(error => {
         console.error('There was an error fetching properties!', error);
       });
+  };
+
+  useEffect(() => {
+    fetchProperties();
   }, []);
 
   // reset to first page if search changes
@@ -79,6 +86,11 @@ export default function Home() {
   return (
     <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-16 pb-4 md:pb-6">
       <h1 className="text-3xl md:text-4xl text-center md:text-left font-bold mb-4">Welcome to the PIS Platform</h1>
+      <AddPropertyForm
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={fetchProperties}
+      />
       <div className="flex justify-between">
         <PropertySearch
           value={search}
@@ -88,9 +100,15 @@ export default function Home() {
           }}
         />
         <div className="flex gap-2">
+          <button
+            className="border bg-white px-3 py-1 mb-4 rounded hover:bg-gray-100 hover:cursor-pointer"
+            onClick={() => setShowAddModal(true)}
+          >
+            + Add Property
+          </button>
           <ViewToggle view={view} onToggle={setView} />
           <PropertyDropdown
-            properties={currentProperties}
+            properties={sortedProperties}
             selectedPropertyId={selectedPropertyId}
             onSelect={setSelectedPropertyId}
           />

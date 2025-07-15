@@ -6,6 +6,10 @@ export default function PropertyDropdown({ properties, selectedPropertyId, onSel
       className="border bg-white rounded px-2 py-1 mb-4"
       value={selectedPropertyId}
       onChange={e => onSelect(e.target.value)}
+      style={{ 
+        width: "220px",
+        maxWidth: "100%",
+      }}
     >
       <option value="">-- Select Property --</option>
       {properties.map(prop => (

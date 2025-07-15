@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 import PropertyGridSection from "./PropertyGridSection";
 import { makeAgColumns } from "./makeAgColumns";
@@ -19,8 +19,37 @@ export default function PropertyGridView({ property }) {
   const [utilities, setUtilities] = useState(property.utilities || []);
   const [codes, setCodes] = useState(property.codes || []);
 
+   // Fetch functions for each section
+  const fetchSuites = useCallback(async () => {
+    const res = await axios.get(`http://localhost:8000/suites?property_id=${property.yardi}`);
+    setSuites(res.data);
+  }, [property.yardi]);
+
+  const fetchServices = useCallback(async () => {
+    const res = await axios.get(`http://localhost:8000/services?property_id=${property.yardi}`);
+    setServices(res.data);
+  }, [property.yardi]);
+
+  const fetchUtilities = useCallback(async () => {
+    const res = await axios.get(`http://localhost:8000/utilities?property_id=${property.yardi}`);
+    setUtilities(res.data);
+  }, [property.yardi]);
+
+  const fetchCodes = useCallback(async () => {
+    const res = await axios.get(`http://localhost:8000/codes?property_id=${property.yardi}`);
+    setCodes(res.data);
+  }, [property.yardi]);
+
+  // Fetch all data on mount or when property changes
+  useEffect(() => {
+    fetchSuites();
+    fetchServices();
+    fetchUtilities();
+    fetchCodes();
+  }, [fetchSuites, fetchServices, fetchUtilities, fetchCodes]);
+
   const handleAddRow = (type) => {
-    const emptyRow = {};
+    const emptyRow = { property_yardi: property.yardi };
     let setRows;
     switch (type) {
       case "suites": setRows = setSuites; break;
@@ -64,12 +93,19 @@ export default function PropertyGridView({ property }) {
       if (id) {
         await axios.put(`http://localhost:8000/${endpoint}/${id}`, params.data);
         console.log(`Saved ${section} row`, params.data);
+      } else if (endpoint !== "properties") {
+        const res = await axios.post(`http://localhost:8000/${endpoint}`, params.data);
       }
+      // Refetch the relevant section
+      if (section === "suites") fetchSuites();
+      if (section === "services") fetchServices();
+      if (section === "utilities") fetchUtilities();
+      if (section === "codes") fetchCodes();
     } catch (error) {
       alert("Error updating property or related records");
       console.error(error);
     }
-  }, []);
+  }, [fetchSuites, fetchServices, fetchUtilities, fetchCodes]);
 
   return (
     <div className="bg-white px-6 py-10 rounded shadow-xl min-h-screen">
