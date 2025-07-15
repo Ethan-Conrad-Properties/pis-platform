@@ -18,25 +18,27 @@ export default function PropertyGridView({ property }) {
   const [services, setServices] = useState(property.services || []);
   const [utilities, setUtilities] = useState(property.utilities || []);
   const [codes, setCodes] = useState(property.codes || []);
+	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
    // Fetch functions for each section
   const fetchSuites = useCallback(async () => {
-    const res = await axios.get(`http://localhost:8000/suites?property_id=${property.yardi}`);
+    const res = await axios.get(`${apiUrl}/suites?property_id=${property.yardi}`);
     setSuites(res.data);
   }, [property.yardi]);
 
   const fetchServices = useCallback(async () => {
-    const res = await axios.get(`http://localhost:8000/services?property_id=${property.yardi}`);
+    const res = await axios.get(`${apiUrl}/services?property_id=${property.yardi}`);
     setServices(res.data);
   }, [property.yardi]);
 
   const fetchUtilities = useCallback(async () => {
-    const res = await axios.get(`http://localhost:8000/utilities?property_id=${property.yardi}`);
+    const res = await axios.get(`${apiUrl}/utilities?property_id=${property.yardi}`);
     setUtilities(res.data);
   }, [property.yardi]);
 
   const fetchCodes = useCallback(async () => {
-    const res = await axios.get(`http://localhost:8000/codes?property_id=${property.yardi}`);
+    const res = await axios.get(`${apiUrl}/codes?property_id=${property.yardi}`);
     setCodes(res.data);
   }, [property.yardi]);
 
@@ -91,10 +93,10 @@ export default function PropertyGridView({ property }) {
         section = "property"; endpoint = "properties"; id = params.data.yardi;
       }
       if (id) {
-        await axios.put(`http://localhost:8000/${endpoint}/${id}`, params.data);
+        await axios.put(`${apiUrl}/${endpoint}/${id}`, params.data);
         console.log(`Saved ${section} row`, params.data);
       } else if (endpoint !== "properties") {
-        const res = await axios.post(`http://localhost:8000/${endpoint}`, params.data);
+        const res = await axios.post(`${apiUrl}/${endpoint}`, params.data);
       }
       // Refetch the relevant section
       if (section === "suites") fetchSuites();

@@ -24,6 +24,8 @@ export default function Home() {
   const [editingYardi, setEditingYardi] = useState(null);
   const [view, setView] = useState('card')
   const [showAddModal, setShowAddModal] = useState(false);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 
   const filteredProperties = properties.filter( prop => {
@@ -57,7 +59,7 @@ export default function Home() {
   const totalPages = Math.ceil(filteredProperties.length / PropertiesPerPage);
 
   const fetchProperties = () => {
-    axios.get('http://localhost:8000/properties')
+    axios.get(`${apiUrl}/properties`)
       .then(response => {
         setProperties(response.data.properties);
       })

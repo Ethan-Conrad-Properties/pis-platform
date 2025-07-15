@@ -30,6 +30,8 @@ export default function AddPropertyForm({ open, onClose, onSuccess }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
   if (!open) return null;
 
@@ -42,7 +44,7 @@ export default function AddPropertyForm({ open, onClose, onSuccess }) {
     setLoading(true);
     setError(null);
     try {
-      await axios.post("http://localhost:8000/properties", form);
+    	await axios.post(`${apiUrl}/properties`, form);
       setForm({
         yardi: null,
         address: null,
