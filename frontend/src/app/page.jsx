@@ -11,7 +11,6 @@ import PaginationControls from './components/PaginationControls';
 import ViewToggle from './components/ViewToggle';
 import PropertyGridView from './components/PropertyGridView';
 import AddPropertyForm from './components/AddPropertyForm';
-import LoginForm from './Login'
 
 export default function Home() {
   const [properties, setProperties] = useState([]);
