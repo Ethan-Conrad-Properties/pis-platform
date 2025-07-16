@@ -11,6 +11,16 @@ export default NextAuth({
     }),
   ],
   callbacks: {
+    async jwt({ token, account }) {
+      if (account?.access_token) {
+        token.accessToken = account.access_token;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      session.accessToken = token.accessToken;
+      return session;
+    },
     async signIn({ user }) {
       // Only allow ethanconradprop.com emails
       return user.email.endsWith("@ethanconradprop.com");

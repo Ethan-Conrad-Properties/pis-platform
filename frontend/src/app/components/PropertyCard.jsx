@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import SubSectionCard from './SubSectionCard';
 import SuccessModal from './SuccessModal';
+import axiosInstance from '../utils/axiosInstance';
 
 export default function PropertyCard({ property, onUpdate }) {
   const [editing, setEditing] = useState(false);
@@ -14,7 +14,6 @@ export default function PropertyCard({ property, onUpdate }) {
   });
 	
 	const [showModal, setShowModal] = useState(false);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 	useEffect(() => {
 		setForm({
@@ -45,19 +44,19 @@ export default function PropertyCard({ property, onUpdate }) {
   const handleSave = async (section, idx = null) => {
     try {
     if (section === "property") {
-      await axios.put(`${apiUrl}/properties/${property.yardi}`, form);
+      await axiosInstance.put(`/properties/${property.yardi}`, form);
     } else if (section === "suites" && idx !== null) {
       const suite = form.suites[idx];
-      await axios.put(`${apiUrl}/suites/${suite.suite_id}`, suite);
+      await axiosInstance.put(`/suites/${suite.suite_id}`, suite);
     } else if (section === "services" && idx !== null) {
       const service = form.services[idx];
-      await axios.put(`${apiUrl}/services/${service.service_id}`, service);
+      await axiosInstance.put(`/services/${service.service_id}`, service);
     } else if (section === "utilities" && idx !== null) {
       const utility = form.utilities[idx];
-      await axios.put(`${apiUrl}/utilities/${utility.utility_id}`, utility);
+      await axiosInstance.put(`/utilities/${utility.utility_id}`, utility);
     } else if (section === "codes" && idx !== null) {
       const code = form.codes[idx];
-      await axios.put(`${apiUrl}/codes/${code.code_id}`, code);
+      await axiosInstance.put(`/codes/${code.code_id}`, code);
     }
     setEditing(false);
     setShowModal(true);

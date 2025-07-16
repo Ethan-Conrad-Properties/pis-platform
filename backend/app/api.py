@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import Property, Suite, Service, Utility, Code
+from app.auth import verify_token
 
 # gets DB Session
 def get_db():
@@ -15,7 +16,7 @@ router = APIRouter()
 
 # get all properties
 @router.get("/properties")
-async def get_properties(db: Session = Depends(get_db)):
+async def get_properties(db: Session = Depends(get_db), user=Depends(verify_token)):
     properties = db.query(Property).all()
     result = []
     for prop in properties:
@@ -59,31 +60,31 @@ async def get_properties(db: Session = Depends(get_db)):
 
 # Get all suites for a property
 @router.get("/suites")
-async def get_suites(property_id: str, db: Session = Depends(get_db)):
+async def get_suites(property_id: str, db: Session = Depends(get_db), user=Depends(verify_token)):
     suites = db.query(Suite).filter(Suite.property_yardi == property_id).all()
     return [s.__dict__ for s in suites]
 
 # Get all services for a property
 @router.get("/services")
-async def get_services(property_id: str, db: Session = Depends(get_db)):
+async def get_services(property_id: str, db: Session = Depends(get_db), user=Depends(verify_token)):
     services = db.query(Service).filter(Service.property_yardi == property_id).all()
     return [s.__dict__ for s in services]
 
 # Get all utilities for a property
 @router.get("/utilities")
-async def get_utilities(property_id: str, db: Session = Depends(get_db)):
+async def get_utilities(property_id: str, db: Session = Depends(get_db), user=Depends(verify_token)):
     utilities = db.query(Utility).filter(Utility.property_yardi == property_id).all()
     return [u.__dict__ for u in utilities]
 
 # Get all codes for a property
 @router.get("/codes")
-async def get_codes(property_id: str, db: Session = Depends(get_db)):
+async def get_codes(property_id: str, db: Session = Depends(get_db), user=Depends(verify_token)):
     codes = db.query(Code).filter(Code.property_yardi == property_id).all()
     return [c.__dict__ for c in codes]
 
 # update a property
 @router.put("/properties/{yardi}")
-async def update_property(yardi: str, updated: dict = Body(...), db: Session = Depends(get_db)):
+async def update_property(yardi: str, updated: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
     property = db.query(Property).filter(Property.yardi == yardi).first()
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
@@ -97,7 +98,7 @@ async def update_property(yardi: str, updated: dict = Body(...), db: Session = D
 
 # Update a suite
 @router.put("/suites/{suite_id}")
-async def update_suite(suite_id: int, updated: dict = Body(...), db: Session = Depends(get_db)):
+async def update_suite(suite_id: int, updated: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
     suite = db.query(Suite).filter(Suite.suite_id == suite_id).first()
     if not suite:
         raise HTTPException(status_code=404, detail="Suite not found")
@@ -110,7 +111,7 @@ async def update_suite(suite_id: int, updated: dict = Body(...), db: Session = D
 
 # Update a service
 @router.put("/services/{service_id}")
-async def update_service(service_id: int, updated: dict = Body(...), db: Session = Depends(get_db)):
+async def update_service(service_id: int, updated: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
     service = db.query(Service).filter(Service.service_id == service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
@@ -123,7 +124,7 @@ async def update_service(service_id: int, updated: dict = Body(...), db: Session
 
 # Update a utility
 @router.put("/utilities/{utility_id}")
-async def update_utility(utility_id: int, updated: dict = Body(...), db: Session = Depends(get_db)):
+async def update_utility(utility_id: int, updated: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
     utility = db.query(Utility).filter(Utility.utility_id == utility_id).first()
     if not utility:
         raise HTTPException(status_code=404, detail="Utility not found")
@@ -136,7 +137,7 @@ async def update_utility(utility_id: int, updated: dict = Body(...), db: Session
 
 # Update a code
 @router.put("/codes/{code_id}")
-async def update_code(code_id: int, updated: dict = Body(...), db: Session = Depends(get_db)):
+async def update_code(code_id: int, updated: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
     code = db.query(Code).filter(Code.code_id == code_id).first()
     if not code:
         raise HTTPException(status_code=404, detail="Code not found")
@@ -149,7 +150,7 @@ async def update_code(code_id: int, updated: dict = Body(...), db: Session = Dep
     
 # create a new property
 @router.post("/properties")
-async def create_property(property: dict = Body(...), db: Session = Depends(get_db)):
+async def create_property(property: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
     # Optionally, check for required fields here
     new_property = Property(**property)
     db.add(new_property)
@@ -159,7 +160,7 @@ async def create_property(property: dict = Body(...), db: Session = Depends(get_
 
 # Create a new suite
 @router.post("/suites")
-async def create_suite(suite: dict = Body(...), db: Session = Depends(get_db)):
+async def create_suite(suite: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
     new_suite = Suite(**suite)
     db.add(new_suite)
     db.commit()
@@ -168,7 +169,7 @@ async def create_suite(suite: dict = Body(...), db: Session = Depends(get_db)):
 
 # Create a new service
 @router.post("/services")
-async def create_service(service: dict = Body(...), db: Session = Depends(get_db)):
+async def create_service(service: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
     new_service = Service(**service)
     db.add(new_service)
     db.commit()
@@ -177,7 +178,7 @@ async def create_service(service: dict = Body(...), db: Session = Depends(get_db
 
 # Create a new utility
 @router.post("/utilities")
-async def create_utility(utility: dict = Body(...), db: Session = Depends(get_db)):
+async def create_utility(utility: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
     new_utility = Utility(**utility)
     db.add(new_utility)
     db.commit()
@@ -186,7 +187,7 @@ async def create_utility(utility: dict = Body(...), db: Session = Depends(get_db
 
 # Create a new code
 @router.post("/codes")
-async def create_code(code: dict = Body(...), db: Session = Depends(get_db)):
+async def create_code(code: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
     new_code = Code(**code)
     db.add(new_code)
     db.commit()

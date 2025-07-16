@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 
-const SESSION_TIMEOUT = 30 * 1000; // 30 seconds
-const WARNING_TIME = 10 * 1000; // 5 seconds before logout
+const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hr
+const WARNING_TIME = 2 * 60 * 1000; // 2 minutes before logout
 
 export default function SessionTimeout() {
   const [showWarning, setShowWarning] = useState(false);

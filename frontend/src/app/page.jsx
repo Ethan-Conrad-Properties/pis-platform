@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from "next-auth/react"
-import axios from 'axios';
 import PropertyList from './components/PropertyList';
 import PropertyCard from './components/PropertyCard'
 import PropertyDropdown from './components/PropertyDropdown';
@@ -11,8 +10,9 @@ import PaginationControls from './components/PaginationControls';
 import ViewToggle from './components/ViewToggle';
 import PropertyGridView from './components/PropertyGridView';
 import AddPropertyForm from './components/AddPropertyForm';
-import LoginForm from './login'
+import LoginForm from './Login';
 import SessionTimeout from './components/SessionTimeout';
+import axiosInstance from './utils/axiosInstance';
 
 export default function Home() {
   const [properties, setProperties] = useState([]);
@@ -25,7 +25,6 @@ export default function Home() {
   const [editingYardi, setEditingYardi] = useState(null);
   const [view, setView] = useState('card')
   const [showAddModal, setShowAddModal] = useState(false);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   const filteredProperties = properties.filter( prop => {
     const fieldsToSearch = [
@@ -58,14 +57,15 @@ export default function Home() {
   const currentProperties = sortedProperties.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.ceil(filteredProperties.length / PropertiesPerPage);
 
-  const fetchProperties = () => {
-    axios.get(`${apiUrl}/properties`)
-      .then(response => {
-        setProperties(response.data.properties);
-      })
-      .catch(error => {
-        console.error('There was an error fetching properties!', error);
-      });
+  console.log(session)
+
+  const fetchProperties = async () => {
+    try {
+      const res = await axiosInstance.get('/properties');
+      setProperties(res.data.properties);
+    } catch (error) {
+      console.error("Error fetching properties:", error);
+    }
   };
 
   useEffect(() => {
