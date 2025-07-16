@@ -10,27 +10,46 @@ export default function PropertyList({
 }) {
   return properties.map(property => {
     const isEditing = editingYardi === property.yardi;
-    const filteredSuites = !isEditing && searchLower
-      ? property.suites?.filter(suite =>
-          String(suite.name || '').toLowerCase().includes(searchLower)
-        ) || []
-      : property.suites;
-    const filteredServices = !isEditing && searchLower
-      ? property.services?.filter(service =>
-          String(service.vendor || '').toLowerCase().includes(searchLower)
-        ) || []
-      : property.services;
-    const filteredUtilities = !isEditing && searchLower
-      ? property.utilities?.filter(util =>
-          String(util.vendor || '').toLowerCase().includes(searchLower)
-        ) || []
-      : property.utilities;
-    const filteredCodes = !isEditing && searchLower
-      ? property.codes?.filter(code =>
-          String(code.description || '').toLowerCase().includes(searchLower)
-        ) || []
-      : property.codes;
 
+    // Check if property itself matches the search
+    const propertyMatches =
+      (property.address || '').toLowerCase().includes(searchLower) ||
+      (property.yardi || '').toLowerCase().includes(searchLower) ||
+      (property.city || '').toLowerCase().includes(searchLower) ||
+      (property.zip || '').toString().toLowerCase().includes(searchLower) ||
+      (property.building_type || '').toLowerCase().includes(searchLower) ||
+      (property.prop_manager || '').toLowerCase().includes(searchLower);
+
+    // If property matches or search is empty, show all nested data
+    const filteredSuites = propertyMatches || !searchLower
+      ? property.suites
+      : (property.suites || []).filter(suite =>
+          (suite.name || '').toLowerCase().includes(searchLower)
+        );
+    const filteredServices = propertyMatches || !searchLower
+      ? property.services
+      : (property.services || []).filter(service =>
+          (service.vendor || '').toLowerCase().includes(searchLower)
+        );
+    const filteredUtilities = propertyMatches || !searchLower
+      ? property.utilities
+      : (property.utilities || []).filter(util =>
+          (util.vendor || '').toLowerCase().includes(searchLower)
+        );
+    const filteredCodes = propertyMatches || !searchLower
+      ? property.codes
+      : (property.codes || []).filter(code =>
+          (code.description || '').toLowerCase().includes(searchLower)
+        );
+
+    // Only show the property if it matches or any nested item matches
+    if (
+      propertyMatches ||
+      filteredSuites.length ||
+      filteredServices.length ||
+      filteredUtilities.length ||
+      filteredCodes.length
+    ) {
     return (
       <PropertyCard
         key={property.yardi}
@@ -52,5 +71,7 @@ export default function PropertyList({
         }}
       />
     );
-  });
+  }    
+  return null;
+  }).filter(Boolean);
 }

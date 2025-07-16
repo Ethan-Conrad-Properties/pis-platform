@@ -29,6 +29,7 @@ export default function Home() {
   const filteredProperties = properties.filter( prop => {
     const fieldsToSearch = [
       prop.address,
+      prop.yardi,
       prop.city,
       prop.zip,
       prop.building_type,
