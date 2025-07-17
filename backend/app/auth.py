@@ -30,5 +30,6 @@ def verify_token(token: str = Depends(oauth2_scheme)):
         if not payload.get("preferred_username", "").endswith("@ethanconradprop.com"):
             raise HTTPException(status_code=403, detail="Forbidden")
         return payload
-    except Exception:
+    except Exception as e:
+        print("Token validation error:", e)
         raise HTTPException(status_code=401, detail="Invalid token")
