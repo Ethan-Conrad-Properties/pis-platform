@@ -24,7 +24,7 @@ def verify_token(token: str = Depends(oauth2_scheme)):
             public_key,
             algorithms=["RS256"],
             audience=f"api://{AZURE_AD_CLIENT_ID}",
-            issuer=f"https://login.microsoftonline.com/{AZURE_AD_TENANT_ID}/v2.0"
+            issuer=f"https://sts.windows.net/{AZURE_AD_TENANT_ID}/"
         )
         # Optionally check email domain
         if not payload.get("preferred_username", "").endswith("@ethanconradprop.com"):
