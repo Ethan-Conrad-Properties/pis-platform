@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt
+from jose import jwt, jwk
 import requests
 import os
 
@@ -18,7 +18,7 @@ def verify_token(token: str = Depends(oauth2_scheme)):
         keys = get_azure_public_keys()
         unverified_header = jwt.get_unverified_header(token)
         key = next(k for k in keys if k["kid"] == unverified_header["kid"])
-        public_key = jwt.construct_rsa_public_key(key)
+        public_key = jwk.construct(key)
         payload = jwt.decode(
             token,
             public_key,
