@@ -1,4 +1,4 @@
-export const columns = [
+export const propertyColumns = [
   { key: "coe", name: "COE" },
   { key: "num_buildings", name: "# Buildings" },
   { key: "apn", name: "APN #" },

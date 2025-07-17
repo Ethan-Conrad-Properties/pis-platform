@@ -10,8 +10,8 @@ export default function PropertyGridSection({
   onCellValueChanged
 }) {
   return (
-    <div className="mt-8">
-      <div style={{ display: "flex", alignItems: "center" }}>
+    <div className="mt-2">
+      <div className="flex items-center">
         <h3 className="text-2xl font-semibold mt-6 mb-2">{title}</h3>
       </div>
       <div className="ag-theme-alpine" style={{ width: "100%" }}>

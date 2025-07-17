@@ -1,7 +1,6 @@
-import React from "react";
 import { ExpandingCell } from "./GridCells";
 
-export function makeAgColumns(columns) {
+export function makeColumns(columns) {
   return columns.map(col => ({
     field: col.key,
     headerName: col.name,

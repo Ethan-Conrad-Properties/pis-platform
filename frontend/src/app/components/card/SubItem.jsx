@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
-import SuccessModal from "./SuccessModal";
+import React, { useRef, useEffect, memo } from "react";
+import { isEmailField } from "@/app/utils/helpers";
 
-function AutoExpandTextarea({ value, onChange, ...props }) {
+export function AutoExpandTextarea({ value, onChange, ...props }) {
   const ref = useRef(null);
   useEffect(() => {
     if (ref.current) {
@@ -27,7 +27,7 @@ function AutoExpandTextarea({ value, onChange, ...props }) {
   );
 }
 
-const SubItem = React.memo(function SubItem({
+const SubItem = memo(function SubItem({
   item,
   idx,
   type,
@@ -70,7 +70,18 @@ const SubItem = React.memo(function SubItem({
                 onChange={e => onChange(type, idx, field.id, e.target.value)}
               />
             ) : (
-              <span className="break-all whitespace-normal max-w-full inline-block align-bottom">{item[field.id]}</span>
+              isEmailField(field.id) ? (
+                <a
+                  href={`mailto:${item[field.id]}`}
+                  className="text-blue-600 underline break-all"
+                >
+                  {item[field.id]}
+                </a>
+              ) : (
+                <span className="break-all whitespace-normal max-w-full inline-block align-bottom">
+                  {item[field.id]}
+                </span>
+              )
             )}
           </div>
         ))}
@@ -91,39 +102,4 @@ const SubItem = React.memo(function SubItem({
   );
 });
 
-export default function SubSectionCard({ type, items, fields, label, onChange, onSave }) {
-  const [editingIdx, setEditingIdx] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-
-  const handleSaveWrapper = async (type, idx) => {
-    await onSave(type, idx);
-    setEditingIdx(null);
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => setShowModal(false);
-
-  return (
-    <>
-      <SuccessModal open={showModal} onClose={handleCloseModal} />
-      <h3 className="text-lg font-bold mt-4 mb-2">{label}</h3>
-      <div className="grid grid-cols-1 gap-4">
-        {items && items.length > 0 ? items.map((item, idx) => (
-          <SubItem
-            key={item.suite_id || item.service_id || item.utility_id || item.code_id}
-            item={item}
-            idx={idx}
-            type={type}
-            fields={fields}
-            isEditing={editingIdx === idx}
-            onChange={onChange}
-            onSave={handleSaveWrapper}
-            setEditingIdx={setEditingIdx}
-          />
-        )) : (
-          <div className="text-gray-500">No {label.toLowerCase()} listed.</div>
-        )}
-      </div>
-    </>
-  );
-}
+export default SubItem;

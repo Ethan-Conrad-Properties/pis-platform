@@ -1,7 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import SubSectionCard from './SubSectionCard';
-import SuccessModal from './SuccessModal';
-import axiosInstance from '../utils/axiosInstance';
+import SuccessModal from '../common/SuccessModal';
+import PropertySearch from '../common/PropertySearch';
+import axiosInstance from '@/app/utils/axiosInstance';
+import { formatDate, filterBySearch } from '@/app/utils/helpers';
+import {
+  propertyFields,
+  suiteFields,
+  serviceFields,
+  utilityFields,
+  codeFields
+} from './cardFields';
 
 export default function PropertyCard({ property, onUpdate }) {
   const [editing, setEditing] = useState(false);
@@ -12,8 +21,33 @@ export default function PropertyCard({ property, onUpdate }) {
     utilities: property.utilities || [],
     codes: property.codes || []
   });
-	
 	const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const suitesRef = useRef(null);
+  const servicesRef = useRef(null);
+  const utilitiesRef = useRef(null);
+  const codesRef = useRef(null);
+
+  // getFields for each section
+  const getSuiteFields = item => [
+    item.suite, item.name, item.sqft, item.contact, item.email_address, item.notes
+  ];
+  const getServiceFields = item => [
+    item.service_type, item.vendor, item.contact, item.email_address, item.notes
+  ];
+  const getUtilityFields = item => [
+    item.service, item.vendor, item.contact_info, item.notes
+  ];
+  const getCodeFields = item => [
+    item.description, item.code, item.notes
+  ];
+
+  // Filtered sub-items
+  const filteredSuites = filterBySearch(form.suites, getSuiteFields, search);
+  const filteredServices = filterBySearch(form.services, getServiceFields, search);
+  const filteredUtilities = filterBySearch(form.utilities, getUtilityFields, search);
+  const filteredCodes = filterBySearch(form.codes, getCodeFields, search);
 
 	useEffect(() => {
 		setForm({
@@ -91,11 +125,23 @@ export default function PropertyCard({ property, onUpdate }) {
     </div>
   );
 
-  function formatDate(dateStr) {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-  }
+  // Scroll to first matching section when search changes and matches found
+  useEffect(() => {
+    if (!search) return;
+    const handler = setTimeout(() => {
+      if (filteredSuites.length > 0 && suitesRef.current) {
+        suitesRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (filteredServices.length > 0 && servicesRef.current) {
+        servicesRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (filteredUtilities.length > 0 && utilitiesRef.current) {
+        utilitiesRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (filteredCodes.length > 0 && codesRef.current) {
+        codesRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 400); // 400ms debounce
+
+    return () => clearTimeout(handler);
+  }, [search, filteredSuites, filteredServices, filteredUtilities, filteredCodes]);
 
   return (
     <div className="bg-white rounded shadow-2xl p-4">
@@ -109,6 +155,11 @@ export default function PropertyCard({ property, onUpdate }) {
           {editing ? "Cancel" : "Edit"}
         </button>
       </div>
+      <PropertySearch
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Search property details..."
+      />
       {property.prop_photo && !editing && (
         <img 
 					src={property.prop_photo} alt="Property" 
@@ -116,31 +167,9 @@ export default function PropertyCard({ property, onUpdate }) {
 					style={{ display: 'block' }}
  				/>
       )}
+      
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 space-x-2 text-xs md:text-sm">
-        {renderField("Yardi", "yardi")}
-        {renderField("City", "city")}
-        {renderField("State", "state")}
-        {renderField("Zip", "zip")}
-        {renderField("Building Type", "building_type")}
-        {renderField("Total Sq Ft", "total_sq_ft")}
-        {renderField("Property Manager", "prop_manager")}
-        {renderField("COE", "coe")}
-        {renderField("Year Built", "year_built")}
-        {renderField("Year Rent", "year_rent")}
-        {renderField("Num Buildings", "num_buildings")}
-        {renderField("Num Stories", "num_stories")}
-        {renderField("APN", "apn")}
-        {renderField("Prop Tax ID", "prop_tax_id")}
-        {renderField("Parking", "parking")}
-        {renderField("Fire Sprinklers", "fire_sprinklers")}
-        {renderField("Net Rentable Area", "net_rentable_area")}
-        {renderField("Land Area", "land_area")}
-        {renderField("Structural Frame", "structural_frame")}
-        {renderField("Foundation", "foundation")}
-        {renderField("Roof Type", "roof_type")}
-        {renderField("Roof Cover", "roof_cover")}
-        {renderField("Heat/Cooling Source", "heat_cooling_source")}
-        {renderField("Misc", "misc")}
+        {propertyFields.map(field => renderField(field.label, field.name, field.name))}
       </div>
 
       {editing && (
@@ -150,81 +179,53 @@ export default function PropertyCard({ property, onUpdate }) {
       )}
 
       {/* Suites */}
-      <SubSectionCard
-        type="suites"
-        items={form.suites}
-        fields={[
-          { id: "suite", label: "Suite" },
-          { id: "sqft", label: "Sqft" },
-          { id: "name", label: "Name" },
-          { id: "contact", label: "Contact" },
-          { id: "phone_number", label: "Phone" },
-          { id: "email_address", label: "Email" },
-          { id: "notes", label: "Notes" },
-          { id: "hvac", label: "HVAC" },
-          { id: "hvac_info", label: "HVAC Info" },
-          { id: "commercial_cafe", label: "Commercial Cafe" },
-          { id: "door_access_codes", label: "Door Access Codes" },
-          { id: "lease_obligations", label: "Lease Obligations" },
-          { id: "signage_rights", label: "Signage Rights" },
-          { id: "parking_spaces", label: "Parking Spaces" },
-          { id: "electrical_amperage", label: "Electrical Amperage" },
-          { id: "misc", label: "Misc" }
-        ]}
-        label="Suites"
-        onChange={handleSubChange}
-        onSave={handleSave}
-      />
-
+      <div ref={suitesRef}>
+        <SubSectionCard
+          type="suites"
+          items={filteredSuites}
+          fields={suiteFields}
+          label="Suites"
+          onChange={handleSubChange}
+          onSave={handleSave}
+          search={search}
+        />
+      </div>
       {/* Services */}
-      <SubSectionCard
-        type="services"
-        items={form.services}
-        fields={[
-          { id: "service_type", label: "Type" },
-          { id: "vendor", label: "Vendor" },
-          { id: "contact", label: "Contact" },
-          { id: "phone_number", label: "Phone" },
-          { id: "email_address", label: "Email" },
-          { id: "notes", label: "Notes" },
-          { id: "paid_by", label: "Paid By" }
-        ]}
-        label="Services"
-        onChange={handleSubChange}
-        onSave={handleSave}
-      />
-
+      <div ref={servicesRef}>
+        <SubSectionCard
+          type="services"
+          items={filteredServices}
+          fields={serviceFields}
+          label="Services"
+          onChange={handleSubChange}
+          onSave={handleSave}
+          search={search}
+        />
+      </div>
       {/* Utilities */}
-      <SubSectionCard
-        type="utilities"
-        items={form.utilities}
-        fields={[
-          { id: "service", label: "Service" },
-          { id: "vendor", label: "Vendor" },
-          { id: "contact_info", label: "Contact Info" },
-          { id: "account_number", label: "Account #" },
-          { id: "meter_number", label: "Meter #" },
-          { id: "notes", label: "Notes" },
-          { id: "paid_by", label: "Paid By" }
-        ]}
-        label="Utilities"
-        onChange={handleSubChange}
-        onSave={handleSave}
-      />
-
+      <div ref={utilitiesRef}>
+        <SubSectionCard
+          type="utilities"
+          items={filteredUtilities}
+          fields={utilityFields}
+          label="Utilities"
+          onChange={handleSubChange}
+          onSave={handleSave}
+          search={search}
+        />
+      </div>
       {/* Codes */}
-      <SubSectionCard
-        type="codes"
-        items={form.codes}
-        fields={[
-          { id: "description", label: "Description" },
-          { id: "code", label: "Code" },
-          { id: "notes", label: "Notes" }
-        ]}
-        label="Codes"
-        onChange={handleSubChange}
-        onSave={handleSave}
-      />
+      <div ref={codesRef}>
+        <SubSectionCard
+          type="codes"
+          items={filteredCodes}
+          fields={codeFields}
+          label="Codes"
+          onChange={handleSubChange}
+          onSave={handleSave}
+          search={search}
+        />
+      </div>
     </div>
   );
 }

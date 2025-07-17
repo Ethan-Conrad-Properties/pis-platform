@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axiosInstance from '../utils/axiosInstance';
+import axiosInstance from '@/app/utils/axiosInstance';
 
 export default function AddPropertyForm({ open, onClose, onSuccess }) {
   const [form, setForm] = useState({

@@ -1,12 +1,12 @@
 import React, { useState } from "react";
+import { formatDate } from "@/app/utils/helpers";
 
 export const ExpandingCell = props => {
   const [expanded, setExpanded] = useState(false);
 	const maxLength = 200;
 	let value = props.value || "";
   if (props.colDef.field === "coe" && value) {
-    const date = new Date(value);
-    value = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+    value = formatDate(value);
   }
 
    if (!value) return null;

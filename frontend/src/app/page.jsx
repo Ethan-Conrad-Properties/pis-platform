@@ -2,17 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from "next-auth/react"
-import PropertyList from './components/PropertyList';
-import PropertyCard from './components/PropertyCard'
-import PropertyDropdown from './components/PropertyDropdown';
-import PropertySearch from './components/PropertySearch';
-import PaginationControls from './components/PaginationControls';
-import ViewToggle from './components/ViewToggle';
-import PropertyGridView from './components/PropertyGridView';
-import AddPropertyForm from './components/AddPropertyForm';
+import PropertyList from './components/card/PropertyList';
+import PropertyCard from './components/card/PropertyCard'
+import PropertyDropdown from './components/common/PropertyDropdown';
+import PropertySearch from './components/common/PropertySearch';
+import PaginationControls from './components/common/PaginationControls';
+import ViewToggle from './components/common/ViewToggle';
+import PropertyGridView from './components/grid/PropertyGridView';
+import AddPropertyForm from './components/common/AddPropertyForm';
 import LoginForm from './Login';
-import SessionTimeout from './components/SessionTimeout';
+import SessionTimeout from './components/common/SessionTimeout';
 import axiosInstance from './utils/axiosInstance';
+import { filterBySearch, paginate, getTotalPages, sort } from './utils/helpers';
 
 export default function Home() {
   const [properties, setProperties] = useState([]);
@@ -20,44 +21,33 @@ export default function Home() {
   const [currentPage, setCurrentPage ] = useState(1);
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
   const { data: session } = useSession();
-  const PropertiesPerPage = 18;
   const searchLower = search.toLowerCase();
+  const PropertiesPerPage = 18;
   const [editingYardi, setEditingYardi] = useState(null);
   const [view, setView] = useState('card')
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const filteredProperties = properties.filter( prop => {
-    const fieldsToSearch = [
-      prop.address,
-      prop.yardi,
-      prop.city,
-      prop.zip,
-      prop.building_type,
-      prop.prop_manager,
-      ...(prop.suites ? prop.suites.map(suite => suite.name) : []),
-      ...(prop.services ? prop.services.map(service => service.vendor) : []),
-      ...(prop.utilities ? prop.utilities.map(util => util.vendor) : []),
-      ...(prop.codes ? prop.codes.map(code => code.description) : []),
-    ];
+  const getFieldsToSearch = prop => [
+    prop.address,
+    prop.yardi,
+    prop.city,
+    prop.zip,
+    prop.building_type,
+    prop.prop_manager,
+    ...(prop.suites ? prop.suites.map(suite => suite.name) : []),
+    ...(prop.services ? prop.services.map(service => service.vendor) : []),
+    ...(prop.utilities ? prop.utilities.map(util => util.vendor) : []),
+    ...(prop.codes ? prop.codes.map(code => code.description) : []),
+  ];
 
-    // Check if any field includes the search term
-    return fieldsToSearch.some(field =>
-      String(field || '').toLowerCase().includes(searchLower)
-    );
-  });
+  const filteredProperties = filterBySearch(properties, getFieldsToSearch, search);
 
   // Sort filteredProperties by address before pagination
-  const sortedProperties = [...filteredProperties].sort((a, b) =>
-    (a.address || '').localeCompare(b.address || '')
-  );
+  const sortedProperties = sort(filteredProperties, 'address');
 
   // calculate pagination
-  const indexOfLast = currentPage * PropertiesPerPage;
-  const indexOfFirst = indexOfLast - PropertiesPerPage;
-  const currentProperties = sortedProperties.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(filteredProperties.length / PropertiesPerPage);
-
-  console.log(session)
+  const currentProperties = paginate(sortedProperties, currentPage, PropertiesPerPage);
+  const totalPages = getTotalPages(filteredProperties, PropertiesPerPage);
 
   const fetchProperties = async () => {
     try {
@@ -101,6 +91,7 @@ export default function Home() {
             setSearch(e.target.value);
             setSelectedPropertyId(''); 
           }}
+          placeholder="Search properties..."
         />
         <div className="flex gap-2">
           <button
