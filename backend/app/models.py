@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -33,6 +33,15 @@ class Property(Base):
     heat_cooling_source = Column(String)
     misc = Column(String)
 
+class Contact(Base):
+    __tablename__ = 'contacts'
+
+    contact_id = Column(Integer, primary_key=True, autoincrement=True)
+    name= Column(String, index=True)
+    office_number = Column(String)
+    cell_number = Column(String)
+    email = Column(String)
+
 class Suite(Base):
     __tablename__ = 'suites'
 
@@ -41,9 +50,6 @@ class Suite(Base):
     suite = Column(String)
     sqft = Column(String)
     name = Column(String, index=True)
-    contact = Column(Text)
-    phone_number = Column(Text)
-    email_address = Column(Text)
     notes = Column(Text)
     hvac = Column(Text)
     hvac_info = Column(Text)
@@ -62,9 +68,6 @@ class Service(Base):
     property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
     service_type = Column(String)
     vendor = Column(String, index=True)
-    contact = Column(Text)
-    phone_number = Column(Text)
-    email_address = Column(Text)
     notes = Column(Text)
     paid_by = Column(String)
 
@@ -75,7 +78,6 @@ class Utility(Base):
     property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
     service = Column(String)
     vendor = Column(String, index=True)
-    contact_info = Column(Text)
     account_number = Column(String)
     meter_number = Column(String)
     notes = Column(Text)
@@ -90,8 +92,30 @@ class Code(Base):
     code = Column(String)
     notes = Column(Text)
 
+# Association tables for many-to-many relationships
+class SuiteContact(Base):
+    __tablename__ = 'suite_contacts'
 
-    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    suite_id = Column(Integer, ForeignKey('suites.suite_id'), nullable=False)
+    contact_id = Column(Integer, ForeignKey('contacts.contact_id'), nullable=False)
+
+class ServiceContact(Base):
+    __tablename__ = 'service_contacts'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    service_id = Column(Integer, ForeignKey('services.service_id'), nullable=False)
+    contact_id = Column(Integer, ForeignKey('contacts.contact_id'), nullable=False)
+
+class UtilityContact(Base):
+    __tablename__ = 'utility_contacts'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    utility_id = Column(Integer, ForeignKey('utilities.utility_id'), nullable=False)
+    contact_id = Column(Integer, ForeignKey('contacts.contact_id'), nullable=False)
+
+
+
 
 
 

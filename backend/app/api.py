@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
-from app.models import Property, Suite, Service, Utility, Code
+from app.models import Property, Suite, Service, Utility, Code, SuiteContact, ServiceContact, UtilityContact, Contact
 from app.auth import verify_token
 
 # gets DB Session
@@ -20,10 +20,41 @@ async def get_properties(db: Session = Depends(get_db), user=Depends(verify_toke
     properties = db.query(Property).all()
     result = []
     for prop in properties:
+        # Suites with contacts
         suites = db.query(Suite).filter(Suite.property_yardi == prop.yardi).all()
+        suites_data = []
+        for s in suites:
+            contact_links = db.query(SuiteContact).filter(SuiteContact.suite_id == s.suite_id).all()
+            contact_ids = [link.contact_id for link in contact_links]
+            contacts = db.query(Contact).filter(Contact.contact_id.in_(contact_ids)).all() if contact_ids else []
+            suite_dict = s.__dict__.copy()
+            suite_dict["contacts"] = [c.__dict__ for c in contacts]
+            suites_data.append(suite_dict)
+
+        # Services with contacts
         services = db.query(Service).filter(Service.property_yardi == prop.yardi).all()
+        services_data = []
+        for sv in services:
+            contact_links = db.query(ServiceContact).filter(ServiceContact.service_id == sv.service_id).all()
+            contact_ids = [link.contact_id for link in contact_links]
+            contacts = db.query(Contact).filter(Contact.contact_id.in_(contact_ids)).all() if contact_ids else []
+            service_dict = sv.__dict__.copy()
+            service_dict["contacts"] = [c.__dict__ for c in contacts]
+            services_data.append(service_dict)
+
+        # Utilities with contacts
         utilities = db.query(Utility).filter(Utility.property_yardi == prop.yardi).all()
+        utilities_data = []
+        for u in utilities:
+            contact_links = db.query(UtilityContact).filter(UtilityContact.utility_id == u.utility_id).all()
+            contact_ids = [link.contact_id for link in contact_links]
+            contacts = db.query(Contact).filter(Contact.contact_id.in_(contact_ids)).all() if contact_ids else []
+            utility_dict = u.__dict__.copy()
+            utility_dict["contacts"] = [c.__dict__ for c in contacts]
+            utilities_data.append(utility_dict)
+
         codes = db.query(Code).filter(Code.property_yardi == prop.yardi).all()
+
         result.append({
             "yardi": prop.yardi,
             "address": prop.address,
@@ -51,9 +82,9 @@ async def get_properties(db: Session = Depends(get_db), user=Depends(verify_toke
             "roof_cover": prop.roof_cover,
             "heat_cooling_source": prop.heat_cooling_source,
             "misc": prop.misc,
-            "suites": [s.__dict__ for s in suites],
-            "services": [sv.__dict__ for sv in services],
-            "utilities": [u.__dict__ for u in utilities],
+            "suites": suites_data,
+            "services": services_data,
+            "utilities": utilities_data,
             "codes": [c.__dict__ for c in codes],
         })
     return {"properties": result}
@@ -147,6 +178,18 @@ async def update_code(code_id: int, updated: dict = Body(...), db: Session = Dep
     db.commit()
     db.refresh(code)
     return {"message": "Code updated successfully", "code": code}
+
+@router.put("/contacts/{contact_id}")
+async def update_contact(contact_id: int, updated: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
+    contact = db.query(Contact).filter(Contact.contact_id == contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    for key, value in updated.items():
+        if hasattr(contact, key):
+            setattr(contact, key, value)
+    db.commit()
+    db.refresh(contact)
+    return {k: v for k, v in contact.__dict__.items() if not k.startswith('_')}
     
 # create a new property
 @router.post("/properties")
@@ -193,5 +236,23 @@ async def create_code(code: dict = Body(...), db: Session = Depends(get_db), use
     db.commit()
     db.refresh(new_code)
     return {k: v for k, v in new_code.__dict__.items() if not k.startswith('_')}
-    
+
+@router.post("/contacts")
+async def create_contact(contact: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
+    new_contact = Contact(**contact)
+    db.add(new_contact)
+    db.commit()
+    db.refresh(new_contact)
+
+    # Link to suite/service/utility if provided
+    if "suite_id" in contact and contact["suite_id"]:
+        db.add(SuiteContact(suite_id=contact["suite_id"], contact_id=new_contact.contact_id))
+    if "service_id" in contact and contact["service_id"]:
+        db.add(ServiceContact(service_id=contact["service_id"], contact_id=new_contact.contact_id))
+    if "utility_id" in contact and contact["utility_id"]:
+        db.add(UtilityContact(utility_id=contact["utility_id"], contact_id=new_contact.contact_id))
+    db.commit()
+
+    return {k: v for k, v in new_contact.__dict__.items() if not k.startswith('_')}
+
 
