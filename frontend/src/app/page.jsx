@@ -77,7 +77,7 @@ export default function Home() {
 
   return (
     <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-16 pb-4 md:pb-6">
-      <h1 className="text-3xl md:text-4xl text-center md:text-left font-bold mb-4">Welcome to the PIS Platform</h1>
+      <h1 className="text-3xl md:text-4xl text-center md:text-left font-bold mb-4 justify-between">Welcome to the PIS Platform</h1>
       <SessionTimeout />
       <AddPropertyForm
         open={showAddModal}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import SubSectionCard from './SubSectionCard';
+import SubSection from './SubSection';
 import SuccessModal from '../common/SuccessModal';
 import PropertySearch from '../common/PropertySearch';
 import axiosInstance from '@/app/utils/axiosInstance';
@@ -74,6 +74,36 @@ export default function PropertyCard({ property, onUpdate }) {
 		});
 	};
 
+  // Handle contact changes for suites, services, utilities
+	const handleContactChange = async (type, idx, contact, isNew) => {
+		setForm(prevForm => {
+			const updatedItems = prevForm[type].map((item, i) => {
+				if (i !== idx) return item;
+				let updatedContacts;
+				if (isNew) {
+					updatedContacts = [...(item.contacts || []), contact];
+				} else {
+					updatedContacts = (item.contacts || []).map(c =>
+						c.contact_id === contact.contact_id ? contact : c
+					);
+				}
+				return { ...item, contacts: updatedContacts };
+			});
+			return { ...prevForm, [type]: updatedItems };
+		});
+	};
+
+  // Save contacts 
+  async function saveContacts(contacts, parentId, parentType) {
+  for (const contact of contacts) {
+    if (!contact.contact_id) {
+      await axiosInstance.post(`/contacts`, { ...contact, [`${parentType}_id`]: parentId });
+    } else {
+      await axiosInstance.put(`/contacts/${contact.contact_id}`, contact);
+    }
+  }
+}
+
   // Save property and all sub-records
   const handleSave = async (section, idx = null) => {
     try {
@@ -82,12 +112,21 @@ export default function PropertyCard({ property, onUpdate }) {
     } else if (section === "suites" && idx !== null) {
       const suite = form.suites[idx];
       await axiosInstance.put(`/suites/${suite.suite_id}`, suite);
+      if (suite.contacts && suite.contacts.length > 0) {
+        await saveContacts(suite.contacts, suite.suite_id, "suite");
+      }
     } else if (section === "services" && idx !== null) {
       const service = form.services[idx];
       await axiosInstance.put(`/services/${service.service_id}`, service);
+      if (service.contacts && service.contacts.length > 0) {
+        await saveContacts(service.contacts, service.service_id, "service");
+      }
     } else if (section === "utilities" && idx !== null) {
       const utility = form.utilities[idx];
       await axiosInstance.put(`/utilities/${utility.utility_id}`, utility);
+      if (utility.contacts && utility.contacts.length > 0) {
+        await saveContacts(utility.contacts, utility.utility_id, "utility");
+      }
     } else if (section === "codes" && idx !== null) {
       const code = form.codes[idx];
       await axiosInstance.put(`/codes/${code.code_id}`, code);
@@ -163,8 +202,7 @@ export default function PropertyCard({ property, onUpdate }) {
       {property.prop_photo && !editing && (
         <img 
 					src={property.prop_photo} alt="Property" 
-					className="mb-2 mx-auto w-full max-w-2xl h-64 object-cover rounded"
-					style={{ display: 'block' }}
+					className="block mb-2 mx-auto w-full max-w-2xl h-64 object-cover rounded"
  				/>
       )}
       
@@ -180,7 +218,7 @@ export default function PropertyCard({ property, onUpdate }) {
 
       {/* Suites */}
       <div ref={suitesRef}>
-        <SubSectionCard
+        <SubSection
           type="suites"
           items={filteredSuites}
           fields={suiteFields}
@@ -188,11 +226,12 @@ export default function PropertyCard({ property, onUpdate }) {
           onChange={handleSubChange}
           onSave={handleSave}
           search={search}
+          onContactChange={handleContactChange}
         />
       </div>
       {/* Services */}
       <div ref={servicesRef}>
-        <SubSectionCard
+        <SubSection
           type="services"
           items={filteredServices}
           fields={serviceFields}
@@ -200,11 +239,12 @@ export default function PropertyCard({ property, onUpdate }) {
           onChange={handleSubChange}
           onSave={handleSave}
           search={search}
+          onContactChange={handleContactChange}
         />
       </div>
       {/* Utilities */}
       <div ref={utilitiesRef}>
-        <SubSectionCard
+        <SubSection
           type="utilities"
           items={filteredUtilities}
           fields={utilityFields}
@@ -212,11 +252,12 @@ export default function PropertyCard({ property, onUpdate }) {
           onChange={handleSubChange}
           onSave={handleSave}
           search={search}
+          onContactChange={handleContactChange}
         />
       </div>
       {/* Codes */}
       <div ref={codesRef}>
-        <SubSectionCard
+        <SubSection
           type="codes"
           items={filteredCodes}
           fields={codeFields}

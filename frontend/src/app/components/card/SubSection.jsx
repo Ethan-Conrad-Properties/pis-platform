@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import SuccessModal from "../common/SuccessModal";
 import SubItem from "./SubItem";
 
-export default function SubSectionCard({ type, items, fields, label, onChange, onSave, search }) {
+export default function SubSection({ type, items, fields, label, onChange, onSave, search, onContactChange }) {
   const [editingIdx, setEditingIdx] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -18,7 +18,7 @@ export default function SubSectionCard({ type, items, fields, label, onChange, o
 
   // auto expand if search matches, close if nothing in search bar
   useEffect(() => {
-    if (search && items && items.length > 0) {
+    if ((search && items && items.length > 0) || editingIdx !== null) {
       setExpanded(true);
     } else {
       setExpanded(false)
@@ -50,6 +50,7 @@ export default function SubSectionCard({ type, items, fields, label, onChange, o
               onChange={onChange}
               onSave={handleSaveWrapper}
               setEditingIdx={setEditingIdx}
+              onContactChange={onContactChange}
             />
           )) : (
             <div className="text-gray-500">No {label.toLowerCase()} listed.</div>

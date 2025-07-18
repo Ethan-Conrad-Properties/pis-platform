@@ -30,8 +30,6 @@ export const suiteFields = [
 	{ id: "sqft", label: "Sqft" },
 	{ id: "name", label: "Name" },
 	{ id: "contact", label: "Contact" },
-	{ id: "phone_number", label: "Phone" },
-	{ id: "email_address", label: "Email" },
 	{ id: "notes", label: "Notes" },
 	{ id: "hvac", label: "HVAC" },
 	{ id: "hvac_info", label: "HVAC Info" },
@@ -48,8 +46,6 @@ export const serviceFields = [
 	{ id: "service_type", label: "Type" },
 	{ id: "vendor", label: "Vendor" },
 	{ id: "contact", label: "Contact" },
-	{ id: "phone_number", label: "Phone" },
-	{ id: "email_address", label: "Email" },
 	{ id: "notes", label: "Notes" },
 	{ id: "paid_by", label: "Paid By" }
 ];
@@ -57,7 +53,7 @@ export const serviceFields = [
 export const utilityFields = [
 	{ id: "service", label: "Service" },
 	{ id: "vendor", label: "Vendor" },
-	{ id: "contact_info", label: "Contact Info" },
+	{ id: "contact", label: "Contact" },
 	{ id: "account_number", label: "Account #" },
 	{ id: "meter_number", label: "Meter #" },
 	{ id: "notes", label: "Notes" },

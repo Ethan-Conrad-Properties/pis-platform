@@ -12,10 +12,6 @@ export function chunkArray(array, size) {
     return result;
   }
 
-export function isEmailField(fieldId) {
-  return fieldId.toLowerCase().includes("email");
-}
-
 export function filterBySearch(items, getFields, search) {
   const lower = search.toLowerCase();
   return items.filter(item =>
