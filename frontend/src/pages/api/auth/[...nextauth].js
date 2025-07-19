@@ -19,6 +19,7 @@ export default NextAuth({
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken;
+      session.error = token.error
       return session;
     },
     async signIn({ user }) {

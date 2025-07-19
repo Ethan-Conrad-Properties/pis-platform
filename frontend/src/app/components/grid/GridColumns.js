@@ -21,9 +21,7 @@ export const suiteColumns = [
   { key: "suite", name: "Suite" },
   { key: "sqft", name: "Sqft" },
   { key: "name", name: "Tenant" },
-  { key: "contact", name: "Contact" },
-  { key: "phone_number", name: "Phone Number" },
-  { key: "email_address", name: "Email Address" },
+  { key: "contacts", name: "Contacts" },
   { key: "notes", name: "Notes" },
   { key: "hvac", name: "HVAC" },
   { key: "misc", name: "Misc" }
@@ -32,9 +30,7 @@ export const suiteColumns = [
 export const serviceColumns = [
   { key: "service_type", name: "Service Type" },
   { key: "vendor", name: "Vendor" },
-  { key: "contact", name: "Contact" },
-  { key: "phone_number", name: "Phone Number" },
-  { key: "email_address", name: "Email Address" },
+  { key: "contacts", name: "Contacts" },
   { key: "notes", name: "Notes" },
 ];
 
@@ -43,7 +39,7 @@ export const utilityColumns = [
   { key: "vendor", name: "Vendor" },
   { key: "account_number", name: "Account #" },
   { key: "meter_number", name: "Meter #" },
-  { key: "contact_info", name: "Contact Info" },
+  { key: "contacts", name: "Contacts" },
   { key: "notes", name: "Notes" },
   { key: "paid_by", name: "Paid By" },
 ];

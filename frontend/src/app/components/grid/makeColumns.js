@@ -1,11 +1,12 @@
 import { ExpandingCell } from "./GridCells";
+import ContactsCell from "./ContactsCell";
 
 export function makeColumns(columns) {
   return columns.map(col => ({
     field: col.key,
     headerName: col.name,
-    editable: true,
-    cellRenderer: ExpandingCell,
+    editable: col.key !== "contacts", 
+    cellRenderer: col.key === "contacts" ? ContactsCell : ExpandingCell,
     autoHeight: true,
     wrapText: true,
     resizable: true,
