@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, memo, useState } from "react";
-import ContactInfoModal from "./ContactInfoModal";
+import ContactInfoModal from "../common/ContactInfoModal";
 import axiosInstance from "@/app/utils/axiosInstance";
 import SuccessModal from "../common/SuccessModal"; 
 
@@ -37,12 +37,31 @@ const emptyContact = {
   email: "",
 };
 
+function SeeMoreText({ text, maxLength = 500 }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!text) return <span className="text-gray-400">N/A</span>;
+  if (text.length <= maxLength) return <span>{text}</span>;
+  return (
+    <span>
+      {expanded ? text : text.slice(0, maxLength) + "... "}
+      <button
+        className="text-blue-600 underline text-xs hover:cursor-pointer"
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+      >
+        {expanded ? "See less" : "See more"}
+      </button>
+    </span>
+  );
+}
+
 const SubItem = memo(function SubItem({
   item,
   idx,
   type,
   fields,
   isEditing,
+  onChange,
   onSave,
   setEditingIdx,
   onContactChange
@@ -55,19 +74,47 @@ const SubItem = memo(function SubItem({
   // Handler for saving contact edits/adds
   const handleContactSave = async (contact, isNew) => {
     try {
+      const parentId =
+        item.suite_id || item.service_id || item.utility_id;
+      const parentType =
+        item.suite_id
+          ? "suite_id"
+          : item.service_id
+          ? "service_id"
+          : item.utility_id
+          ? "utility_id"
+          : null;
+
+      const payload = {
+        ...contact,
+        ...(parentType && { [parentType]: parentId }),
+      };
+
+      let res;
       if (isNew) {
-        const res = await axiosInstance.post('/contacts', contact);
-        onContactChange(type, idx, res.data, true); 
+        res = await axiosInstance.post('/contacts', payload);
+        onContactChange(type, idx, res.data, "add"); 
       } else {
-        const res = await axiosInstance.put(`/contacts/${contact.contact_id}`, contact);
-        onContactChange(type, idx, res.data, false); 
+        res = await axiosInstance.put(`/contacts/${contact.contact_id}`, payload);
+        onContactChange(type, idx, res.data, "edit"); 
       }
       setShowSuccess(true);
       setSelectedContact(null);
       setEditMode(false);
-      
     } catch (error) {
       alert("Failed to save contact.");
+    }
+  };
+
+  // Handler for deleting a contact
+  const handleContactDelete = async (contactId) => {
+    if (!window.confirm("Delete this contact?")) return;
+    try {
+      await axiosInstance.delete(`/contacts/${contactId}`);
+      onContactChange(type, idx, { contact_id: contactId }, "delete");
+      setShowSuccess(true);
+    } catch (error) {
+      alert("Failed to delete contact.");
     }
   };
 
@@ -85,20 +132,20 @@ const SubItem = memo(function SubItem({
         {isEditing ? (
           <button
             onClick={() => setEditingIdx(null)}
-            className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
+            className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer mb-2"
           >
             Cancel
           </button>
         ) : (
           <button
             onClick={() => setEditingIdx(idx)}
-            className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
+            className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer mb-2"
           >
             Edit
           </button>
         )}
       </div>
-      <div className="grid grid-cols-2 space-x-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         {fields.map((field, id) => {
           let value = item[field.id];
           if (
@@ -110,8 +157,8 @@ const SubItem = memo(function SubItem({
           // Special rendering for contacts
           if (field.id === "contact") {
             return (
-              <div key={field.id} className="mb-2 text-xs md:text-sm flex items-start">
-                <label className="font-semibold mr-1 whitespace-nowrap">{field.label}:</label>
+              <div key={field.id} className="mb-2 text-xs md:text-sm flex flex-col md:flex-row items-start">
+                <label className="font-semibold mb-1 md:mb-0 md:mr-1 whitespace-nowrap">{field.label}:</label>
                 <div className="flex-1">
                   {item.contacts && item.contacts.length > 0 ? (
                     <ul className="mt-1">
@@ -128,23 +175,33 @@ const SubItem = memo(function SubItem({
                             {contact.name}
                           </button>
                           {isEditing && (
-                            <button
-                              className="text-xs hover:cursor-pointer"
-                              type="button"
-                              title="Edit Contact"
-                              onClick={() => {
-                                setSelectedContact(contact);
-                                setEditMode(true);
-                              }}
-                            >
-                              ✏️
-                            </button>
+                            <>
+                              <button
+                                className="text-xs hover:cursor-pointer"
+                                type="button"
+                                title="Edit Contact"
+                                onClick={() => {
+                                  setSelectedContact(contact);
+                                  setEditMode(true);
+                                }}
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                className="text-xs text-red-600 hover:cursor-pointer"
+                                type="button"
+                                title="Delete Contact"
+                                onClick={() => handleContactDelete(contact.contact_id)}
+                              >
+                                ❌
+                              </button>
+                            </>
                           )}
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <span className="text-gray-400">No contacts</span>
+                    <span></span>
                   )}
                   {isEditing && (
                     <button
@@ -164,8 +221,8 @@ const SubItem = memo(function SubItem({
           }
 
           return (
-            <div key={field.id} className="mb-2 text-xs md:text-sm flex items-start">
-              <label className="font-semibold mr-1 whitespace-nowrap">{field.label}:</label>
+            <div key={field.id} className="mb-2 text-xs md:text-sm flex flex-col md:flex-row items-start">
+              <label className="font-semibold mb-1 md:mb-0 md:mr-1 whitespace-nowrap">{field.label}:</label>
               <div className="flex-1">
                 {isEditing ? (
                   <AutoExpandTextarea
@@ -174,7 +231,7 @@ const SubItem = memo(function SubItem({
                   />
                 ) : (
                   <span className="break-all whitespace-pre-line max-w-full inline-block align-bottom">
-                    {value || <span className="text-gray-400">N/A</span>}
+                    <SeeMoreText text={value} />
                   </span>
                 )}
               </div>

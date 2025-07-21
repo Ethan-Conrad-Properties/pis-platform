@@ -74,23 +74,40 @@ export default function PropertyCard({ property, onUpdate }) {
 		});
 	};
 
+  async function refreshProperty() {
+    const res = await axiosInstance.get(`/properties/${property.yardi}`);
+    setForm({
+      ...res.data,
+      suites: res.data.suites || [],
+      services: res.data.services || [],
+      utilities: res.data.utilities || [],
+      codes: res.data.codes || []
+    });
+    if (onUpdate) onUpdate(res.data);
+  }
+  
   // Handle contact changes for suites, services, utilities
-	const handleContactChange = async (type, idx, contact, isNew) => {
+	const handleContactChange = async (type, idx, contact, action) => {
 		setForm(prevForm => {
 			const updatedItems = prevForm[type].map((item, i) => {
 				if (i !== idx) return item;
 				let updatedContacts;
-				if (isNew) {
+				if (action === "add") { // add
 					updatedContacts = [...(item.contacts || []), contact];
-				} else {
+				} else if (action === "edit") { // edit
 					updatedContacts = (item.contacts || []).map(c =>
 						c.contact_id === contact.contact_id ? contact : c
+					);
+				} else if (action === "delete") { // delete
+					updatedContacts = (item.contacts || []).filter(c =>
+						c.contact_id !== contact.contact_id
 					);
 				}
 				return { ...item, contacts: updatedContacts };
 			});
 			return { ...prevForm, [type]: updatedItems };
 		});
+    await refreshProperty();
 	};
 
   // Save contacts 

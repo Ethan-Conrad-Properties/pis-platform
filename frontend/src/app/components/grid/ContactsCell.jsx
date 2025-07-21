@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import ContactInfoModal from "../card/ContactInfoModal";
+import { createPortal } from "react-dom";
+import ContactInfoModal from "../common/ContactInfoModal";
 import axiosInstance from "@/app/utils/axiosInstance";
 
 const emptyContact = {
@@ -38,7 +39,7 @@ export default function ContactsCell(props) {
       }
       setModalContact(null);
       setEditMode(false);
-      // Optionally: trigger a grid refresh here if needed
+      // trigger grid refresh
       if (props.api && props.api.refreshCells) {
         props.api.refreshCells();
       }
@@ -64,26 +65,28 @@ export default function ContactsCell(props) {
           </button>
         ))
       ) : (
-        <span className="text-gray-400">No contacts</span>
+        <span></span>
       )}
       <button
-        className="text-green-700 border border-green-700 px-1 rounded ml-1"
+        className="mt-2 text-xs text-green-700 border border-green-700 px-2 py-1 rounded hover:bg-green-50 hover:cursor-pointer"
         onClick={() => {
           setModalContact(emptyContact);
           setEditMode(true);
         }}
         type="button"
       >
-        + Add
+        + Add Contact
       </button>
-      {modalContact && (
-        <ContactInfoModal
-          contact={modalContact}
-          onClose={() => setModalContact(null)}
-          isEdit={editMode}
-          onContactSave={handleContactSave}
-        />
-      )}
+      {modalContact &&
+        createPortal(
+          <ContactInfoModal
+            contact={modalContact}
+            onClose={() => setModalContact(null)}
+            isEdit={editMode}
+            onContactSave={handleContactSave}
+          />,
+          document.body
+        )}
     </div>
   );
 }

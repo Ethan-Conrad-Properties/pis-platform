@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import PropertyList from './components/card/PropertyList';
 import PropertyCard from './components/card/PropertyCard'
 import PropertyDropdown from './components/common/PropertyDropdown';
@@ -55,6 +55,9 @@ export default function Home() {
       setProperties(res.data.properties);
     } catch (error) {
       console.error("Error fetching properties:", error);
+      if (error.response?.status === 401) {
+        signOut();
+      }
     }
   };
 
@@ -75,6 +78,8 @@ export default function Home() {
     return <LoginForm />;
   }
 
+
+
   return (
     <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-16 pb-4 md:pb-6">
       <h1 className="text-3xl md:text-4xl text-center md:text-left font-bold mb-4 justify-between">Welcome to the PIS Platform</h1>
@@ -84,7 +89,7 @@ export default function Home() {
         onClose={() => setShowAddModal(false)}
         onSuccess={fetchProperties}
       />
-      <div className="flex justify-between">
+      <div className="md:flex justify-between">
         <PropertySearch
           value={search}
           onChange={e => {
@@ -93,7 +98,7 @@ export default function Home() {
           }}
           placeholder="Search properties..."
         />
-        <div className="flex gap-2">
+        <div className="md:flex space-x-4 gap-2">
           <button
             className="border bg-white px-3 py-1 mb-4 rounded hover:bg-gray-100 hover:cursor-pointer"
             onClick={() => setShowAddModal(true)}

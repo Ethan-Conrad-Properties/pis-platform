@@ -30,7 +30,9 @@ async def update_contact(contact_id: int, updated: dict = Body(...), db: Session
 # add a contact
 @router.post("/contacts")
 async def create_contact(contact: dict = Body(...), db: Session = Depends(get_db), user=Depends(verify_token)):
-    new_contact = Contact(**contact)
+    # Remove linking fields before creating Contact
+    contact_data = {k: v for k, v in contact.items() if k not in ["suite_id", "service_id", "utility_id"]}
+    new_contact = Contact(**contact_data)
     db.add(new_contact)
     db.commit()
     db.refresh(new_contact)
@@ -45,3 +47,20 @@ async def create_contact(contact: dict = Body(...), db: Session = Depends(get_db
     db.commit()
 
     return {k: v for k, v in new_contact.__dict__.items() if not k.startswith('_')}
+
+# delete a contact
+@router.delete("/contacts/{contact_id}")
+async def delete_contact(contact_id: int, db: Session = Depends(get_db), user=Depends(verify_token)):
+    contact = db.query(Contact).filter(Contact.contact_id == contact_id).first()
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    # Remove links from join tables
+    db.query(SuiteContact).filter(SuiteContact.contact_id == contact_id).delete()
+    db.query(ServiceContact).filter(ServiceContact.contact_id == contact_id).delete()
+    db.query(UtilityContact).filter(UtilityContact.contact_id == contact_id).delete()
+
+    # Remove the contact itself
+    db.delete(contact)
+    db.commit()
+    return {"detail": "Contact deleted"}

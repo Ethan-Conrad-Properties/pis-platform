@@ -148,10 +148,10 @@ export default function PropertyGridView({ property }) {
 
   return (
     <div className="bg-white px-6 py-10 rounded shadow-xl min-h-screen">
-      <h2 className="text-3xl font-bold mb-4 text-center">
+      <h2 className="text-xl md:text-3xl font-bold mb-4 text-center">
         {property.address} {property.city}, {property.state} {property.zip}
       </h2>
-      <h3 className="text--lg font-normal mb-4 text-center">
+      <h3 className="text-md md:text-lg font-normal mb-4 text-center">
         Building Type: {property.building_type} | Property Manager: {property.prop_manager} | Total Sq Ft: {property.total_sq_ft}
       </h3>
       <PropertySearch

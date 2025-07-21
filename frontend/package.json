@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.1.1",
     "ag-grid-community": "^34.0.1",
     "ag-grid-react": "^34.0.1",
     "axios": "^1.10.0",
@@ -17,7 +18,9 @@
     "next-auth": "^4.24.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.6.3"
+    "react-hook-form": "^7.60.0",
+    "react-router-dom": "^7.6.3",
+    "zod": "^4.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

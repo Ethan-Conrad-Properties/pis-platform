@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
-from app.models import Service, Contact, SuiteContact
+from app.models import Service, Contact, ServiceContact
 from app.auth import verify_token
 
 def get_db():

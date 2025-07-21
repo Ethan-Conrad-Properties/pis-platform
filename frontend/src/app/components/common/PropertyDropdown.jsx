@@ -3,13 +3,10 @@ import React from "react";
 export default function PropertyDropdown({ properties, selectedPropertyId, onSelect }) {
   return (
     <select
-      className="border bg-white rounded px-2 py-1 mb-4"
+      className="border bg-white rounded px-2 py-1 mb-4 w-full sm:w-[220px] text-xs sm:text-sm"
       value={selectedPropertyId}
       onChange={e => onSelect(e.target.value)}
-      style={{ 
-        width: "220px",
-        maxWidth: "100%",
-      }}
+
     >
       <option value="">-- Select Property --</option>
       {properties.map(prop => (
