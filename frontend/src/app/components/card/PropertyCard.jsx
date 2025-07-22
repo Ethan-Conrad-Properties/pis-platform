@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import SubSection from './SubSection';
 import SuccessModal from '../common/SuccessModal';
 import PropertySearch from '../common/PropertySearch';
@@ -13,7 +14,10 @@ import {
 } from './cardFields';
 
 export default function PropertyCard({ property, onUpdate }) {
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState("");
   const [form, setForm] = useState({
     ...property,
     suites: property.suites || [],
@@ -21,13 +25,33 @@ export default function PropertyCard({ property, onUpdate }) {
     utilities: property.utilities || [],
     codes: property.codes || []
   });
-	const [showModal, setShowModal] = useState(false);
-  const [search, setSearch] = useState("");
 
   const suitesRef = useRef(null);
   const servicesRef = useRef(null);
   const utilitiesRef = useRef(null);
   const codesRef = useRef(null);
+
+  // Fetch latest property data
+  const { data: propertyData, refetch } = useQuery({
+    queryKey: ['property', property.yardi],
+    queryFn: async () => {
+      const res = await axiosInstance.get(`/properties/${property.yardi}`);
+      return res.data;
+    },
+    enabled: !!property.yardi,
+    initialData: property
+  });
+
+  // Keep local form in sync with server data
+  useEffect(() => {
+    setForm({
+      ...propertyData,
+      suites: propertyData.suites || [],
+      services: propertyData.services || [],
+      utilities: propertyData.utilities || [],
+      codes: propertyData.codes || []
+    });
+  }, [propertyData]);
 
   // getFields for each section
   const getSuiteFields = item => [
@@ -49,112 +73,155 @@ export default function PropertyCard({ property, onUpdate }) {
   const filteredUtilities = filterBySearch(form.utilities, getUtilityFields, search);
   const filteredCodes = filterBySearch(form.codes, getCodeFields, search);
 
-	useEffect(() => {
-		setForm({
-			...property,
-			suites: property.suites || [],
-			services: property.services || [],
-			utilities: property.utilities || [],
-			codes: property.codes || []
-		});
-	}, [property]);
-
-  // Handle property field changes
+  // Handle property field changes (local state for instant UI)
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Handle suite/service/utility/code field changes
-	const handleSubChange = (type, idx, field, value) => {
-		setForm(prevForm => {
-			const updated = prevForm[type].map((item, i) =>
-				i === idx ? { ...item, [field]: value } : item
-			);
-			return { ...prevForm, [type]: updated };
-		});
-	};
-
-  async function refreshProperty() {
-    const res = await axiosInstance.get(`/properties/${property.yardi}`);
-    setForm({
-      ...res.data,
-      suites: res.data.suites || [],
-      services: res.data.services || [],
-      utilities: res.data.utilities || [],
-      codes: res.data.codes || []
+  // Handle suite/service/utility/code field changes (local state for instant UI)
+  const handleSubChange = (type, idx, field, value) => {
+    setForm(prevForm => {
+      const updated = prevForm[type].map((item, i) =>
+        i === idx ? { ...item, [field]: value } : item
+      );
+      return { ...prevForm, [type]: updated };
     });
-    if (onUpdate) onUpdate(res.data);
-  }
-  
-  // Handle contact changes for suites, services, utilities
-	const handleContactChange = async (type, idx, contact, action) => {
-		setForm(prevForm => {
-			const updatedItems = prevForm[type].map((item, i) => {
-				if (i !== idx) return item;
-				let updatedContacts;
-				if (action === "add") { // add
-					updatedContacts = [...(item.contacts || []), contact];
-				} else if (action === "edit") { // edit
-					updatedContacts = (item.contacts || []).map(c =>
-						c.contact_id === contact.contact_id ? contact : c
-					);
-				} else if (action === "delete") { // delete
-					updatedContacts = (item.contacts || []).filter(c =>
-						c.contact_id !== contact.contact_id
-					);
-				}
-				return { ...item, contacts: updatedContacts };
-			});
-			return { ...prevForm, [type]: updatedItems };
-		});
-    await refreshProperty();
-	};
+  };
 
-  // Save contacts 
+  // Handle contact changes for suites, services, utilities (local state for instant UI)
+  const handleContactChange = async (type, idx, contact, action) => {
+    setForm(prevForm => {
+      const updatedItems = prevForm[type].map((item, i) => {
+        if (i !== idx) return item;
+        let updatedContacts;
+        if (action === "add") {
+          updatedContacts = [...(item.contacts || []), contact];
+        } else if (action === "edit") {
+          updatedContacts = (item.contacts || []).map(c =>
+            c.contact_id === contact.contact_id ? contact : c
+          );
+        } else if (action === "delete") {
+          updatedContacts = (item.contacts || []).filter(c =>
+            c.contact_id !== contact.contact_id
+          );
+        }
+        return { ...item, contacts: updatedContacts };
+      });
+      return { ...prevForm, [type]: updatedItems };
+    });
+  };
+
+  // Save contacts
   async function saveContacts(contacts, parentId, parentType) {
-  for (const contact of contacts) {
-    if (!contact.contact_id) {
-      await axiosInstance.post(`/contacts`, { ...contact, [`${parentType}_id`]: parentId });
-    } else {
-      await axiosInstance.put(`/contacts/${contact.contact_id}`, contact);
+    for (const contact of contacts) {
+      if (!contact.contact_id) {
+        await axiosInstance.post(`/contacts`, { ...contact, [`${parentType}_id`]: parentId });
+      } else {
+        await axiosInstance.put(`/contacts/${contact.contact_id}`, contact);
+      }
     }
   }
-}
+
+  // Mutations for saving property and sub-records
+  const propertyMutation = useMutation({
+    mutationFn: updated => axiosInstance.put(`/properties/${property.yardi}`, updated),
+    onSuccess: () => {
+      setEditing(false);
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(['properties']);
+      if (onUpdate) onUpdate(form);
+    },
+    onError: () => alert('Error updating property')
+  });
+
+  const suiteMutation = useMutation({
+    mutationFn: suite => axiosInstance.put(`/suites/${suite.suite_id}`, suite),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(['properties']);
+    },
+    onError: () => alert('Error updating suite')
+  });
+
+  const serviceMutation = useMutation({
+    mutationFn: service => axiosInstance.put(`/services/${service.service_id}`, service),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(['properties']);
+    },
+    onError: () => alert('Error updating service')
+  });
+
+  const utilityMutation = useMutation({
+    mutationFn: utility => axiosInstance.put(`/utilities/${utility.utility_id}`, utility),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(['properties']);
+    },
+    onError: () => alert('Error updating utility')
+  });
+
+  const codeMutation = useMutation({
+    mutationFn: code => axiosInstance.put(`/codes/${code.code_id}`, code),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(['properties']);
+    },
+    onError: () => alert('Error updating code')
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: (newActive) =>
+      axiosInstance.put(`/properties/${property.yardi}`, { ...form, active: newActive }),
+    onSuccess: (_, variables) => {
+      setForm(f => ({ ...f, active: variables }));
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(['properties']);
+      if (onUpdate) onUpdate({ ...form, active: variables });
+    },
+    onError: () => alert('Error updating property')
+  });
 
   // Save property and all sub-records
   const handleSave = async (section, idx = null) => {
     try {
-    if (section === "property") {
-      await axiosInstance.put(`/properties/${property.yardi}`, form);
-    } else if (section === "suites" && idx !== null) {
-      const suite = form.suites[idx];
-      await axiosInstance.put(`/suites/${suite.suite_id}`, suite);
-      if (suite.contacts && suite.contacts.length > 0) {
-        await saveContacts(suite.contacts, suite.suite_id, "suite");
+      if (section === "property") {
+        propertyMutation.mutate(form);
+      } else if (section === "suites" && idx !== null) {
+        const suite = form.suites[idx];
+        suiteMutation.mutate(suite);
+        if (suite.contacts && suite.contacts.length > 0) {
+          await saveContacts(suite.contacts, suite.suite_id, "suite");
+        }
+      } else if (section === "services" && idx !== null) {
+        const service = form.services[idx];
+        serviceMutation.mutate(service);
+        if (service.contacts && service.contacts.length > 0) {
+          await saveContacts(service.contacts, service.service_id, "service");
+        }
+      } else if (section === "utilities" && idx !== null) {
+        const utility = form.utilities[idx];
+        utilityMutation.mutate(utility);
+        if (utility.contacts && utility.contacts.length > 0) {
+          await saveContacts(utility.contacts, utility.utility_id, "utility");
+        }
+      } else if (section === "codes" && idx !== null) {
+        const code = form.codes[idx];
+        codeMutation.mutate(code);
       }
-    } else if (section === "services" && idx !== null) {
-      const service = form.services[idx];
-      await axiosInstance.put(`/services/${service.service_id}`, service);
-      if (service.contacts && service.contacts.length > 0) {
-        await saveContacts(service.contacts, service.service_id, "service");
-      }
-    } else if (section === "utilities" && idx !== null) {
-      const utility = form.utilities[idx];
-      await axiosInstance.put(`/utilities/${utility.utility_id}`, utility);
-      if (utility.contacts && utility.contacts.length > 0) {
-        await saveContacts(utility.contacts, utility.utility_id, "utility");
-      }
-    } else if (section === "codes" && idx !== null) {
-      const code = form.codes[idx];
-      await axiosInstance.put(`/codes/${code.code_id}`, code);
+      setEditing(false);
+      setShowModal(true);
+      if (onUpdate) onUpdate(form);
+    } catch (error) {
+      alert('Error updating property or related records');
     }
-    setEditing(false);
-    setShowModal(true);
-    if (onUpdate) onUpdate(form);
-  } catch (error) {
-    alert('Error updating property or related records');
-  }
-};
+  };
 
 	const handleCloseModal = () => setShowModal(false);
 
@@ -204,12 +271,20 @@ export default function PropertyCard({ property, onUpdate }) {
 			<SuccessModal open={showModal} onClose={handleCloseModal} />
       <div className="flex items-center justify-between text-lg mb-2">
         {renderField("Address", "address")}
-        <button
-          onClick={() => setEditing(e => !e)}
-          className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
-        >
-          {editing ? "Cancel" : "Edit"}
-        </button>
+        <div className="space-x-2">
+          <button
+            className="border border-red px-2 py-1 rounded text-red-700 hover:bg-red-100 hover:cursor-pointer"
+            onClick={() => toggleActiveMutation.mutate(!property.active)}
+          >
+            {property.active ? "Mark as Sold" : "Mark as Not Sold"}
+          </button>
+          <button
+            onClick={() => setEditing(e => !e)}
+            className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
+          >
+            {editing ? "Cancel" : "Edit"}
+          </button>
+        </div>
       </div>
       <PropertySearch
         value={search}

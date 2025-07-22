@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 import PropertyGridSection from './PropertyGridSection';
 import { makeColumns } from './makeColumns';
@@ -16,11 +17,92 @@ import PropertySearch from '../common/PropertySearch';
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function PropertyGridView({ property }) {
-  const [suites, setSuites] = useState(property.suites || []);
-  const [services, setServices] = useState(property.services || []);
-  const [utilities, setUtilities] = useState(property.utilities || []);
-  const [codes, setCodes] = useState(property.codes || []);
   const [search, setSearch] = useState('');
+
+  // Suites
+  const { data: suites = [], refetch: refetchSuites } = useQuery({
+    queryKey: ['suites', property.yardi],
+    queryFn: async () => {
+      const res = await axiosInstance.get(`/suites?property_id=${property.yardi}`);
+    return res.data;
+  },
+  enabled: !!property.yardi,
+  });
+
+  // Services
+  const { data: services = [], refetch: refetchServices } = useQuery({
+    queryKey: ['services', property.yardi],
+    queryFn: async () => {
+      const res = await axiosInstance.get(`/services?property_id=${property.yardi}`);
+      return res.data;
+    },
+    enabled: !!property.yardi,
+  });
+
+  // Utilities
+  const { data: utilities = [], refetch: refetchUtilities } = useQuery({
+    queryKey: ['utilities', property.yardi],
+    queryFn: async () => {
+      const res = await axiosInstance.get(`/utilities?property_id=${property.yardi}`);
+      return res.data;
+    },
+    enabled: !!property.yardi,
+  });
+
+  // Codes
+  const { data: codes = [], refetch: refetchCodes } = useQuery({
+    queryKey: ['codes', property.yardi],
+    queryFn: async () => {
+      const res = await axiosInstance.get(`/codes?property_id=${property.yardi}`);
+      return res.data;
+    },
+    enabled: !!property.yardi,
+  });
+
+    // Mutations for add/update
+  const addSuiteMutation = useMutation({
+    mutationFn: payload => axiosInstance.post('/suites', payload),
+    onSuccess: () => refetchSuites(),
+    onError: () => alert("Error adding suite"),
+  });
+  const updateSuiteMutation = useMutation({
+    mutationFn: payload => axiosInstance.put(`/suites/${payload.suite_id}`, payload),
+    onSuccess: () => refetchSuites(),
+    onError: () => alert("Error updating suite"),
+  });
+
+  const addServiceMutation = useMutation({
+    mutationFn: payload => axiosInstance.post('/services', payload),
+    onSuccess: () => refetchServices(),
+    onError: () => alert("Error adding service"),
+  });
+  const updateServiceMutation = useMutation({
+    mutationFn: payload => axiosInstance.put(`/services/${payload.service_id}`, payload),
+    onSuccess: () => refetchServices(),
+    onError: () => alert("Error updating service"),
+  });
+
+  const addUtilityMutation = useMutation({
+    mutationFn: payload => axiosInstance.post('/utilities', payload),
+    onSuccess: () => refetchUtilities(),
+    onError: () => alert("Error adding utility"),
+  });
+  const updateUtilityMutation = useMutation({
+    mutationFn: payload => axiosInstance.put(`/utilities/${payload.utility_id}`, payload),
+    onSuccess: () => refetchUtilities(),
+    onError: () => alert("Error updating utility"),
+  });
+
+  const addCodeMutation = useMutation({
+    mutationFn: payload => axiosInstance.post('/codes', payload),
+    onSuccess: () => refetchCodes(),
+    onError: () => alert("Error adding code"),
+  });
+  const updateCodeMutation = useMutation({
+    mutationFn: payload => axiosInstance.put(`/codes/${payload.code_id}`, payload),
+    onSuccess: () => refetchCodes(),
+    onError: () => alert("Error updating code"),
+  });
 
   // Section refs
   const suitesRef = useRef(null);
@@ -48,46 +130,24 @@ export default function PropertyGridView({ property }) {
   const filteredUtilities = filterBySearch(utilities, getUtilityFields, search);
   const filteredCodes = filterBySearch(codes, getCodeFields, search);
 
-  // Fetch functions for each section
-  const fetchSuites = useCallback(async () => {
-    const res = await axiosInstance.get(`/suites?property_id=${property.yardi}`);
-    setSuites(res.data);
-  }, [property.yardi]);
-
-  const fetchServices = useCallback(async () => {
-    const res = await axiosInstance.get(`/services?property_id=${property.yardi}`);
-    setServices(res.data);
-  }, [property.yardi]);
-
-  const fetchUtilities = useCallback(async () => {
-    const res = await axiosInstance.get(`/utilities?property_id=${property.yardi}`);
-    setUtilities(res.data);
-  }, [property.yardi]);
-
-  const fetchCodes = useCallback(async () => {
-    const res = await axiosInstance.get(`/codes?property_id=${property.yardi}`);
-    setCodes(res.data);
-  }, [property.yardi]);
-
-  // Fetch all data on mount or when property changes
-  useEffect(() => {
-    fetchSuites();
-    fetchServices();
-    fetchUtilities();
-    fetchCodes();
-  }, [fetchSuites, fetchServices, fetchUtilities, fetchCodes]);
-
   const handleAddRow = (type) => {
     const emptyRow = { property_yardi: property.yardi };
-    let setRows;
     switch (type) {
-      case "suites": setRows = setSuites; break;
-      case "services": setRows = setServices; break;
-      case "utilities": setRows = setUtilities; break;
-      case "codes": setRows = setCodes; break;
-      default: return;
+      case "suites":
+        addSuiteMutation.mutate(emptyRow);
+        break;
+      case "services":
+        addServiceMutation.mutate(emptyRow);
+        break;
+      case "utilities":
+        addUtilityMutation.mutate(emptyRow);
+        break;
+      case "codes":
+        addCodeMutation.mutate(emptyRow);
+        break;
+      default:
+        return;
     }
-    setRows(prev => [...prev, emptyRow]);
   };
 
   const mainColumns = makeColumns(propertyColumns);
@@ -97,36 +157,43 @@ export default function PropertyGridView({ property }) {
   const agUtilityColumns = makeColumns(utilityColumns);
   const agCodeColumns = makeColumns(codeColumns);
 
-  const onCellValueChanged = useCallback(async params => {
-    try {
-      let section = "", idField = "", endpoint = "", id = "";
-      if (params.api.getColumnDefs().some(col => col.field === "suite")) {
-        section = "suites"; idField = "suite_id"; endpoint = "suites"; id = params.data[idField];
-      } else if (params.api.getColumnDefs().some(col => col.field === "service_type")) {
-        section = "services"; idField = "service_id"; endpoint = "services"; id = params.data[idField];
-      } else if (params.api.getColumnDefs().some(col => col.field === "service")) {
-        section = "utilities"; idField = "utility_id"; endpoint = "utilities"; id = params.data[idField];
-      } else if (params.api.getColumnDefs().some(col => col.field === "code")) {
-        section = "codes"; idField = "code_id"; endpoint = "codes"; id = params.data[idField];
-      } else {
-        section = "property"; endpoint = "properties"; id = params.data.yardi;
-      }
+  const onCellValueChanged = useCallback(params => {
+    let section = "", idField = "", endpoint = "", id = "";
+    if (params.api.getColumnDefs().some(col => col.field === "suite")) {
+      section = "suites"; idField = "suite_id"; endpoint = "suites"; id = params.data[idField];
       if (id) {
-        await axiosInstance.put(`/${endpoint}/${id}`, params.data);
-        console.log(`Saved ${section} row`, params.data);
-      } else if (endpoint !== "properties") {
-        await axiosInstance.post(`/${endpoint}`, params.data);
+        updateSuiteMutation.mutate(params.data);
+      } else {
+        addSuiteMutation.mutate(params.data);
       }
-      // Refetch the relevant section
-      if (section === "suites") fetchSuites();
-      if (section === "services") fetchServices();
-      if (section === "utilities") fetchUtilities();
-      if (section === "codes") fetchCodes();
-    } catch (error) {
-      alert("Error updating property or related records");
-      console.error(error);
+    } else if (params.api.getColumnDefs().some(col => col.field === "service_type")) {
+      section = "services"; idField = "service_id"; endpoint = "services"; id = params.data[idField];
+      if (id) {
+        updateServiceMutation.mutate(params.data);
+      } else {
+        addServiceMutation.mutate(params.data);
+      }
+    } else if (params.api.getColumnDefs().some(col => col.field === "service")) {
+      section = "utilities"; idField = "utility_id"; endpoint = "utilities"; id = params.data[idField];
+      if (id) {
+        updateUtilityMutation.mutate(params.data);
+      } else {
+        addUtilityMutation.mutate(params.data);
+      }
+    } else if (params.api.getColumnDefs().some(col => col.field === "code")) {
+      section = "codes"; idField = "code_id"; endpoint = "codes"; id = params.data[idField];
+      if (id) {
+        updateCodeMutation.mutate(params.data);
+      } else {
+        addCodeMutation.mutate(params.data);
+      }
     }
-  }, [fetchSuites, fetchServices, fetchUtilities, fetchCodes]);
+  }, [
+    addSuiteMutation, updateSuiteMutation,
+    addServiceMutation, updateServiceMutation,
+    addUtilityMutation, updateUtilityMutation,
+    addCodeMutation, updateCodeMutation
+  ]);
 
   // Scroll to first matching section when search changes and matches found
   useEffect(() => {

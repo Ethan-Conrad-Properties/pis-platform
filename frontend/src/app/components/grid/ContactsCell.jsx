@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
+import { useMutation } from '@tanstack/react-query';
 import ContactInfoModal from "../common/ContactInfoModal";
 import axiosInstance from "@/app/utils/axiosInstance";
 
@@ -26,25 +27,30 @@ export default function ContactsCell(props) {
   const [modalContact, setModalContact] = useState(null);
   const [editMode, setEditMode] = useState(false);
 
-  // Save handler for modal
+  const addContactMutation = useMutation({
+  mutationFn: payload => axiosInstance.post("/contacts", payload),
+  onError: () => alert("Failed to save contact."),
+  });
+
+  const editContactMutation = useMutation({
+    mutationFn: payload => axiosInstance.put(`/contacts/${payload.contact_id}`, payload),
+    onError: () => alert("Failed to save contact."),
+  });
+
   const handleContactSave = async (contact, isNew) => {
-    try {
-      if (isNew) {
-        await axiosInstance.post("/contacts", {
-          ...contact,
-          [`${parentType}_id`]: parentId,
-        });
-      } else {
-        await axiosInstance.put(`/contacts/${contact.contact_id}`, contact);
-      }
-      setModalContact(null);
-      setEditMode(false);
-      // trigger grid refresh
-      if (props.api && props.api.refreshCells) {
-        props.api.refreshCells();
-      }
-    } catch (error) {
-      alert("Failed to save contact.");
+    const payload = {
+      ...contact,
+      [`${parentType}_id`]: parentId,
+    };
+    if (isNew) {
+      await addContactMutation.mutateAsync(payload);
+    } else {
+      await editContactMutation.mutateAsync(payload);
+    }
+    setModalContact(null);
+    setEditMode(false);
+    if (props.api && props.api.refreshCells) {
+      props.api.refreshCells();
     }
   };
 
@@ -68,7 +74,7 @@ export default function ContactsCell(props) {
         <span></span>
       )}
       <button
-        className="mt-2 text-xs text-green-700 border border-green-700 px-2 py-1 rounded hover:bg-green-50 hover:cursor-pointer"
+        className="mt-2 ml-2 text-xs text-green-700 border border-green-700 px-2 py-1 rounded hover:bg-green-50 hover:cursor-pointer"
         onClick={() => {
           setModalContact(emptyContact);
           setEditMode(true);

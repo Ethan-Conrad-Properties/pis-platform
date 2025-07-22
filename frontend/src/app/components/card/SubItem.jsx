@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, memo, useState } from "react";
+import { useMutation } from '@tanstack/react-query';
 import ContactInfoModal from "../common/ContactInfoModal";
 import axiosInstance from "@/app/utils/axiosInstance";
 import SuccessModal from "../common/SuccessModal"; 
@@ -49,7 +50,7 @@ function SeeMoreText({ text, maxLength = 500 }) {
         type="button"
         onClick={() => setExpanded(!expanded)}
       >
-        {expanded ? "See less" : "See more"}
+        {expanded ? "Show less" : "Show more"}
       </button>
     </span>
   );
@@ -71,50 +72,60 @@ const SubItem = memo(function SubItem({
   const [editMode, setEditMode] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  const addContactMutation = useMutation({
+  mutationFn: payload => axiosInstance.post('/contacts', payload),
+  onError: () => alert("Failed to save contact."),
+  });
+
+  const editContactMutation = useMutation({
+    mutationFn: payload => axiosInstance.put(`/contacts/${payload.contact_id}`, payload),
+    onError: () => alert("Failed to save contact."),
+  });
+
+  const deleteContactMutation = useMutation({
+    mutationFn: contactId => axiosInstance.delete(`/contacts/${contactId}`),
+    onError: () => alert("Failed to delete contact."),
+  });
+
   // Handler for saving contact edits/adds
   const handleContactSave = async (contact, isNew) => {
-    try {
-      const parentId =
-        item.suite_id || item.service_id || item.utility_id;
-      const parentType =
-        item.suite_id
-          ? "suite_id"
-          : item.service_id
-          ? "service_id"
-          : item.utility_id
-          ? "utility_id"
-          : null;
+    const parentId = item.suite_id || item.service_id || item.utility_id;
+    const parentType =
+      item.suite_id
+        ? "suite_id"
+        : item.service_id
+        ? "service_id"
+        : item.utility_id
+        ? "utility_id"
+        : null;
 
-      const payload = {
-        ...contact,
-        ...(parentType && { [parentType]: parentId }),
-      };
+    const payload = {
+      ...contact,
+      ...(parentType && { [parentType]: parentId }),
+    };
 
-      let res;
-      if (isNew) {
-        res = await axiosInstance.post('/contacts', payload);
-        onContactChange(type, idx, res.data, "add"); 
-      } else {
-        res = await axiosInstance.put(`/contacts/${contact.contact_id}`, payload);
-        onContactChange(type, idx, res.data, "edit"); 
-      }
-      setShowSuccess(true);
-      setSelectedContact(null);
-      setEditMode(false);
-    } catch (error) {
-      alert("Failed to save contact.");
+    let res;
+    if (isNew) {
+      res = await addContactMutation.mutateAsync(payload);
+      onContactChange(type, idx, res.data, "add");
+    } else {
+      res = await editContactMutation.mutateAsync(payload);
+      onContactChange(type, idx, res.data, "edit");
     }
+    setShowSuccess(true);
+    setSelectedContact(null);
+    setEditMode(false);
   };
 
   // Handler for deleting a contact
   const handleContactDelete = async (contactId) => {
     if (!window.confirm("Delete this contact?")) return;
     try {
-      await axiosInstance.delete(`/contacts/${contactId}`);
+      await deleteContactMutation.mutateAsync(contactId);
       onContactChange(type, idx, { contact_id: contactId }, "delete");
       setShowSuccess(true);
     } catch (error) {
-      alert("Failed to delete contact.");
+      // Error handled by mutation's onError
     }
   };
 
@@ -149,7 +160,7 @@ const SubItem = memo(function SubItem({
         {fields.map((field, id) => {
           let value = item[field.id];
           if (
-            field.id !== "contact" &&
+            field.id !== "contact" && field.id !== "notes" &&
             (value === undefined || value === null || value === "")
           ) {
             return null;

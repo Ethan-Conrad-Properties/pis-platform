@@ -5,7 +5,6 @@ export default function PropertyList({
   properties,
   editingYardi,
   setEditingYardi,
-  setProperties,
   searchLower
 }) {
   return properties.map(property => {
@@ -63,12 +62,7 @@ export default function PropertyList({
         editing={isEditing}
         onEdit={() => setEditingYardi(property.yardi)}
         onCancelEdit={() => setEditingYardi(null)}
-        onUpdate={updatedProp => {
-          setProperties(props =>
-            props.map(p => (p.yardi === updatedProp.yardi ? updatedProp : p))
-          );
-          setEditingYardi(null);
-        }}
+        onUpdate={() => { setEditingYardi(null)}}
       />
     );
   }    

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -32,6 +32,7 @@ class Property(Base):
     roof_cover = Column(String)
     heat_cooling_source = Column(String)
     misc = Column(String)
+    active = Column(Boolean, default=True)
 
 class Contact(Base):
     __tablename__ = 'contacts'

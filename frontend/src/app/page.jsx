@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import { useQuery } from '@tanstack/react-query';
 import PropertyList from './components/card/PropertyList';
 import PropertyCard from './components/card/PropertyCard'
 import PropertyDropdown from './components/common/PropertyDropdown';
@@ -15,12 +16,20 @@ import SessionTimeout from './components/common/SessionTimeout';
 import axiosInstance from './utils/axiosInstance';
 import { filterBySearch, paginate, getTotalPages, sort } from './utils/helpers';
 
+async function fetchProperties() {
+  const res = await axiosInstance.get('/properties');
+  return res.data.properties;
+}
+
 export default function Home() {
-  const [properties, setProperties] = useState([]);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage ] = useState(1);
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
   const { data: session } = useSession();
+  const { data: properties = [], error, refetch } = useQuery({
+    queryKey: ['properties'],
+    queryFn: fetchProperties,
+  });
   const searchLower = search.toLowerCase();
   const PropertiesPerPage = 18;
   const [editingYardi, setEditingYardi] = useState(null);
@@ -49,20 +58,8 @@ export default function Home() {
   const currentProperties = paginate(sortedProperties, currentPage, PropertiesPerPage);
   const totalPages = getTotalPages(filteredProperties, PropertiesPerPage);
 
-  const fetchProperties = async () => {
-    try {
-      const res = await axiosInstance.get('/properties');
-      setProperties(res.data.properties);
-    } catch (error) {
-      console.error("Error fetching properties:", error);
-      if (error.response?.status === 401) {
-        signOut();
-      }
-    }
-  };
-
   useEffect(() => {
-    fetchProperties();
+    refetch();
   }, []);
 
   // reset to first page if search changes
@@ -78,7 +75,7 @@ export default function Home() {
     return <LoginForm />;
   }
 
-
+  if (error) return <div>Error loading properties.</div>;
 
   return (
     <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-16 pb-4 md:pb-6">
@@ -87,7 +84,7 @@ export default function Home() {
       <AddPropertyForm
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onSuccess={fetchProperties}
+        onSuccess={refetch}
       />
       <div className="md:flex justify-between">
         <PropertySearch
@@ -98,7 +95,7 @@ export default function Home() {
           }}
           placeholder="Search properties..."
         />
-        <div className="md:flex space-x-4 gap-2">
+        <div className="md:flex space-x-4 md:space-x-1 gap-2">
           <button
             className="border bg-white px-3 py-1 mb-4 rounded hover:bg-gray-100 hover:cursor-pointer"
             onClick={() => setShowAddModal(true)}
@@ -130,10 +127,8 @@ export default function Home() {
           editing={editingYardi === selectedProperty.yardi}
           onEdit={() => setEditingYardi(selectedProperty.yardi)}
           onCancelEdit={() => setEditingYardi(null)}
-          onUpdate={updatedProp => {
-            setProperties(props =>
-              props.map(p => (p.yardi === updatedProp.yardi ? updatedProp : p))
-            );
+          onUpdate={() => {
+            refetch();
             setEditingYardi(null);
           }}
         />
@@ -142,7 +137,6 @@ export default function Home() {
           properties={currentProperties}
           editingYardi={editingYardi}
           setEditingYardi={setEditingYardi}
-          setProperties={setProperties}
           searchLower={searchLower}
         />
         )}
