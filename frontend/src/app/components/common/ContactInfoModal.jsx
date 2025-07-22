@@ -1,7 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-export default function ContactInfoModal({ contact, onClose, isEdit, onContactSave }) {
+export default function ContactInfoModal({
+  contact,
+  onClose,
+  isEdit,
+  onContactSave,
+}) {
   const [form, setForm] = useState(contact);
+
+  useEffect(() => {
+    setForm(contact);
+  }, [contact]);
 
   if (!contact) return null;
 
@@ -75,7 +84,8 @@ export default function ContactInfoModal({ contact, onClose, isEdit, onContactSa
               {contact.office_number || "N/A"}
             </div>
             <div>
-              <span className="font-semibold">Cell:</span> {contact.cell_number || "N/A"}
+              <span className="font-semibold">Cell:</span>{" "}
+              {contact.cell_number || "N/A"}
             </div>
             <div>
               <span className="font-semibold">Email:</span>{" "}

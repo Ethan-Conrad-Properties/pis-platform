@@ -21,11 +21,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <QueryProvider>
-          <SessionWrapper>
-            {children}
-          </SessionWrapper>
+          <SessionWrapper>{children}</SessionWrapper>
         </QueryProvider>
       </body>
     </html>

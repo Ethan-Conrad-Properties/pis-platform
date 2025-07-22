@@ -2,10 +2,10 @@ import { ExpandingCell } from "./GridCells";
 import ContactsCell from "./ContactsCell";
 
 export function makeColumns(columns) {
-  return columns.map(col => ({
+  return columns.map((col) => ({
     field: col.key,
     headerName: col.name,
-    editable: col.key !== "contacts", 
+    editable: col.key !== "contacts",
     cellRenderer: col.key === "contacts" ? ContactsCell : ExpandingCell,
     autoHeight: true,
     wrapText: true,
@@ -16,7 +16,7 @@ export function makeColumns(columns) {
     },
     cellStyle: {
       backgroundColor: "#f2f4f5",
-      borderRight: "1px solid #d1d5db"
+      borderRight: "1px solid #d1d5db",
     },
   }));
 }

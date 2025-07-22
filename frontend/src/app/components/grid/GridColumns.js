@@ -24,7 +24,7 @@ export const suiteColumns = [
   { key: "contacts", name: "Contacts" },
   { key: "notes", name: "Notes" },
   { key: "hvac", name: "HVAC" },
-  { key: "misc", name: "Misc" }
+  { key: "misc", name: "Misc" },
 ];
 
 export const serviceColumns = [

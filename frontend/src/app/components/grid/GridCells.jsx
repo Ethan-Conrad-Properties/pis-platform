@@ -1,39 +1,38 @@
 import React, { useState } from "react";
 import { formatDate } from "@/app/utils/helpers";
 
-export const ExpandingCell = props => {
+export const ExpandingCell = (props) => {
   const [expanded, setExpanded] = useState(false);
-	const maxLength = 200;
-	let value = props.value || "";
+  const maxLength = 200;
+  let value = props.value == null ? "" : String(props.value);
   if (props.colDef.field === "coe" && value) {
     value = formatDate(value);
   }
 
-   if (!value) return null;
+  if (value === "") return null;
 
   const isLong = value.length > maxLength;
-  const displayValue = !expanded && isLong
-    ? value.slice(0, maxLength) + "..."
-    : value;
+  const displayValue =
+    !expanded && isLong ? value.slice(0, maxLength) + "..." : value;
 
   return (
-    <div style={{ whiteSpace: "pre-line", wordBreak: "break-word" }}>
+    <div className="whitespace-pre-line break-words">
       {displayValue}
       {isLong && !expanded && (
-        <span
-          style={{ color: "#2563eb", cursor: "pointer", marginLeft: 4, fontSize: "0.9em" }}
+        <button
+          className="text-blue-600 cursor-pointer ml-1 text-sm"
           onClick={() => setExpanded(true)}
         >
           Show more
-        </span>
+        </button>
       )}
       {isLong && expanded && (
-        <span
-          style={{ color: "#2563eb", cursor: "pointer", marginLeft: 4, fontSize: "0.9em" }}
+        <button
+          className="text-blue-600 cursor-pointer ml-1 text-sm"
           onClick={() => setExpanded(false)}
         >
           Show less
-        </span>
+        </button>
       )}
     </div>
   );
@@ -41,17 +40,11 @@ export const ExpandingCell = props => {
 
 export const AddIcon = ({ onClick }) => (
   <button
-    style={{
-      background: "none",
-      border: "none",
-      color: "#2563eb",
-      cursor: "pointer",
-      fontSize: "1.5rem",
-      marginLeft: "8px",
-      verticalAlign: "middle"
-    }}
+    className="bg-transparent border-0 text-blue-600 cursor-pointer text-2xl ml-2 align-middle"
     title="Add"
+    aria-label="Add"
     onClick={onClick}
+    type="button"
   >
     &#x2795;
   </button>

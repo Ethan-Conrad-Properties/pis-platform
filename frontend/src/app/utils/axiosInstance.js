@@ -16,15 +16,32 @@ axiosInstance.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Sign out globally on 401 errors
+// Prevent multiple concurrent sign-outs
+let signOutInProgress = false;
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !signOutInProgress) {
+      signOutInProgress = true;
       const session = await getSession();
+      let message = "Authentication error. Please sign in again.";
+      // Inspect error response for token details
+      const errorData = error.response?.data;
+      if (errorData?.detail) {
+        if (typeof errorData.detail === "string") {
+          if (errorData.detail.toLowerCase().includes("expired")) {
+            message = "Your session has expired. Please sign in again.";
+          } else if (errorData.detail.toLowerCase().includes("invalid")) {
+            message = "Your session is invalid. Please sign in again.";
+          } else if (errorData.detail.toLowerCase().includes("missing")) {
+            message = "Authentication token missing. Please sign in again.";
+          }
+        }
+      }
       if (session) {
-        alert("Your session has expired, please sign in again.");
-        signOut();
+        alert(message);
+        await signOut();
       }
     }
     return Promise.reject(error);

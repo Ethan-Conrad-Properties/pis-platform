@@ -1,6 +1,11 @@
 import React from "react";
 
-export default function PaginationControls({ currentPage, totalPages, onPrev, onNext }) {
+export default function PaginationControls({
+  currentPage,
+  totalPages,
+  onPrev,
+  onNext,
+}) {
   return (
     <div className="flex justify-center items-center mt-6 gap-2">
       <button

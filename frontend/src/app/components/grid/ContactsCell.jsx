@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
-import { useMutation } from '@tanstack/react-query';
+import { useMutation } from "@tanstack/react-query";
 import ContactInfoModal from "../common/ContactInfoModal";
 import axiosInstance from "@/app/utils/axiosInstance";
 
@@ -15,7 +15,8 @@ const emptyContact = {
 export default function ContactsCell(props) {
   // AG Grid passes the row data as props.data or props.node.data
   const contacts = props.data?.contacts || [];
-  const parentId = props.data?.suite_id || props.data?.service_id || props.data?.utility_id;
+  const parentId =
+    props.data?.suite_id || props.data?.service_id || props.data?.utility_id;
   const parentType = props.data?.suite_id
     ? "suite"
     : props.data?.service_id
@@ -28,12 +29,13 @@ export default function ContactsCell(props) {
   const [editMode, setEditMode] = useState(false);
 
   const addContactMutation = useMutation({
-  mutationFn: payload => axiosInstance.post("/contacts", payload),
-  onError: () => alert("Failed to save contact."),
+    mutationFn: (payload) => axiosInstance.post("/contacts", payload),
+    onError: () => alert("Failed to save contact."),
   });
 
   const editContactMutation = useMutation({
-    mutationFn: payload => axiosInstance.put(`/contacts/${payload.contact_id}`, payload),
+    mutationFn: (payload) =>
+      axiosInstance.put(`/contacts/${payload.contact_id}`, payload),
     onError: () => alert("Failed to save contact."),
   });
 

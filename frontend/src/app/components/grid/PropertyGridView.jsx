@@ -1,39 +1,43 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
-import PropertyGridSection from './PropertyGridSection';
-import { makeColumns } from './makeColumns';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
+import PropertyGridSection from "./PropertyGridSection";
+import { makeColumns } from "./makeColumns";
 import {
   propertyColumns,
   suiteColumns,
   serviceColumns,
   utilityColumns,
-  codeColumns
-} from './GridColumns';
-import axiosInstance from '@/app/utils/axiosInstance';
-import { chunkArray, filterBySearch } from '@/app/utils/helpers';
-import PropertySearch from '../common/PropertySearch';
+  codeColumns,
+} from "./GridColumns";
+import axiosInstance from "@/app/utils/axiosInstance";
+import { chunkArray, filterBySearch } from "@/app/utils/helpers";
+import PropertySearch from "../common/PropertySearch";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function PropertyGridView({ property }) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
   // Suites
   const { data: suites = [], refetch: refetchSuites } = useQuery({
-    queryKey: ['suites', property.yardi],
+    queryKey: ["suites", property.yardi],
     queryFn: async () => {
-      const res = await axiosInstance.get(`/suites?property_id=${property.yardi}`);
-    return res.data;
-  },
-  enabled: !!property.yardi,
+      const res = await axiosInstance.get(
+        `/suites?property_id=${property.yardi}`
+      );
+      return res.data;
+    },
+    enabled: !!property.yardi,
   });
 
   // Services
   const { data: services = [], refetch: refetchServices } = useQuery({
-    queryKey: ['services', property.yardi],
+    queryKey: ["services", property.yardi],
     queryFn: async () => {
-      const res = await axiosInstance.get(`/services?property_id=${property.yardi}`);
+      const res = await axiosInstance.get(
+        `/services?property_id=${property.yardi}`
+      );
       return res.data;
     },
     enabled: !!property.yardi,
@@ -41,9 +45,11 @@ export default function PropertyGridView({ property }) {
 
   // Utilities
   const { data: utilities = [], refetch: refetchUtilities } = useQuery({
-    queryKey: ['utilities', property.yardi],
+    queryKey: ["utilities", property.yardi],
     queryFn: async () => {
-      const res = await axiosInstance.get(`/utilities?property_id=${property.yardi}`);
+      const res = await axiosInstance.get(
+        `/utilities?property_id=${property.yardi}`
+      );
       return res.data;
     },
     enabled: !!property.yardi,
@@ -51,55 +57,61 @@ export default function PropertyGridView({ property }) {
 
   // Codes
   const { data: codes = [], refetch: refetchCodes } = useQuery({
-    queryKey: ['codes', property.yardi],
+    queryKey: ["codes", property.yardi],
     queryFn: async () => {
-      const res = await axiosInstance.get(`/codes?property_id=${property.yardi}`);
+      const res = await axiosInstance.get(
+        `/codes?property_id=${property.yardi}`
+      );
       return res.data;
     },
     enabled: !!property.yardi,
   });
 
-    // Mutations for add/update
+  // Mutations for add/update
   const addSuiteMutation = useMutation({
-    mutationFn: payload => axiosInstance.post('/suites', payload),
+    mutationFn: (payload) => axiosInstance.post("/suites", payload),
     onSuccess: () => refetchSuites(),
     onError: () => alert("Error adding suite"),
   });
   const updateSuiteMutation = useMutation({
-    mutationFn: payload => axiosInstance.put(`/suites/${payload.suite_id}`, payload),
+    mutationFn: (payload) =>
+      axiosInstance.put(`/suites/${payload.suite_id}`, payload),
     onSuccess: () => refetchSuites(),
     onError: () => alert("Error updating suite"),
   });
 
   const addServiceMutation = useMutation({
-    mutationFn: payload => axiosInstance.post('/services', payload),
+    mutationFn: (payload) => axiosInstance.post("/services", payload),
     onSuccess: () => refetchServices(),
     onError: () => alert("Error adding service"),
   });
   const updateServiceMutation = useMutation({
-    mutationFn: payload => axiosInstance.put(`/services/${payload.service_id}`, payload),
+    mutationFn: (payload) =>
+      axiosInstance.put(`/services/${payload.service_id}`, payload),
     onSuccess: () => refetchServices(),
     onError: () => alert("Error updating service"),
   });
 
   const addUtilityMutation = useMutation({
-    mutationFn: payload => axiosInstance.post('/utilities', payload),
+    mutationFn: (payload) => axiosInstance.post("/utilities", payload),
     onSuccess: () => refetchUtilities(),
     onError: () => alert("Error adding utility"),
   });
   const updateUtilityMutation = useMutation({
-    mutationFn: payload => axiosInstance.put(`/utilities/${payload.utility_id}`, payload),
+    mutationFn: (payload) =>
+      axiosInstance.put(`/utilities/${payload.utility_id}`, payload),
     onSuccess: () => refetchUtilities(),
     onError: () => alert("Error updating utility"),
   });
 
   const addCodeMutation = useMutation({
-    mutationFn: payload => axiosInstance.post('/codes', payload),
+    mutationFn: (payload) => axiosInstance.post("/codes", payload),
     onSuccess: () => refetchCodes(),
     onError: () => alert("Error adding code"),
   });
   const updateCodeMutation = useMutation({
-    mutationFn: payload => axiosInstance.put(`/codes/${payload.code_id}`, payload),
+    mutationFn: (payload) =>
+      axiosInstance.put(`/codes/${payload.code_id}`, payload),
     onSuccess: () => refetchCodes(),
     onError: () => alert("Error updating code"),
   });
@@ -111,18 +123,28 @@ export default function PropertyGridView({ property }) {
   const codesRef = useRef(null);
 
   // getFields for each section
-  const getSuiteFields = item => [
-    item.suite, item.name, item.sqft, item.contact, item.email_address, item.notes
+  const getSuiteFields = (item) => [
+    item.suite,
+    item.name,
+    item.sqft,
+    item.contact,
+    item.email_address,
+    item.notes,
   ];
-  const getServiceFields = item => [
-    item.service_type, item.vendor, item.contact, item.email_address, item.notes
+  const getServiceFields = (item) => [
+    item.service_type,
+    item.vendor,
+    item.contact,
+    item.email_address,
+    item.notes,
   ];
-  const getUtilityFields = item => [
-    item.service, item.vendor, item.contact_info, item.notes
+  const getUtilityFields = (item) => [
+    item.service,
+    item.vendor,
+    item.contact_info,
+    item.notes,
   ];
-  const getCodeFields = item => [
-    item.description, item.code, item.notes
-  ];
+  const getCodeFields = (item) => [item.description, item.code, item.notes];
 
   // Filtered rows
   const filteredSuites = filterBySearch(suites, getSuiteFields, search);
@@ -157,61 +179,74 @@ export default function PropertyGridView({ property }) {
   const agUtilityColumns = makeColumns(utilityColumns);
   const agCodeColumns = makeColumns(codeColumns);
 
-  const onCellValueChanged = useCallback(params => {
-    let section = "", idField = "", endpoint = "", id = "";
-    if (params.api.getColumnDefs().some(col => col.field === "suite")) {
-      section = "suites"; idField = "suite_id"; endpoint = "suites"; id = params.data[idField];
+  const mutationMap = {
+    suites: {
+      add: addSuiteMutation,
+      update: updateSuiteMutation,
+      idField: "suite_id",
+    },
+    services: {
+      add: addServiceMutation,
+      update: updateServiceMutation,
+      idField: "service_id",
+    },
+    utilities: {
+      add: addUtilityMutation,
+      update: updateUtilityMutation,
+      idField: "utility_id",
+    },
+    codes: {
+      add: addCodeMutation,
+      update: updateCodeMutation,
+      idField: "code_id",
+    },
+  };
+
+  const onCellValueChanged = useCallback(
+    (section, params) => {
+      const { add, update, idField } = mutationMap[section];
+      const id = params.data[idField];
       if (id) {
-        updateSuiteMutation.mutate(params.data);
+        update.mutate(params.data);
       } else {
-        addSuiteMutation.mutate(params.data);
+        add.mutate(params.data);
       }
-    } else if (params.api.getColumnDefs().some(col => col.field === "service_type")) {
-      section = "services"; idField = "service_id"; endpoint = "services"; id = params.data[idField];
-      if (id) {
-        updateServiceMutation.mutate(params.data);
-      } else {
-        addServiceMutation.mutate(params.data);
-      }
-    } else if (params.api.getColumnDefs().some(col => col.field === "service")) {
-      section = "utilities"; idField = "utility_id"; endpoint = "utilities"; id = params.data[idField];
-      if (id) {
-        updateUtilityMutation.mutate(params.data);
-      } else {
-        addUtilityMutation.mutate(params.data);
-      }
-    } else if (params.api.getColumnDefs().some(col => col.field === "code")) {
-      section = "codes"; idField = "code_id"; endpoint = "codes"; id = params.data[idField];
-      if (id) {
-        updateCodeMutation.mutate(params.data);
-      } else {
-        addCodeMutation.mutate(params.data);
-      }
-    }
-  }, [
-    addSuiteMutation, updateSuiteMutation,
-    addServiceMutation, updateServiceMutation,
-    addUtilityMutation, updateUtilityMutation,
-    addCodeMutation, updateCodeMutation
-  ]);
+    },
+    [addSuiteMutation, updateSuiteMutation, addServiceMutation, updateServiceMutation, addUtilityMutation, updateUtilityMutation, addCodeMutation, updateCodeMutation]
+  );
 
   // Scroll to first matching section when search changes and matches found
   useEffect(() => {
     if (!search) return;
     const handler = setTimeout(() => {
       if (filteredSuites.length > 0 && suitesRef.current) {
-        suitesRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        suitesRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       } else if (filteredServices.length > 0 && servicesRef.current) {
-        servicesRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        servicesRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       } else if (filteredUtilities.length > 0 && utilitiesRef.current) {
-        utilitiesRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        utilitiesRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       } else if (filteredCodes.length > 0 && codesRef.current) {
         codesRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 400); // 400ms debounce
 
     return () => clearTimeout(handler);
-  }, [search, filteredSuites, filteredServices, filteredUtilities, filteredCodes]);
+  }, [
+    search,
+    filteredSuites,
+    filteredServices,
+    filteredUtilities,
+    filteredCodes,
+  ]);
 
   return (
     <div className="bg-white px-6 py-10 rounded shadow-xl min-h-screen">
@@ -219,11 +254,12 @@ export default function PropertyGridView({ property }) {
         {property.address} {property.city}, {property.state} {property.zip}
       </h2>
       <h3 className="text-md md:text-lg font-normal mb-4 text-center">
-        Building Type: {property.building_type} | Property Manager: {property.prop_manager} | Total Sq Ft: {property.total_sq_ft}
+        Building Type: {property.building_type} | Property Manager:{" "}
+        {property.prop_manager} | Total Sq Ft: {property.total_sq_ft}
       </h3>
       <PropertySearch
         value={search}
-        onChange={e => setSearch(e.target.value)}
+        onChange={(e) => setSearch(e.target.value)}
         placeholder="Search property details..."
       />
       {columnGroups.map((group, idx) => (
@@ -242,7 +278,7 @@ export default function PropertyGridView({ property }) {
           columns={agSuiteColumns}
           rows={filteredSuites}
           onAddRow={() => handleAddRow("suites")}
-          onCellValueChanged={onCellValueChanged}
+          onCellValueChanged={(params) => onCellValueChanged("suites", params)}
         />
       </div>
       <div ref={servicesRef}>
@@ -251,7 +287,7 @@ export default function PropertyGridView({ property }) {
           columns={agServiceColumns}
           rows={filteredServices}
           onAddRow={() => handleAddRow("services")}
-          onCellValueChanged={onCellValueChanged}
+          onCellValueChanged={(params) => onCellValueChanged("services", params)}
         />
       </div>
       <div ref={utilitiesRef}>
@@ -260,7 +296,7 @@ export default function PropertyGridView({ property }) {
           columns={agUtilityColumns}
           rows={filteredUtilities}
           onAddRow={() => handleAddRow("utilities")}
-          onCellValueChanged={onCellValueChanged}
+          onCellValueChanged={(params) => onCellValueChanged("utilities", params)}
         />
       </div>
       <div ref={codesRef}>
@@ -269,7 +305,7 @@ export default function PropertyGridView({ property }) {
           columns={agCodeColumns}
           rows={filteredCodes}
           onAddRow={() => handleAddRow("codes")}
-          onCellValueChanged={onCellValueChanged}
+          onCellValueChanged={(params) => onCellValueChanged("codes", params)}
         />
       </div>
     </div>

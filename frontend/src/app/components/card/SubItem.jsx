@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, memo, useState } from "react";
-import { useMutation } from '@tanstack/react-query';
+import { useMutation } from "@tanstack/react-query";
 import ContactInfoModal from "../common/ContactInfoModal";
 import axiosInstance from "@/app/utils/axiosInstance";
-import SuccessModal from "../common/SuccessModal"; 
+import SuccessModal from "../common/SuccessModal";
 
 export function AutoExpandTextarea({ value, onChange, ...props }) {
   const ref = useRef(null);
@@ -65,39 +65,40 @@ const SubItem = memo(function SubItem({
   onChange,
   onSave,
   setEditingIdx,
-  onContactChange
+  onContactChange,
 }) {
-  const uniqueKey = item.suite_id || item.service_id || item.utility_id || item.code_id;
+  const uniqueKey =
+    item.suite_id || item.service_id || item.utility_id || item.code_id;
   const [selectedContact, setSelectedContact] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const addContactMutation = useMutation({
-  mutationFn: payload => axiosInstance.post('/contacts', payload),
-  onError: () => alert("Failed to save contact."),
+    mutationFn: (payload) => axiosInstance.post("/contacts", payload),
+    onError: () => alert("Failed to save contact."),
   });
 
   const editContactMutation = useMutation({
-    mutationFn: payload => axiosInstance.put(`/contacts/${payload.contact_id}`, payload),
+    mutationFn: (payload) =>
+      axiosInstance.put(`/contacts/${payload.contact_id}`, payload),
     onError: () => alert("Failed to save contact."),
   });
 
   const deleteContactMutation = useMutation({
-    mutationFn: contactId => axiosInstance.delete(`/contacts/${contactId}`),
+    mutationFn: (contactId) => axiosInstance.delete(`/contacts/${contactId}`),
     onError: () => alert("Failed to delete contact."),
   });
 
   // Handler for saving contact edits/adds
   const handleContactSave = async (contact, isNew) => {
     const parentId = item.suite_id || item.service_id || item.utility_id;
-    const parentType =
-      item.suite_id
-        ? "suite_id"
-        : item.service_id
-        ? "service_id"
-        : item.utility_id
-        ? "utility_id"
-        : null;
+    const parentType = item.suite_id
+      ? "suite_id"
+      : item.service_id
+      ? "service_id"
+      : item.utility_id
+      ? "utility_id"
+      : null;
 
     const payload = {
       ...contact,
@@ -160,7 +161,8 @@ const SubItem = memo(function SubItem({
         {fields.map((field, id) => {
           let value = item[field.id];
           if (
-            field.id !== "contact" && field.id !== "notes" &&
+            field.id !== "contact" &&
+            field.id !== "notes" &&
             (value === undefined || value === null || value === "")
           ) {
             return null;
@@ -168,13 +170,21 @@ const SubItem = memo(function SubItem({
           // Special rendering for contacts
           if (field.id === "contact") {
             return (
-              <div key={field.id} className="mb-2 text-xs md:text-sm flex flex-col md:flex-row items-start">
-                <label className="font-semibold mb-1 md:mb-0 md:mr-1 whitespace-nowrap">{field.label}:</label>
+              <div
+                key={field.id}
+                className="mb-2 text-xs md:text-sm flex flex-col md:flex-row items-start"
+              >
+                <label className="font-semibold mb-1 md:mb-0 md:mr-1 whitespace-nowrap">
+                  {field.label}:
+                </label>
                 <div className="flex-1">
                   {item.contacts && item.contacts.length > 0 ? (
                     <ul className="mt-1">
-                      {item.contacts.map(contact => (
-                        <li key={contact.contact_id} className="flex items-center gap-2">
+                      {item.contacts.map((contact) => (
+                        <li
+                          key={contact.contact_id}
+                          className="flex items-center gap-2"
+                        >
                           <button
                             className="hover:underline hover:cursor-pointer"
                             type="button"
@@ -202,7 +212,9 @@ const SubItem = memo(function SubItem({
                                 className="text-xs text-red-600 hover:cursor-pointer"
                                 type="button"
                                 title="Delete Contact"
-                                onClick={() => handleContactDelete(contact.contact_id)}
+                                onClick={() =>
+                                  handleContactDelete(contact.contact_id)
+                                }
                               >
                                 ❌
                               </button>
@@ -232,13 +244,20 @@ const SubItem = memo(function SubItem({
           }
 
           return (
-            <div key={field.id} className="mb-2 text-xs md:text-sm flex flex-col md:flex-row items-start">
-              <label className="font-semibold mb-1 md:mb-0 md:mr-1 whitespace-nowrap">{field.label}:</label>
+            <div
+              key={field.id}
+              className="mb-2 text-xs md:text-sm flex flex-col md:flex-row items-start"
+            >
+              <label className="font-semibold mb-1 md:mb-0 md:mr-1 whitespace-nowrap">
+                {field.label}:
+              </label>
               <div className="flex-1">
                 {isEditing ? (
                   <AutoExpandTextarea
                     value={value ?? ""}
-                    onChange={e => onChange(type, idx, field.id, e.target.value)}
+                    onChange={(e) =>
+                      onChange(type, idx, field.id, e.target.value)
+                    }
                   />
                 ) : (
                   <span className="break-all whitespace-pre-line max-w-full inline-block align-bottom">

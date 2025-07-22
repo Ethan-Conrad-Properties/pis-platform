@@ -6,8 +6,12 @@ export default NextAuth({
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
-      tenantId: process.env.AZURE_AD_TENANT_ID, 
-      authorization: { params: { scope: `openid profile email api://${process.env.AZURE_AD_CLIENT_ID}/access_as_user` } }
+      tenantId: process.env.AZURE_AD_TENANT_ID,
+      authorization: {
+        params: {
+          scope: `openid profile email api://${process.env.AZURE_AD_CLIENT_ID}/access_as_user`,
+        },
+      },
     }),
   ],
   callbacks: {
@@ -19,7 +23,7 @@ export default NextAuth({
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken;
-      session.error = token.error
+      session.error = token.error;
       return session;
     },
     async signIn({ user }) {

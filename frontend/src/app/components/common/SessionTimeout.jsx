@@ -13,7 +13,10 @@ export default function SessionTimeout() {
       clearTimeout(timeout);
       clearTimeout(warning);
       setShowWarning(false);
-      warning = setTimeout(() => setShowWarning(true), SESSION_TIMEOUT - WARNING_TIME);
+      warning = setTimeout(
+        () => setShowWarning(true),
+        SESSION_TIMEOUT - WARNING_TIME
+      );
       timeout = setTimeout(() => signOut(), SESSION_TIMEOUT);
     };
 

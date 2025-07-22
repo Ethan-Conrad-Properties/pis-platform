@@ -7,20 +7,14 @@ export default function PropertyGridSection({
   columns,
   rows,
   onAddRow,
-  onCellValueChanged
+  onCellValueChanged,
 }) {
   return (
     <div className="mt-2">
       <div className="flex items-center">
         <h3 className="text-2xl font-semibold mt-6 mb-2">{title}</h3>
       </div>
-      <div
-        className="ag-theme-alpine w-full overflow-x-auto"
-        style={{
-          minWidth: 0,
-          WebkitOverflowScrolling: "touch",
-        }}
-      >
+      <div className="ag-theme-alpine w-full overflow-x-auto">
         <div style={{ minWidth: 600 }}>
           <AgGridReact
             columnDefs={columns}
@@ -36,5 +30,5 @@ export default function PropertyGridSection({
         {onAddRow && <AddIcon onClick={onAddRow} />}
       </div>
     </div>
-  )
+  );
 }

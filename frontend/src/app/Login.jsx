@@ -9,7 +9,7 @@ export default function LoginForm() {
           Please sign in with your Ethan Conrad Properties account to continue.
         </p>
         <button
-          onClick={() => signIn('azure-ad')}
+          onClick={() => signIn("azure-ad")}
           className="bg-yellow-500 text-white px-6 py-2 rounded shadow hover:bg-yellow-600 transition hover:cursor-pointer"
         >
           Login with Ethan Conrad Properties

@@ -1,11 +1,15 @@
 import React from "react";
 
-export default function ViewToggle({ view, onToggle, views = ['card', 'grid'] }) {
+export default function ViewToggle({
+  view,
+  onToggle,
+  views = ["card", "grid"],
+}) {
   const labels = {
     card: "Card View",
-    grid: "Excel View"
+    grid: "Excel View",
   };
-  const nextView = views.find(v => v !== view);
+  const nextView = views.find((v) => v !== view);
 
   return (
     <button

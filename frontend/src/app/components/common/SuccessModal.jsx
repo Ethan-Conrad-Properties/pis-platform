@@ -1,14 +1,18 @@
 import React, { useEffect } from "react";
 
-export default function SuccessModal({ open, onClose, message = "Your changes have been saved!" }) {
-    useEffect(() => {
-        if (open) {
-        const timer = setTimeout(() => {
-            if (onClose) onClose();
-        }, 2000);
-        return () => clearTimeout(timer);
-        }
-    }, [open, onClose]);
+export default function SuccessModal({
+  open,
+  onClose,
+  message = "Your changes have been saved!",
+}) {
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => {
+        if (onClose) onClose();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [open, onClose]);
 
   if (!open) return null;
   return (
