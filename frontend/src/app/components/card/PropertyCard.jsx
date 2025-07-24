@@ -12,6 +12,7 @@ import {
   utilityFields,
   codeFields,
 } from "./cardFields";
+import Image from 'next/image'
 
 export default function PropertyCard({ property, onUpdate }) {
   const queryClient = useQueryClient();
@@ -314,10 +315,10 @@ export default function PropertyCard({ property, onUpdate }) {
         <div className="space-x-2">
           <button
             className="border border-red px-2 py-1 rounded text-red-700 hover:bg-red-100 hover:cursor-pointer"
-            onClick={() => toggleActiveMutation.mutate(!property.active)}
+            onClick={() => toggleActiveMutation.mutate(!propertyData.active)}
             disabled={toggleActiveMutation.isPending}
           >
-            {property.active ? "Mark as Sold" : "Mark as Not Sold"}
+            {propertyData.active ? "Mark as Sold" : "Mark as Not Sold"}
           </button>
           <button
             onClick={() => setEditing((e) => !e)}
@@ -333,9 +334,11 @@ export default function PropertyCard({ property, onUpdate }) {
         placeholder="Search property details..."
       />
       {property.prop_photo && !editing && (
-        <img
+        <Image
           src={property.prop_photo}
           alt="Property"
+          width={800}
+          height={400}
           className="block mb-2 mx-auto w-full max-w-2xl h-64 object-cover rounded"
         />
       )}
