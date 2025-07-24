@@ -15,8 +15,8 @@ router = APIRouter()
 
 # Get all utilities for a property
 @router.get("/utilities")
-async def get_utilities(property_id: str, db: Session = Depends(get_db), user=Depends(verify_token)):
-    utilities = db.query(Utility).filter(Utility.property_yardi == property_id).all()
+async def get_utilities(property_yardi: str, db: Session = Depends(get_db), user=Depends(verify_token)):
+    utilities = db.query(Utility).filter(Utility.property_yardi == property_yardi).all()
     utilities_data = []
     for u in utilities:
         contact_links = db.query(UtilityContact).filter(UtilityContact.utility_id == u.utility_id).all()

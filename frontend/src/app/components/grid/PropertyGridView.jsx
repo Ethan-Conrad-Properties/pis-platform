@@ -24,7 +24,7 @@ export default function PropertyGridView({ property }) {
     queryKey: ["suites", property.yardi],
     queryFn: async () => {
       const res = await axiosInstance.get(
-        `/suites?property_id=${property.yardi}`
+        `/suites?property_yardi=${property.yardi}`
       );
       return res.data;
     },
@@ -36,7 +36,7 @@ export default function PropertyGridView({ property }) {
     queryKey: ["services", property.yardi],
     queryFn: async () => {
       const res = await axiosInstance.get(
-        `/services?property_id=${property.yardi}`
+        `/services?property_yardi=${property.yardi}`
       );
       return res.data;
     },
@@ -48,7 +48,7 @@ export default function PropertyGridView({ property }) {
     queryKey: ["utilities", property.yardi],
     queryFn: async () => {
       const res = await axiosInstance.get(
-        `/utilities?property_id=${property.yardi}`
+        `/utilities?property_yardi=${property.yardi}`
       );
       return res.data;
     },
@@ -60,7 +60,7 @@ export default function PropertyGridView({ property }) {
     queryKey: ["codes", property.yardi],
     queryFn: async () => {
       const res = await axiosInstance.get(
-        `/codes?property_id=${property.yardi}`
+        `/codes?property_yardi=${property.yardi}`
       );
       return res.data;
     },
@@ -247,6 +247,15 @@ export default function PropertyGridView({ property }) {
     filteredUtilities,
     filteredCodes,
   ]);
+
+  // debugging
+  useEffect(() => {
+    console.log("property.yardi", property.yardi);
+    console.log("suites", suites);
+    console.log("services", services);
+    console.log("utilities", utilities);
+    console.log("codes", codes);
+  }, [property.yardi, suites, services, utilities, codes]);
 
   return (
     <div className="bg-white px-6 py-10 rounded shadow-xl min-h-screen">

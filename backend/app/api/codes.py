@@ -15,8 +15,8 @@ router = APIRouter()
 
 # Get all codes for a property
 @router.get("/codes")
-async def get_codes(property_id: str, db: Session = Depends(get_db), user=Depends(verify_token)):
-    codes = db.query(Code).filter(Code.property_yardi == property_id).all()
+async def get_codes(property_yardi: str, db: Session = Depends(get_db), user=Depends(verify_token)):
+    codes = db.query(Code).filter(Code.property_yardi == property_yardi).all()
     return [c.__dict__ for c in codes]
 
 # Create a new code

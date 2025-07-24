@@ -15,8 +15,8 @@ router = APIRouter()
 
 # Get all suites for a property
 @router.get("/suites")
-async def get_suites(property_id: str, db: Session = Depends(get_db), user=Depends(verify_token)):
-    suites = db.query(Suite).filter(Suite.property_yardi == property_id).all()
+async def get_suites(property_yardi: str, db: Session = Depends(get_db), user=Depends(verify_token)):
+    suites = db.query(Suite).filter(Suite.property_yardi == property_yardi).all()
     suites_data = []
     for s in suites:
         contact_links = db.query(SuiteContact).filter(SuiteContact.suite_id == s.suite_id).all()
