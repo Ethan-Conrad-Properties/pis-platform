@@ -67,7 +67,7 @@ class Service(Base):
 
     service_id = Column(Integer, primary_key=True, autoincrement=True)
     property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
-    service_type = Column(String)
+    service_type = Column(String, index=True)
     vendor = Column(String, index=True)
     notes = Column(Text)
     paid_by = Column(String)
@@ -77,7 +77,7 @@ class Utility(Base):
 
     utility_id = Column(Integer, primary_key=True, autoincrement=True)
     property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
-    service = Column(String)
+    service = Column(String, index=True)
     vendor = Column(String, index=True)
     account_number = Column(String)
     meter_number = Column(String)

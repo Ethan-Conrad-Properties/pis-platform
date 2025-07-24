@@ -47,19 +47,19 @@ export default function ContactInfoModal({
               className="border p-1 rounded w-full mb-2"
               value={form.office_number || ""}
               onChange={(e) => handleChange("office_number", e.target.value)}
-              placeholder="Office"
+              placeholder="Office Number"
             />
             <input
               className="border p-1 rounded w-full mb-2"
               value={form.cell_number || ""}
               onChange={(e) => handleChange("cell_number", e.target.value)}
-              placeholder="Cell"
+              placeholder="Cell Number"
             />
             <input
               className="border p-1 rounded w-full mb-2"
               value={form.email || ""}
               onChange={(e) => handleChange("email", e.target.value)}
-              placeholder="Email"
+              placeholder="Email Address"
             />
             <div className="flex gap-2 mt-2">
               <button
@@ -80,12 +80,20 @@ export default function ContactInfoModal({
           <>
             <h2 className="text-lg font-bold mb-2">{contact.name}</h2>
             <div>
-              <span className="font-semibold">Office:</span>{" "}
-              {contact.office_number || "N/A"}
+              <span className="font-semibold">Office Number:</span>{" "}
+              {contact.office_number ? (
+                <a href={`tel:${contact.office_number}`} className="text-blue-600 underline">
+                  {contact.office_number}
+                </a>
+              ) : "N/A"}
             </div>
             <div>
-              <span className="font-semibold">Cell:</span>{" "}
-              {contact.cell_number || "N/A"}
+              <span className="font-semibold">Cell Number:</span>{" "}
+              {contact.cell_number ? (
+                <a href={`tel:${contact.cell_number}`} className="text-blue-600 underline">
+                  {contact.cell_number}
+                </a>
+              ) : "N/A"}
             </div>
             <div>
               <span className="font-semibold">Email:</span>{" "}

@@ -49,6 +49,7 @@ export default function Home() {
     prop.prop_manager,
     ...(prop.suites ? prop.suites.map((suite) => suite.name) : []),
     ...(prop.services ? prop.services.map((service) => service.vendor) : []),
+    ...(prop.services ? prop.services.map((service) => service.type) : []),
     ...(prop.utilities ? prop.utilities.map((util) => util.vendor) : []),
     ...(prop.codes ? prop.codes.map((code) => code.description) : []),
   ];
@@ -79,6 +80,11 @@ export default function Home() {
   const selectedProperty = filteredProperties.find(
     (p) => p.yardi === selectedPropertyId
   );
+
+  // logs
+  useEffect(() => {
+    console.log("Properties: ", properties)
+  }, [properties]);
 
   // check if user is authenticated
   if (!session) {

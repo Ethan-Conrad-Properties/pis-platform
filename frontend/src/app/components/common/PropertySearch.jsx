@@ -7,7 +7,7 @@ export default function PropertySearch({ value, onChange, placeholder }) {
       placeholder={placeholder}
       value={value}
       onChange={onChange}
-      className="mb-2 md:mb-4 p-1 md:p-2 border border-black rounded w-full md:w-1/4"
+      className="mb-2 md:mb-4 p-1 md:p-2 border border-black rounded w-full md:w-1/3"
     />
   );
 }

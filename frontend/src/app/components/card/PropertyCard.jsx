@@ -4,7 +4,11 @@ import SubSection from "./SubSection";
 import SuccessModal from "../common/SuccessModal";
 import PropertySearch from "../common/PropertySearch";
 import axiosInstance from "@/app/utils/axiosInstance";
-import { formatDate, filterBySearch } from "@/app/utils/helpers";
+import {
+  formatDate,
+  filterBySearch,
+  exportProperty,
+} from "@/app/utils/helpers";
 import {
   propertyFields,
   suiteFields,
@@ -12,7 +16,7 @@ import {
   utilityFields,
   codeFields,
 } from "./cardFields";
-import Image from 'next/image'
+import Image from "next/image";
 
 export default function PropertyCard({ property, onUpdate }) {
   const queryClient = useQueryClient();
@@ -319,6 +323,12 @@ export default function PropertyCard({ property, onUpdate }) {
             disabled={toggleActiveMutation.isPending}
           >
             {propertyData.active ? "Mark as Sold" : "Mark as Not Sold"}
+          </button>
+          <button
+            className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
+            onClick={() => exportProperty(propertyData)}
+          >
+            Export
           </button>
           <button
             onClick={() => setEditing((e) => !e)}
