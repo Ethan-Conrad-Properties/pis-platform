@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import Property, Suite, Service, Utility, Code, SuiteContact, ServiceContact, UtilityContact, Contact
 from app.auth import verify_token
+from app.helpers import log_edit, log_add
 
 def get_db():
     db = SessionLocal()
@@ -173,7 +174,11 @@ async def update_property(yardi: str, updated: dict = Body(...), db: Session = D
         raise HTTPException(status_code=404, detail="Property not found")
     for key, value in updated.items():
         if hasattr(property, key):
-            setattr(property, key, value)
+            old_value = getattr(property, key)
+            if old_value != value:
+                setattr(property, key, value)
+                # Log the edit
+                log_edit(db, user["name"], "property", property.yardi, key, old_value, value)
     db.commit()
     db.refresh(property)
     return {"message": "Property updated successfully", "property": property}
@@ -185,5 +190,7 @@ async def create_property(property: dict = Body(...), db: Session = Depends(get_
     db.add(new_property)
     db.commit()
     db.refresh(new_property)
+    # Log the creation
+    log_add(db, user["username"], "property", new_property.yardi, new_property)
     return {k: v for k, v in new_property.__dict__.items() if not k.startswith('_')}
 

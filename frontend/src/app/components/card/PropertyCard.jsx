@@ -149,6 +149,7 @@ export default function PropertyCard({ property, onUpdate }) {
   }
 
   // Mutations for saving property and sub-records
+  // TODO: handle errors and success modal showing up improperly (apply to all mutations)
   const propertyMutation = useMutation({
     mutationFn: (updated) =>
       axiosInstance.put(`/properties/${property.yardi}`, updated),

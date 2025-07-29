@@ -7,7 +7,7 @@ export default function PropertyDropdown({
 }) {
   return (
     <select
-      className="border bg-white rounded px-2 py-1 mb-4 w-full sm:w-[220px] text-xs sm:text-sm"
+      className="border bg-white rounded px-2 py-1 mb-4 w-full sm:w-[220px] text-xs md:text-lg"
       value={selectedPropertyId}
       onChange={(e) => onSelect(e.target.value)}
     >

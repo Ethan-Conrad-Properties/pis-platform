@@ -11,7 +11,7 @@ import {
   codeColumns,
 } from "./GridColumns";
 import axiosInstance from "@/app/utils/axiosInstance";
-import { chunkArray, filterBySearch } from "@/app/utils/helpers";
+import { chunkArray, filterBySearch, exportProperty } from "@/app/utils/helpers";
 import PropertySearch from "../common/PropertySearch";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -115,6 +115,22 @@ export default function PropertyGridView({ property }) {
     onSuccess: () => refetchCodes(),
     onError: () => alert("Error updating code"),
   });
+
+  const toggleActiveMutation = useMutation({
+      mutationFn: (newActive) =>
+        axiosInstance.put(`/properties/${property.yardi}`, {
+          ...form,
+          active: newActive,
+        }),
+      onSuccess: (_, variables) => {
+        setForm((f) => ({ ...f, active: variables }));
+        setShowModal(true);
+        refetch();
+        queryClient.invalidateQueries(["properties"]);
+        if (onUpdate) onUpdate({ ...form, active: variables });
+      },
+      onError: () => alert("Error updating property"),
+    });
 
   // Section refs
   const suitesRef = useRef(null);
@@ -266,11 +282,29 @@ export default function PropertyGridView({ property }) {
         Building Type: {property.building_type} | Property Manager:{" "}
         {property.prop_manager} | Total Sq Ft: {property.total_sq_ft}
       </h3>
-      <PropertySearch
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search property details..."
-      />
+      <div className="flex items-center justify-between text-lg mb-2">
+        <PropertySearch
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search property details..."
+        />
+        <div className="space-x-2">
+          <button
+            className="border border-red px-2 py-1 rounded text-red-700 hover:bg-red-100 hover:cursor-pointer"
+            onClick={() => toggleActiveMutation.mutate(!property.active)}
+            disabled={toggleActiveMutation.isPending}
+          >
+            {property.active ? "Mark as Sold" : "Mark as Not Sold"}
+          </button>
+          <button
+            className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
+            onClick={() => exportProperty(propertyData)}
+          >
+            Export
+          </button>
+        </div>
+      </div>
+
       {columnGroups.map((group, idx) => (
         <PropertyGridSection
           key={idx}

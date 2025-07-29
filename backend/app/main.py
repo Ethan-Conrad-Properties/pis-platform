@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import properties, suites, services, utilities, codes, contacts
+from app.api import properties, suites, services, utilities, codes, contacts, edit_history
 
 app = FastAPI()
 
@@ -27,3 +27,4 @@ app.include_router(services.router)
 app.include_router(utilities.router)
 app.include_router(codes.router)
 app.include_router(contacts.router)
+app.include_router(edit_history.router)

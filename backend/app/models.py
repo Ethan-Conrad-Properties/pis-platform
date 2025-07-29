@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -114,6 +115,19 @@ class UtilityContact(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     utility_id = Column(Integer, ForeignKey('utilities.utility_id'), nullable=False)
     contact_id = Column(Integer, ForeignKey('contacts.contact_id'), nullable=False)
+
+class EditHistory(Base):
+    __tablename__ = 'edit_history'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    edited_by = Column(String, index=True)
+    edited_at = Column(DateTime, default=datetime.now())
+    entity_type = Column(String, index=True)  
+    entity_id = Column(String, index=True)  
+    changes = Column(Text)  
+    old_value = Column(Text)
+    new_value = Column(Text)
+    action = Column(String, index=True)  
 
 
 

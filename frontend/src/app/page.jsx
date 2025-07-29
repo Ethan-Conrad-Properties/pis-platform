@@ -15,6 +15,8 @@ import LoginForm from "./Login";
 import SessionTimeout from "./components/common/SessionTimeout";
 import axiosInstance from "./utils/axiosInstance";
 import { filterBySearch, paginate, getTotalPages, sort } from "./utils/helpers";
+import { FaHistory } from "react-icons/fa";
+import Link from "next/link"
 
 async function fetchProperties() {
   const res = await axiosInstance.get("/properties");
@@ -113,7 +115,15 @@ export default function Home() {
           }}
           placeholder="Search properties..."
         />
-        <div className="md:flex space-x-4 md:space-x-1 gap-2">
+        <div className="md:flex space-x-4 md:space-x-1 gap-2 items-center">
+          <button
+            className=" flex p-1 items-center rounded mb-4 hover:cursor-pointer hover:underline"
+          >
+            <Link href="/edit-history">View Edit History</Link>
+            <FaHistory
+              className="ml-1"
+            />
+          </button>
           <button
             className="border bg-white px-3 py-1 mb-4 rounded hover:bg-gray-100 hover:cursor-pointer"
             onClick={() => setShowAddModal(true)}
