@@ -8,6 +8,7 @@ import {
   formatDate,
   filterBySearch,
   exportProperty,
+  sort,
 } from "@/app/utils/helpers";
 import {
   propertyFields,
@@ -17,6 +18,7 @@ import {
   codeFields,
 } from "./cardFields";
 import Image from "next/image";
+import PropertyPhotos from "./PropertyPhotos";
 
 export default function PropertyCard({ property, onUpdate }) {
   const queryClient = useQueryClient();
@@ -85,7 +87,7 @@ export default function PropertyCard({ property, onUpdate }) {
   // Filtered sub-items
   const filteredSuites = filterBySearch(form.suites, getSuiteFields, search);
   const filteredServices = filterBySearch(
-    form.services,
+  sort(form.services, "service_type"),
     getServiceFields,
     search
   );
@@ -314,7 +316,7 @@ export default function PropertyCard({ property, onUpdate }) {
 
   return (
     <div className="bg-white rounded shadow-2xl p-4">
-      <SuccessModal open={showModal} onClose={handleCloseModal} />
+      <SuccessModal open={showModal} onClose={handleCloseModal} />      
       <div className="flex items-center justify-between text-lg mb-2">
         {renderField("Address", "address")}
         <div className="space-x-2">
@@ -422,6 +424,19 @@ export default function PropertyCard({ property, onUpdate }) {
           search={search}
         />
       </div>
+      <SubSection
+        type="photos"
+        items={[]}
+        fields={[]}
+        label="Photos"
+        editing={editing}
+        renderContent={() => (
+          <PropertyPhotos
+            propertyYardi={property.yardi}
+            editing={editing}
+          />
+        )}
+      />
     </div>
   );
 }

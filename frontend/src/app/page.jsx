@@ -132,7 +132,7 @@ export default function Home() {
           </button>
           <ViewToggle view={view} onToggle={setView} />
           <PropertyDropdown
-            properties={sortedProperties}
+            properties={sort(properties, "address")}
             selectedPropertyId={selectedPropertyId}
             onSelect={setSelectedPropertyId}
           />

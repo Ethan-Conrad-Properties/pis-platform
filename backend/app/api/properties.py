@@ -1,16 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
-from app.database import SessionLocal
+from app.database import get_db
 from app.models import Property, Suite, Service, Utility, Code, SuiteContact, ServiceContact, UtilityContact, Contact
 from app.auth import verify_token
 from app.helpers import log_edit, log_add
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 router = APIRouter()
 

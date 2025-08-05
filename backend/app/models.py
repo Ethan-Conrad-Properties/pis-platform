@@ -94,6 +94,14 @@ class Code(Base):
     code = Column(String)
     notes = Column(Text)
 
+class PropertyPhoto(Base):
+    __tablename__ = 'property_photos'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
+    photo_url = Column(String, nullable=False)
+    caption = Column(Text)
+
 # Association tables for many-to-many relationships
 class SuiteContact(Base):
     __tablename__ = 'suite_contacts'

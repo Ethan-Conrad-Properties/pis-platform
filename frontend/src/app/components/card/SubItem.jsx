@@ -179,14 +179,14 @@ const SubItem = memo(function SubItem({
                 </label>
                 <div className="flex-1">
                   {item.contacts && item.contacts.length > 0 ? (
-                    <ul className="mt-1">
+                    <ul>
                       {item.contacts.map((contact) => (
                         <li
                           key={contact.contact_id}
                           className="flex items-center gap-2"
                         >
                           <button
-                            className="hover:underline hover:cursor-pointer"
+                            className="hover:underline hover:cursor-pointer align-middle"
                             type="button"
                             onClick={() => {
                               setSelectedContact(contact);

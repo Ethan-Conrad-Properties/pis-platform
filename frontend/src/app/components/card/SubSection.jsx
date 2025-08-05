@@ -11,6 +11,7 @@ export default function SubSection({
   onSave,
   search,
   onContactChange,
+  renderContent,
 }) {
   const [editingIdx, setEditingIdx] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -47,7 +48,9 @@ export default function SubSection({
       </div>
       {expanded && (
         <div className="grid grid-cols-1 gap-4">
-          {items && items.length > 0 ? (
+          {renderContent ? (
+            renderContent()
+          ) : items && items.length > 0 ? (
             items.map((item, idx) => (
               <SubItem
                 key={
