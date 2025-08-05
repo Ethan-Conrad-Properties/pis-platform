@@ -12,3 +12,6 @@ Thumbs.db
 # Python
 __pycache__/
 *.pyc
+
+# User uploads
+backend/static/uploads/
