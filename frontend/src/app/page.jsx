@@ -41,26 +41,76 @@ export default function Home() {
   const [editingYardi, setEditingYardi] = useState(null);
   const [view, setView] = useState("card");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
 
-  const getFieldsToSearch = (prop) => [
-    prop.address,
-    prop.yardi,
-    prop.city,
-    prop.zip,
-    prop.building_type,
-    prop.prop_manager,
-    ...(prop.suites ? prop.suites.map((suite) => suite.name) : []),
-    ...(prop.services ? prop.services.map((service) => service.vendor) : []),
-    ...(prop.services ? prop.services.map((service) => service.type) : []),
-    ...(prop.utilities ? prop.utilities.map((util) => util.vendor) : []),
-    ...(prop.codes ? prop.codes.map((code) => code.description) : []),
-  ];
 
-  const filteredProperties = filterBySearch(
-    properties,
-    getFieldsToSearch,
-    search
-  );
+  // Enhanced search: parse for natural language queries
+  function advancedFilter(properties, search) {
+    if (!search.trim()) return properties;
+    const s = search.toLowerCase();
+    let filtered = properties;
+
+    const pmMatch = s.match(/([\w\s]+?)\s+as\s+the\s+pm/);
+    let pmFiltered = null;
+    if (pmMatch) {
+      const pmName = pmMatch[1].replace(/properties|with|where|having/gi, "").trim();
+      if (pmName.length > 0) {
+        pmFiltered = properties.filter(
+          (p) => {
+            if (!p.prop_manager) return false;
+            // Lowercase, then remove whitespace and newlines
+            const pmValue = p.prop_manager.trim().toLowerCase().replace(/\s+/g, "").replace(/\n/g, "");
+            const pmSearch = pmName.trim().toLowerCase().replace(/\s+/g, "").replace(/\n/g, "");
+            return pmValue.includes(pmSearch);
+          }
+        );
+      }
+    }
+
+    // Match: properties in [city]
+    const cityMatch = s.match(/(?:in|at|located in)\s+([\w\s]+)/);
+    let cityFiltered = null;
+    if (cityMatch) {
+      const cityName = cityMatch[1].trim();
+      cityFiltered = properties.filter(
+        (p) => p.city && p.city.toLowerCase().includes(cityName)
+      );
+    }
+
+    // Fallback: generic search (all fields) if no results
+    if ((pmFiltered || cityFiltered) && filtered.length === 0) {
+      const getFieldsToSearch = (prop) => [
+        prop.address,
+        prop.yardi,
+        prop.city,
+        prop.zip,
+        prop.building_type,
+        prop.prop_manager,
+        ...(prop.suites ? prop.suites.map((suite) => suite.name) : []),
+        ...(prop.services ? prop.services.map((service) => service.vendor) : []),
+        ...(prop.services ? prop.services.map((service) => service.type) : []),
+        ...(prop.utilities ? prop.utilities.map((util) => util.vendor) : []),
+        ...(prop.codes ? prop.codes.map((code) => code.description) : []),
+      ];
+      filtered = filterBySearch(properties, getFieldsToSearch, search);
+    }
+    return filtered;
+  }
+
+  const filteredProperties = advancedFilter(properties, search);
+
+  useEffect(() => {
+    const s = search.toLowerCase();
+    let advanced = false;
+    if (s.match(/([\w\s]+?)\s+as\s+the\s+pm/)) advanced = true;
+    if (s.match(/(?:in|at|located in)\s+([\w\s]+)/)) advanced = true;
+    // If fallback to generic search, advanced should be false
+    if (!search.trim()) advanced = false;
+    setIsAdvancedSearch(advanced);
+  }, [search]);
+  useEffect(() => {
+    console.log('[DEBUG] Filtered Properties:', filteredProperties);
+  }, [filteredProperties]);
 
   // Sort filteredProperties by address before pagination
   const sortedProperties = sort(filteredProperties, "address");
@@ -166,6 +216,7 @@ export default function Home() {
               editingYardi={editingYardi}
               setEditingYardi={setEditingYardi}
               searchLower={searchLower}
+              isAdvancedSearch={isAdvancedSearch}
             />
           )}
         </div>

@@ -6,7 +6,27 @@ export default function PropertyList({
   editingYardi,
   setEditingYardi,
   searchLower,
+  isAdvancedSearch = false,
 }) {
+  if (isAdvancedSearch) {
+    return properties.map((property) => {
+      const isEditing = editingYardi === property.yardi;
+      return (
+        <PropertyCard
+          key={property.yardi}
+          property={property}
+          editing={isEditing}
+          onEdit={() => setEditingYardi(property.yardi)}
+          onCancelEdit={() => setEditingYardi(null)}
+          onUpdate={() => {
+            setEditingYardi(null);
+          }}
+        />
+      );
+    });
+  }
+
+  // ...existing code...
   return properties
     .map((property) => {
       const isEditing = editingYardi === property.yardi;
