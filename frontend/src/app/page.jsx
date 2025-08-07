@@ -17,6 +17,8 @@ import axiosInstance from "./utils/axiosInstance";
 import { filterBySearch, paginate, getTotalPages, sort } from "./utils/helpers";
 import { FaHistory } from "react-icons/fa";
 import Link from "next/link"
+import { isDirector, isIT, isPM, isBroker } from "./constants/roles";
+import { signOut } from "next-auth/react";
 
 async function fetchProperties() {
   const res = await axiosInstance.get("/properties");
@@ -108,9 +110,6 @@ export default function Home() {
     if (!search.trim()) advanced = false;
     setIsAdvancedSearch(advanced);
   }, [search]);
-  useEffect(() => {
-    console.log('[DEBUG] Filtered Properties:', filteredProperties);
-  }, [filteredProperties]);
 
   // Sort filteredProperties by address before pagination
   const sortedProperties = sort(filteredProperties, "address");
@@ -135,8 +134,9 @@ export default function Home() {
 
   // logs
   useEffect(() => {
+    console.log("Session object:", session);
     console.log("Properties: ", properties)
-  }, [properties]);
+  }, [properties, session]);
 
   // check if user is authenticated
   if (!session) {
@@ -146,16 +146,23 @@ export default function Home() {
   if (error) return <div>Error loading properties.</div>;
 
   return (
-    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-16 pb-4 md:pb-6">
+    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-16 pb-4 md:pb-6 relative">
+      {/* Logout button top right */}
+      <button
+        onClick={() => signOut()}
+        className="absolute top-4 right-4 bg-white border border-black px-3 py-1 rounded shadow hover:bg-gray-100 cursor-pointer z-50"
+      >
+        Logout
+      </button>
       <h1 className="text-3xl md:text-4xl text-center md:text-left font-bold mb-4 justify-between">
         Welcome to the PIS Platform
       </h1>
       <SessionTimeout />
-      <AddPropertyForm
-        open={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSuccess={refetch}
-      />
+        <AddPropertyForm
+          open={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onSuccess={refetch}
+        />
       <div className="md:flex justify-between">
         <PropertySearch
           value={search}
@@ -174,18 +181,24 @@ export default function Home() {
               className="ml-1"
             />
           </button>
-          <button
-            className="border bg-white px-3 py-1 mb-4 rounded hover:bg-gray-100 hover:cursor-pointer"
-            onClick={() => setShowAddModal(true)}
-          >
-            + Add Property
-          </button>
-          <ViewToggle view={view} onToggle={setView} />
+          {isDirector(session) && (
+            <button
+              className="border bg-white px-3 py-1 mb-4 rounded hover:bg-gray-100 hover:cursor-pointer"
+              onClick={() => setShowAddModal(true)}
+            >
+              + Add Property
+            </button>
+          )}
+          {(isDirector(session) || isPM(session) || isIT(session) || isBroker(session)) && (
+            <>
+              <ViewToggle view={view} onToggle={setView} />
+            </>
+          )}
           <PropertyDropdown
-            properties={sort(properties, "address")}
-            selectedPropertyId={selectedPropertyId}
-            onSelect={setSelectedPropertyId}
-          />
+              properties={sort(properties, "address")}
+              selectedPropertyId={selectedPropertyId}
+              onSelect={setSelectedPropertyId}
+            />
         </div>
       </div>
       {view === "grid" ? (

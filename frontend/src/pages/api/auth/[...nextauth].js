@@ -18,12 +18,26 @@ export default NextAuth({
     async jwt({ token, account }) {
       if (account?.access_token) {
         token.accessToken = account.access_token;
+        // Decode roles from access token 
+        try {
+          const base64Url = account.access_token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const buff = Buffer.from(base64, 'base64');
+          const jsonPayload = buff.toString('utf-8');
+          const payload = JSON.parse(jsonPayload);
+          token.roles = payload.roles || [];
+        } catch (e) {
+          token.roles = [];
+        }
       }
       return token;
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken;
       session.error = token.error;
+      // Add roles to session.user for easy access
+      if (!session.user) session.user = {};
+      session.user.roles = token.roles || [];
       return session;
     },
     async signIn({ user }) {

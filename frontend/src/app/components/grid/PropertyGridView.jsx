@@ -13,11 +13,14 @@ import {
 import axiosInstance from "@/app/utils/axiosInstance";
 import { chunkArray, filterBySearch, exportProperty } from "@/app/utils/helpers";
 import PropertySearch from "../common/PropertySearch";
+import { useSession } from "next-auth/react";
+import { isDirector } from "@/app/constants/roles";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function PropertyGridView({ property }) {
   const [search, setSearch] = useState("");
+  const { data: session } = useSession();
 
   // Suites
   const { data: suites = [], refetch: refetchSuites } = useQuery({
@@ -289,6 +292,7 @@ export default function PropertyGridView({ property }) {
           placeholder="Search property details..."
         />
         <div className="space-x-2">
+          {isDirector(session) && (
           <button
             className="border border-red px-2 py-1 rounded text-red-700 hover:bg-red-100 hover:cursor-pointer"
             onClick={() => toggleActiveMutation.mutate(!property.active)}
@@ -296,6 +300,7 @@ export default function PropertyGridView({ property }) {
           >
             {property.active ? "Mark as Sold" : "Mark as Not Sold"}
           </button>
+          )}
           <button
             className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
             onClick={() => exportProperty(propertyData)}

@@ -19,9 +19,12 @@ import {
 } from "./cardFields";
 import Image from "next/image";
 import PropertyPhotos from "./PropertyPhotos";
+import { useSession } from "next-auth/react";
+import { isDirector, isPM, isIT, isBroker } from "@/app/constants/roles";
 
 export default function PropertyCard({ property, onUpdate }) {
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
   const [editing, setEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
@@ -320,25 +323,31 @@ export default function PropertyCard({ property, onUpdate }) {
       <div className="flex items-center justify-between text-lg mb-2">
         {renderField("Address", "address")}
         <div className="space-x-2">
-          <button
-            className="border border-red px-2 py-1 rounded text-red-700 hover:bg-red-100 hover:cursor-pointer"
-            onClick={() => toggleActiveMutation.mutate(!propertyData.active)}
-            disabled={toggleActiveMutation.isPending}
-          >
-            {propertyData.active ? "Mark as Sold" : "Mark as Not Sold"}
-          </button>
-          <button
-            className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
-            onClick={() => exportProperty(propertyData)}
-          >
-            Export
-          </button>
-          <button
-            onClick={() => setEditing((e) => !e)}
-            className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
-          >
-            {editing ? "Cancel" : "Edit"}
-          </button>
+          {isDirector(session) && (
+            <button
+              className="border border-red px-2 py-1 rounded text-red-700 hover:bg-red-100 hover:cursor-pointer"
+              onClick={() => toggleActiveMutation.mutate(!propertyData.active)}
+              disabled={toggleActiveMutation.isPending}
+            >
+              {propertyData.active ? "Mark as Sold" : "Mark as Not Sold"}
+            </button>
+          )}
+          {(isDirector(session) || isPM(session) || isIT(session) || isBroker(session)) && (
+            <>
+              <button
+                className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
+                onClick={() => exportProperty(propertyData)}
+              >
+                Export
+              </button>
+              <button
+                onClick={() => setEditing((e) => !e)}
+                className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
+              >
+                {editing ? "Cancel" : "Edit"}
+              </button>
+            </>
+          )}
         </div>
       </div>
       <PropertySearch
