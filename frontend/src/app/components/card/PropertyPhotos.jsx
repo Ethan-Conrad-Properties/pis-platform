@@ -29,6 +29,12 @@ export default function PropertyPhotos({ propertyYardi, editing }) {
       const file = e.target.elements.photo.files[0];
       const caption = e.target.elements.caption.value;
       if (!file) throw new Error("No file selected");
+      // Check file size
+      if (file.size > 10 * 1024 * 1024) { // 10 MB limit
+        alert("File size must be 10 MB or less.");
+        setUploading(false);
+        return;
+      }
       // 1. Upload file
       const formData = new FormData();
       formData.append("file", file);

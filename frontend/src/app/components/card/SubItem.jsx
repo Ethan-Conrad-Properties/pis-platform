@@ -160,13 +160,6 @@ const SubItem = memo(function SubItem({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         {fields.map((field, id) => {
           let value = item[field.id];
-          if (
-            field.id !== "contact" &&
-            field.id !== "notes" &&
-            (value === undefined || value === null || value === "")
-          ) {
-            return null;
-          }
           // Special rendering for contacts
           if (field.id === "contact") {
             return (
