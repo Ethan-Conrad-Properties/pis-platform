@@ -143,7 +143,7 @@ export default function Home() {
               + Add Property
             </button>
           )}
-          {isDirector(session) || isPM(session) || isIT(session) || isBroker(session) && (
+          {(isDirector(session) || isPM(session) || isIT(session) || isBroker(session)) && (
             <>
               <ViewToggle view={view} onToggle={setView} />
             </>

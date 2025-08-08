@@ -48,7 +48,7 @@ export default function PropertyPhotos({ propertyYardi, editing }) {
       metaData.append("caption", caption);
       await axiosInstance.post("/property-photos", metaData, {
         headers: { "Content-Type": "multipart/form-data" },
-      });
+      }); 
       // 3. Refresh photo list
       const res = await axiosInstance.get(`/property-photos/${propertyYardi}`);
       setPhotos(res.data);
