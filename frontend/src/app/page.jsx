@@ -19,6 +19,8 @@ import { FaHistory } from "react-icons/fa";
 import Link from "next/link"
 import { isDirector, isIT, isPM, isBroker } from "./constants/roles";
 import { signOut } from "next-auth/react";
+import '@n8n/chat/style.css';
+import { createChat } from '@n8n/chat';
 
 async function fetchProperties() {
   const res = await axiosInstance.get("/properties");
@@ -86,6 +88,24 @@ export default function Home() {
     (p) => p.yardi === selectedPropertyId
   );
 
+  useEffect(() => {
+    if(properties.length > 0) {
+      createChat({
+        webhookUrl: 'https://n8n.srv945784.hstgr.cloud/webhook/82cc73c3-a75f-4542-b7bf-a036201b1351/chat',
+        initialMessages: [
+          'I am your personal PIS chatbot. How can I assist you today?'
+        ],
+        	i18n: {
+            en: {
+              title: 'Hi there! 👋',
+              subtitle: "Start a chat. I'm here to help you 24/7.",
+              inputPlaceholder: 'Type your question..',
+            },
+          },
+      });
+    }
+	}, [properties]);
+
   // logs
   useEffect(() => {
     console.log("Session object:", session);
@@ -101,7 +121,6 @@ export default function Home() {
 
   return (
     <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-16 pb-4 md:pb-6 relative">
-      {/* Logout button top right */}
       <button
         onClick={() => signOut()}
         className="absolute top-4 right-4 bg-white border border-black px-3 py-1 rounded shadow hover:bg-gray-100 cursor-pointer z-50"

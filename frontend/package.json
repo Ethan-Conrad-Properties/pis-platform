@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@n8n/chat": "^0.50.0",
     "@tanstack/react-query": "^5.83.0",
     "ag-grid-community": "^34.0.1",
     "ag-grid-react": "^34.0.1",
