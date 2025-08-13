@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.database import get_db
 from app.models import Property, Suite, Service, Utility, Code, SuiteContact, ServiceContact, UtilityContact, Contact
 from app.auth import verify_token
@@ -10,8 +11,21 @@ router = APIRouter()
 
 # Get all properties (with nested suites, services, utilities, codes, and contacts)
 @router.get("/properties")
-async def get_properties(db: Session = Depends(get_db), user=Depends(verify_token)):
-    properties = db.query(Property).all()
+async def get_properties(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user=Depends(verify_token),
+):
+    total = db.query(func.count(Property.yardi)).scalar() or 0
+    properties = (
+        db.query(Property)
+        .order_by(Property.yardi)
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
+
     result = []
     for prop in properties:
         # Suites with contacts
@@ -82,7 +96,14 @@ async def get_properties(db: Session = Depends(get_db), user=Depends(verify_toke
             "utilities": utilities_data,
             "codes": [c.__dict__ for c in codes],
         })
-    return {"properties": result}
+
+    return {
+        "page": page,
+        "per_page": per_page,
+        "total": total,
+        "total_pages": (total + per_page - 1) // per_page if total else 0,
+        "properties": result,
+    }
 
 # Get a single property by yardi (with nested data)
 @router.get("/properties/{yardi}")

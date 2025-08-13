@@ -22,9 +22,11 @@ import { signOut } from "next-auth/react";
 import '@n8n/chat/style.css';
 import { createChat } from '@n8n/chat';
 
-async function fetchProperties() {
-  const res = await axiosInstance.get("/properties");
-  return res.data.properties;
+async function fetchFirstPage() {
+  const res = await axiosInstance.get("/properties", {
+    params: { page: 1, per_page: 20 },  
+  });
+  return res.data; 
 }
 
 export default function Home() {
@@ -32,20 +34,47 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPropertyId, setSelectedPropertyId] = useState("");
   const { data: session } = useSession();
+
+  // local accumulator so we can append subsequent pages
+  const [properties, setProperties] = useState([]);
+
   const {
-    data: properties = [],
+    data: firstPageData,   
     error,
-    refetch,
+    refetch
   } = useQuery({
-    queryKey: ["properties"],
-    queryFn: fetchProperties,
+    queryKey: ["properties", "page1", 20],
+    queryFn: fetchFirstPage,
+    enabled: !!session,
   });
+
+  // After page 1 arrives, append it, then fetch pages 2..N in the background
+  useEffect(() => {
+    if (!firstPageData) return;
+
+    let isCancelled = false;
+    setProperties(firstPageData.properties); // paint immediately
+
+    (async () => {
+      const totalPages = firstPageData.total_pages || 1;
+      for (let p = 2; p <= totalPages; p++) {
+        if (isCancelled) break;
+        const res = await axiosInstance.get("/properties", {
+          params: { page: p, per_page: 20 },
+        });
+        if (isCancelled) break;
+        setProperties(prev => [...prev, ...res.data.properties]);
+      }
+    })();
+
+    return () => { isCancelled = true; };
+  }, [firstPageData]);
+
   const searchLower = search.toLowerCase();
-  const PropertiesPerPage = 18;
+  const PropertiesPerPage = 20;
   const [editingYardi, setEditingYardi] = useState(null);
   const [view, setView] = useState("card");
   const [showAddModal, setShowAddModal] = useState(false);
-
 
   const getFieldsToSearch = (prop) => [
     prop.address,
@@ -61,16 +90,15 @@ export default function Home() {
     ...(prop.codes ? prop.codes.map((code) => code.description) : []),
   ];
 
+  // Use the progressively loaded `properties`
   const filteredProperties = filterBySearch(
     properties,
     getFieldsToSearch,
     search
   );
 
-  // Sort filteredProperties by address before pagination
   const sortedProperties = sort(filteredProperties, "address");
 
-  // calculate pagination
   const currentProperties = paginate(
     sortedProperties,
     currentPage,
@@ -78,41 +106,37 @@ export default function Home() {
   );
   const totalPages = getTotalPages(filteredProperties, PropertiesPerPage);
 
-  // reset to first page if search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
 
-  // Get selected property object (from filtered list, so search applies)
   const selectedProperty = filteredProperties.find(
     (p) => p.yardi === selectedPropertyId
   );
 
   useEffect(() => {
-    if(properties.length > 0) {
+    if (properties.length > 0) {
       createChat({
         webhookUrl: 'https://n8n.srv945784.hstgr.cloud/webhook/82cc73c3-a75f-4542-b7bf-a036201b1351/chat',
         initialMessages: [
           'I am your personal PIS chatbot. How can I assist you today?'
         ],
-        	i18n: {
-            en: {
-              title: 'Hi there! 👋',
-              subtitle: "Start a chat. I'm here to help you 24/7.",
-              inputPlaceholder: 'Type your question..',
-            },
+        i18n: {
+          en: {
+            title: 'Hi there! 👋',
+            subtitle: "Start a chat. I'm here to help you 24/7.",
+            inputPlaceholder: 'Type your question..',
           },
+        },
       });
     }
-	}, [properties]);
+  }, [properties]);
 
-  // logs
   useEffect(() => {
     console.log("Session object:", session);
     console.log("Properties: ", properties)
   }, [properties, session]);
 
-  // check if user is authenticated
   if (!session) {
     return <LoginForm />;
   }
