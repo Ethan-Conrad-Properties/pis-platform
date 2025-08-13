@@ -24,7 +24,7 @@ import { createChat } from '@n8n/chat';
 
 async function fetchFirstPage() {
   const res = await axiosInstance.get("/properties", {
-    params: { page: 1, per_page: 20 },  
+    params: { page: 1, per_page: 10 },  
   });
   return res.data; 
 }
@@ -60,7 +60,7 @@ export default function Home() {
       for (let p = 2; p <= totalPages; p++) {
         if (isCancelled) break;
         const res = await axiosInstance.get("/properties", {
-          params: { page: p, per_page: 20 },
+          params: { page: p, per_page: 10 },
         });
         if (isCancelled) break;
         setProperties(prev => [...prev, ...res.data.properties]);

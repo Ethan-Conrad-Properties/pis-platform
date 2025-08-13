@@ -1,11 +1,15 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import ORJSONResponse
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import properties, suites, services, utilities, codes, contacts, edit_history, property_photos
+import time
 
 
-app = FastAPI()
+app = FastAPI(default_response_class=ORJSONResponse)
 app.mount("/uploads", StaticFiles(directory="static/uploads"), name="uploads")
+app.add_middleware(GZipMiddleware, minimum_size=512)
 
 # Allow CORS for all origins
 app.add_middleware(
@@ -22,6 +26,13 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return {"message": "Hello, World!"}
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    t0 = time.perf_counter()
+    resp = await call_next(request)
+    resp.headers["X-Process-Time-ms"] = str(int((time.perf_counter() - t0)*1000))
+    return resp
 
 # Include routers
 app.include_router(properties.router)

@@ -13,7 +13,7 @@ router = APIRouter()
 @router.get("/properties")
 async def get_properties(
     page: int = Query(1, ge=1),
-    per_page: int = Query(20, ge=1, le=100),
+    per_page: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     user=Depends(verify_token),
 ):
