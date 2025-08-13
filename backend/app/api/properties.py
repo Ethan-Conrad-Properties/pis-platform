@@ -6,10 +6,10 @@ from app.models import Property, Suite, Service, Utility, Code, SuiteContact, Se
 from app.auth import verify_token
 from app.helpers import log_edit, log_add
 
-
 router = APIRouter()
 
 # Get all properties (with nested suites, services, utilities, codes, and contacts)
+
 @router.get("/properties")
 async def get_properties(
     page: int = Query(1, ge=1),
@@ -104,7 +104,7 @@ async def get_properties(
         "total_pages": (total + per_page - 1) // per_page if total else 0,
         "properties": result,
     }
-
+     
 # Get a single property by yardi (with nested data)
 @router.get("/properties/{yardi}")
 async def get_property_by_yardi(yardi: str, db: Session = Depends(get_db), user=Depends(verify_token)):
