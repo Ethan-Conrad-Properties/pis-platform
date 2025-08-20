@@ -68,21 +68,22 @@ export default function PropertyCard({ property, onUpdate }) {
     item.suite,
     item.name,
     item.sqft,
-    item.contact,
-    item.email_address,
+    item.hvac,
+    item.hvac_info,
     item.notes,
   ];
   const getServiceFields = (item) => [
     item.service_type,
     item.vendor,
-    item.contact,
-    item.email_address,
+    item.paid_by,
     item.notes,
   ];
   const getUtilityFields = (item) => [
     item.service,
     item.vendor,
-    item.contact_info,
+    item.account_number,
+    item.meter_number,
+    item.paid_by,
     item.notes,
   ];
   const getCodeFields = (item) => [item.description, item.code, item.notes];
@@ -90,7 +91,7 @@ export default function PropertyCard({ property, onUpdate }) {
   // Filtered sub-items
   const filteredSuites = filterBySearch(form.suites, getSuiteFields, search);
   const filteredServices = filterBySearch(
-  sort(form.services, "service_type"),
+    sort(form.services, "service_type"),
     getServiceFields,
     search
   );
@@ -169,7 +170,7 @@ export default function PropertyCard({ property, onUpdate }) {
       alert("Error updating property", error.response?.data?.message),
   });
 
-  const suiteMutation = useMutation({
+  const suiteUpdate = useMutation({
     mutationFn: (suite) =>
       axiosInstance.put(`/suites/${suite.suite_id}`, suite),
     onSuccess: () => {
@@ -180,7 +181,7 @@ export default function PropertyCard({ property, onUpdate }) {
     onError: () => alert("Error updating suite"),
   });
 
-  const serviceMutation = useMutation({
+  const serviceUpdate = useMutation({
     mutationFn: (service) =>
       axiosInstance.put(`/services/${service.service_id}`, service),
     onSuccess: () => {
@@ -191,7 +192,7 @@ export default function PropertyCard({ property, onUpdate }) {
     onError: () => alert("Error updating service"),
   });
 
-  const utilityMutation = useMutation({
+  const utilityUpdate = useMutation({
     mutationFn: (utility) =>
       axiosInstance.put(`/utilities/${utility.utility_id}`, utility),
     onSuccess: () => {
@@ -202,7 +203,7 @@ export default function PropertyCard({ property, onUpdate }) {
     onError: () => alert("Error updating utility"),
   });
 
-  const codeMutation = useMutation({
+  const codeUpdate = useMutation({
     mutationFn: (code) => axiosInstance.put(`/codes/${code.code_id}`, code),
     onSuccess: () => {
       setShowModal(true);
@@ -228,38 +229,209 @@ export default function PropertyCard({ property, onUpdate }) {
     onError: () => alert("Error updating property"),
   });
 
+  // --- Create (POST) mutations ---
+  const suiteCreate = useMutation({
+    mutationFn: (suite) =>
+      axiosInstance.post(`/suites`, {
+        ...suite,
+        property_yardi: property.yardi,
+      }),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(["properties"]);
+    },
+    onError: () => alert("Error adding suite"),
+  });
+
+  const serviceCreate = useMutation({
+    mutationFn: (service) =>
+      axiosInstance.post(`/services`, {
+        ...service,
+        property_yardi: property.yardi,
+      }),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(["properties"]);
+    },
+    onError: () => alert("Error adding service"),
+  });
+
+  const utilityCreate = useMutation({
+    mutationFn: (utility) =>
+      axiosInstance.post(`/utilities`, {
+        ...utility,
+        property_yardi: property.yardi,
+      }),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(["properties"]);
+    },
+    onError: () => alert("Error adding utility"),
+  });
+
+  const codeCreate = useMutation({
+    mutationFn: (code) =>
+      axiosInstance.post(`/codes`, { ...code, property_yardi: property.yardi }),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(["properties"]);
+    },
+    onError: () => alert("Error adding code"),
+  });
+
+  // 2) delete mutations
+  const suiteDelete = useMutation({
+    mutationFn: (id) => axiosInstance.delete(`/suites/${id}`),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(["properties"]);
+    },
+    onError: () => alert("Error deleting suite"),
+  });
+  const serviceDelete = useMutation({
+    mutationFn: (id) => axiosInstance.delete(`/services/${id}`),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(["properties"]);
+    },
+    onError: () => alert("Error deleting service"),
+  });
+  const utilityDelete = useMutation({
+    mutationFn: (id) => axiosInstance.delete(`/utilities/${id}`),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(["properties"]);
+    },
+    onError: () => alert("Error deleting utility"),
+  });
+  const codeDelete = useMutation({
+    mutationFn: (id) => axiosInstance.delete(`/codes/${id}`),
+    onSuccess: () => {
+      setShowModal(true);
+      refetch();
+      queryClient.invalidateQueries(["properties"]);
+    },
+    onError: () => alert("Error deleting code"),
+  });
+
+  const entityMap = {
+    suites: {
+      idKey: "suite_id",
+      fkKey: "property_yardi",
+      create: suiteCreate,
+      update: suiteUpdate,
+      remove: suiteDelete,
+      parentType: "suite",
+    },
+    services: {
+      idKey: "service_id",
+      fkKey: "property_yardi",
+      create: serviceCreate,
+      update: serviceUpdate,
+      remove: serviceDelete,
+      parentType: "service",
+    },
+    utilities: {
+      idKey: "utility_id",
+      fkKey: "property_yardi",
+      create: utilityCreate,
+      update: utilityUpdate,
+      remove: utilityDelete,
+      parentType: "utility",
+    },
+    codes: {
+      idKey: "code_id",
+      fkKey: "property_yardi",
+      create: codeCreate,
+      update: codeUpdate,
+      remove: codeDelete,
+      parentType: null,
+    },
+  };
+
+  async function upsertEntity(section, idx) {
+    const cfg = entityMap[section];
+    const list = form[section] || [];
+    const item = list[idx];
+    const id = item?.[cfg.idKey];
+    if (!item) return;
+
+    if (!id) {
+      // POST
+      const { data: created } = await cfg.create.mutateAsync(item);
+
+      setForm((prev) => {
+        const next = [...(prev[section] || [])];
+        next[idx] = created; // swap temp with server entity
+        return { ...prev, [section]: next };
+      });
+
+      // save contacts after creation (only for suites/services/utilities)
+      if (cfg.parentType && item.contacts?.length) {
+        await saveContacts(item.contacts, created[cfg.idKey], cfg.parentType);
+      }
+    } else {
+      // PUT
+      await cfg.update.mutateAsync(item);
+      if (cfg.parentType && item.contacts?.length) {
+        await saveContacts(item.contacts, id, cfg.parentType);
+      }
+    }
+  }
+
   // Save property and all sub-records
   const handleSave = async (section, idx = null) => {
     try {
       if (section === "property") {
         propertyMutation.mutate(form);
-      } else if (section === "suites" && idx !== null) {
-        const suite = form.suites[idx];
-        suiteMutation.mutate(suite);
-        if (suite.contacts && suite.contacts.length > 0) {
-          await saveContacts(suite.contacts, suite.suite_id, "suite");
-        }
-      } else if (section === "services" && idx !== null) {
-        const service = form.services[idx];
-        serviceMutation.mutate(service);
-        if (service.contacts && service.contacts.length > 0) {
-          await saveContacts(service.contacts, service.service_id, "service");
-        }
-      } else if (section === "utilities" && idx !== null) {
-        const utility = form.utilities[idx];
-        utilityMutation.mutate(utility);
-        if (utility.contacts && utility.contacts.length > 0) {
-          await saveContacts(utility.contacts, utility.utility_id, "utility");
-        }
-      } else if (section === "codes" && idx !== null) {
-        const code = form.codes[idx];
-        codeMutation.mutate(code);
+      } else if (idx !== null) {
+        await upsertEntity(section, idx);
       }
       setEditing(false);
-      setShowModal(true);
       if (onUpdate) onUpdate(form);
     } catch (error) {
       alert("Error updating property or related records");
+    }
+  };
+
+  const handleDelete = async (section, idx) => {
+    const list = form[section] || [];
+    const item = list[idx];
+    if (!item) return;
+
+    const idKey = entityMap[section].idKey;
+    const id = item[idKey];
+
+    try {
+      // If not persisted yet, just remove locally
+      if (!id) {
+        setForm((prev) => {
+          const next = [...(prev[section] || [])];
+          next.splice(idx, 1);
+          return { ...prev, [section]: next };
+        });
+        setShowModal(true); // feedback for local delete
+        return;
+      }
+
+      // Persisted: call DELETE
+      await entityMap[section].remove.mutateAsync(id);
+
+      // Remove from local state
+      setForm((prev) => {
+        const next = [...(prev[section] || [])];
+        next.splice(idx, 1);
+        return { ...prev, [section]: next };
+      });
+    } catch {
+      alert("Error deleting item");
     }
   };
 
@@ -283,6 +455,57 @@ export default function PropertyCard({ property, onUpdate }) {
       )}
     </div>
   );
+
+  // handle adding entity
+  const handleAdd = (type) => {
+    const empty =
+      type === "suites"
+        ? {
+            suite_id: null,
+            suite: "",
+            sqft: "",
+            name: "",
+            notes: "",
+            hvac: "",
+            hvac_info: "",
+            commercial_cafe: "",
+            door_access_codes: "",
+            lease_obligations: "",
+            signage_rights: "",
+            parking_spaces: "",
+            electrical_amperage: "",
+            misc: "",
+          }
+        : type === "services"
+        ? {
+            service_id: null,
+            service_type: "",
+            vendor: "",
+            notes: "",
+            paid_by: "",
+          }
+        : type === "utilities"
+        ? {
+            utility_id: null,
+            service: "",
+            vendor: "",
+            account_number: "",
+            meter_number: "",
+            notes: "",
+            paid_by: "",
+          }
+        : {
+            code_id: null,
+            description: "",
+            code: "",
+            notes: "",
+          };
+
+    setForm((prev) => ({
+      ...prev,
+      [type]: [...(prev[type] || []), empty],
+    }));
+  };
 
   // Scroll to first matching section when search changes and matches found
   useEffect(() => {
@@ -319,7 +542,7 @@ export default function PropertyCard({ property, onUpdate }) {
 
   return (
     <div className="bg-white rounded shadow-2xl p-4">
-      <SuccessModal open={showModal} onClose={handleCloseModal} />      
+      <SuccessModal open={showModal} onClose={handleCloseModal} />
       <div className="flex items-center justify-between text-lg mb-2">
         {renderField("Address", "address")}
         <div className="space-x-2">
@@ -332,7 +555,10 @@ export default function PropertyCard({ property, onUpdate }) {
               {propertyData.active ? "Mark as Sold" : "Mark as Not Sold"}
             </button>
           )}
-          {(isDirector(session) || isPM(session) || isIT(session) || isBroker(session)) && (
+          {(isDirector(session) ||
+            isPM(session) ||
+            isIT(session) ||
+            isBroker(session)) && (
             <>
               <button
                 className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
@@ -393,6 +619,8 @@ export default function PropertyCard({ property, onUpdate }) {
           onSave={handleSave}
           search={search}
           onContactChange={handleContactChange}
+          onAdd={handleAdd}
+          onDelete={handleDelete}
         />
       </div>
       {/* Services */}
@@ -406,6 +634,8 @@ export default function PropertyCard({ property, onUpdate }) {
           onSave={handleSave}
           search={search}
           onContactChange={handleContactChange}
+          onAdd={handleAdd}
+          onDelete={handleDelete}
         />
       </div>
       {/* Utilities */}
@@ -419,6 +649,8 @@ export default function PropertyCard({ property, onUpdate }) {
           onSave={handleSave}
           search={search}
           onContactChange={handleContactChange}
+          onAdd={handleAdd}
+          onDelete={handleDelete}
         />
       </div>
       {/* Codes */}
@@ -431,6 +663,8 @@ export default function PropertyCard({ property, onUpdate }) {
           onChange={handleSubChange}
           onSave={handleSave}
           search={search}
+          onAdd={handleAdd}
+          onDelete={handleDelete}
         />
       </div>
       <SubSection
@@ -440,10 +674,7 @@ export default function PropertyCard({ property, onUpdate }) {
         label="Photos"
         editing={editing}
         renderContent={() => (
-          <PropertyPhotos
-            propertyYardi={property.yardi}
-            editing={editing}
-          />
+          <PropertyPhotos propertyYardi={property.yardi} editing={editing} />
         )}
       />
     </div>

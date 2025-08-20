@@ -66,6 +66,7 @@ const SubItem = memo(function SubItem({
   onSave,
   setEditingIdx,
   onContactChange,
+  onDelete,
 }) {
   const uniqueKey =
     item.suite_id || item.service_id || item.utility_id || item.code_id;
@@ -130,6 +131,12 @@ const SubItem = memo(function SubItem({
     }
   };
 
+  const handleDeleteClick = () => {
+    const singular = type.slice(0, -1); // "suites" -> "suite"
+    if (!window.confirm(`Delete this ${singular}?`)) return;
+    onDelete(type, idx);
+  };
+
   return (
     <div
       key={uniqueKey}
@@ -140,7 +147,15 @@ const SubItem = memo(function SubItem({
         onClose={() => setShowSuccess(false)}
         message="Contact saved!"
       />
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end gap-2">
+        <button
+          onClick={handleDeleteClick}
+          className="border border-red-600 text-red-700 px-2 py-1 rounded hover:bg-red-50 hover:cursor-pointer mb-2"
+          type="button"
+          title="Delete"
+        >
+          Delete
+        </button>
         {isEditing ? (
           <button
             onClick={() => setEditingIdx(null)}

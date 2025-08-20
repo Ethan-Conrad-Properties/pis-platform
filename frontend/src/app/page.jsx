@@ -16,17 +16,17 @@ import SessionTimeout from "./components/common/SessionTimeout";
 import axiosInstance from "./utils/axiosInstance";
 import { filterBySearch, paginate, getTotalPages, sort } from "./utils/helpers";
 import { FaHistory } from "react-icons/fa";
-import Link from "next/link"
+import Link from "next/link";
 import { isDirector, isIT, isPM, isBroker } from "./constants/roles";
 import { signOut } from "next-auth/react";
-import '@n8n/chat/style.css';
-import { createChat } from '@n8n/chat';
+import "@n8n/chat/style.css";
+import { createChat } from "@n8n/chat";
 
 async function fetchFirstPage() {
   const res = await axiosInstance.get("/properties", {
-    params: { page: 1, per_page: 10 },  
+    params: { page: 1, per_page: 10 },
   });
-  return res.data; 
+  return res.data;
 }
 
 export default function Home() {
@@ -39,9 +39,9 @@ export default function Home() {
   const [properties, setProperties] = useState([]);
 
   const {
-    data: firstPageData,   
+    data: firstPageData,
     error,
-    refetch
+    refetch,
   } = useQuery({
     queryKey: ["properties", "page1", 20],
     queryFn: fetchFirstPage,
@@ -63,11 +63,13 @@ export default function Home() {
           params: { page: p, per_page: 10 },
         });
         if (isCancelled) break;
-        setProperties(prev => [...prev, ...res.data.properties]);
+        setProperties((prev) => [...prev, ...res.data.properties]);
       }
     })();
 
-    return () => { isCancelled = true; };
+    return () => {
+      isCancelled = true;
+    };
   }, [firstPageData]);
 
   const searchLower = search.toLowerCase();
@@ -117,15 +119,16 @@ export default function Home() {
   useEffect(() => {
     if (properties.length > 0) {
       createChat({
-        webhookUrl: 'https://n8n.srv945784.hstgr.cloud/webhook/82cc73c3-a75f-4542-b7bf-a036201b1351/chat',
+        webhookUrl:
+          "https://n8n.srv945784.hstgr.cloud/webhook/82cc73c3-a75f-4542-b7bf-a036201b1351/chat",
         initialMessages: [
-          'I am your personal PIS chatbot. How can I assist you today?'
+          "I am your personal PIS chatbot. How can I assist you today?",
         ],
         i18n: {
           en: {
-            title: 'Hi there! 👋',
+            title: "Hi there! 👋",
             subtitle: "Start a chat. I'm here to help you 24/7.",
-            inputPlaceholder: 'Type your question..',
+            inputPlaceholder: "Type your question..",
           },
         },
       });
@@ -134,7 +137,7 @@ export default function Home() {
 
   useEffect(() => {
     console.log("Session object:", session);
-    console.log("Properties: ", properties)
+    console.log("Properties: ", properties);
   }, [properties, session]);
 
   if (!session) {
@@ -155,11 +158,11 @@ export default function Home() {
         Welcome to the PIS Platform
       </h1>
       <SessionTimeout />
-        <AddPropertyForm
-          open={showAddModal}
-          onClose={() => setShowAddModal(false)}
-          onSuccess={refetch}
-        />
+      <AddPropertyForm
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={refetch}
+      />
       <div className="md:flex justify-between">
         <PropertySearch
           value={search}
@@ -170,14 +173,12 @@ export default function Home() {
           placeholder="Search properties..."
         />
         <div className="md:flex space-x-4 md:space-x-1 gap-2 items-center">
-          <button
-            className=" flex p-1 items-center rounded mb-4 hover:cursor-pointer hover:underline"
-          >
-            <Link href="/edit-history">View Edit History</Link>
-            <FaHistory
-              className="ml-1"
-            />
-          </button>
+          {(isDirector(session) || isIT(session)) && (
+            <button className=" flex p-1 items-center rounded mb-4 hover:cursor-pointer hover:underline">
+              <Link href="/edit-history">View Edit History</Link>
+              <FaHistory className="ml-1" />
+            </button>
+          )}
           {isDirector(session) && (
             <button
               className="border bg-white px-3 py-1 mb-4 rounded hover:bg-gray-100 hover:cursor-pointer"
@@ -186,16 +187,19 @@ export default function Home() {
               + Add Property
             </button>
           )}
-          {(isDirector(session) || isPM(session) || isIT(session) || isBroker(session)) && (
+          {(isDirector(session) ||
+            isPM(session) ||
+            isIT(session) ||
+            isBroker(session)) && (
             <>
               <ViewToggle view={view} onToggle={setView} />
             </>
           )}
           <PropertyDropdown
-              properties={sort(properties, "address")}
-              selectedPropertyId={selectedPropertyId}
-              onSelect={setSelectedPropertyId}
-            />
+            properties={sort(properties, "address")}
+            selectedPropertyId={selectedPropertyId}
+            onSelect={setSelectedPropertyId}
+          />
         </div>
       </div>
       {view === "grid" ? (
