@@ -592,9 +592,11 @@ export default function PropertyCard({ property, onUpdate }) {
       )}
 
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 space-x-2 text-xs md:text-sm">
-        {propertyFields.map((field) =>
-          renderField(field.label, field.name, field.name)
-        )}
+        {propertyFields.map((field) => (
+          <React.Fragment key={field.name}>
+            {renderField(field.label, field.name, field.name)}
+          </React.Fragment>
+        ))}
       </div>
 
       {editing && (

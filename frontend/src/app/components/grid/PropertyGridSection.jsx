@@ -9,30 +9,34 @@ export default function PropertyGridSection({
   onAddRow,
   onDeleteRows,
   onCellValueChanged,
-  pinnedLeftField,
 }) {
   const gridRef = useRef(null);
 
-  const defaultColDef = {
-    editable: true,
-    resizable: true,
-    sortable: true,
-    filter: true,
-    cellEditor: 'agLargeTextCellEditor',
-    cellEditorPopup: true,
-    wrapText: true,
-    autoHeight: true,
-  };
+  const getRowId = useCallback(
+    (params) =>
+      String(
+        params.data.yardi ??
+          params.data.suite_id ??
+          params.data.service_id ??
+          params.data.utility_id ??
+          params.data.code_id
+      ),
+    []
+  );
 
-  const colDefs = pinnedLeftField
-    ? columns.map((c, i) =>
-        i === 0 || c.field === pinnedLeftField ? { ...c, pinned: "left" } : c
-      )
-    : columns;
-
-  const onGridReady = useCallback((params) => {
-    params.api.sizeColumnsToFit();
-  }, []);
+  const defaultColDef = useMemo(
+    () => ({
+      editable: true,
+      resizable: true,
+      sortable: true,
+      filter: true,
+      cellEditor: "agLargeTextCellEditor",
+      cellEditorPopup: true,
+      width: 600,
+      minWidth: 160,
+    }),
+    []
+  );
 
   const onHeaderCellDblClicked = useCallback((params) => {
     const col = params.column;
@@ -51,7 +55,7 @@ export default function PropertyGridSection({
   }, []);
 
   return (
-    <div className="mt-2">
+    <div className="mt-2 flex flex-col">
       <div className="flex items-center justify-between">
         <h3 className="text-2xl font-semibold mt-6 mb-2">{title}</h3>
         <div className="flex items-center gap-2 mt-6 mb-2">
@@ -68,20 +72,13 @@ export default function PropertyGridSection({
               Delete Selected
             </button>
           )}
-          <button
-            className="border px-2 py-1 rounded hover:bg-gray-50 cursor-pointer"
-            type="button"
-            onClick={() => gridRef.current?.api?.sizeColumnsToFit()}
-          >
-            Fit Columns
-          </button>
         </div>
       </div>
 
-      <div className="ag-theme-alpine w-full">
+      <div className="ag-theme-alpine w-full" style={{height: 300}}>
         <AgGridReact
           ref={gridRef}
-          columnDefs={colDefs}
+          columnDefs={columns}
           rowData={rows}
           defaultColDef={defaultColDef}
           rowSelection="multiple"
@@ -91,9 +88,11 @@ export default function PropertyGridSection({
           enterNavigatesVertically={true}
           enterNavigatesVerticallyAfterEdit={true}
           animateRows
-          domLayout="autoHeight"
+          domLayout="normal"
+          rowHeight={48}
+          getRowId={getRowId}
+          deltaRowDataMode={true}
           popupParent={popupParent}
-          onGridReady={onGridReady}
           onColumnHeaderDoubleClicked={onHeaderCellDblClicked}
           onCellValueChanged={onCellValueChanged}
         />

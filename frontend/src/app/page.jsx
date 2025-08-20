@@ -147,16 +147,18 @@ export default function Home() {
   if (error) return <div>Error loading properties.</div>;
 
   return (
-    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-16 pb-4 md:pb-6 relative">
-      <button
-        onClick={() => signOut()}
-        className="absolute top-4 right-4 bg-white border border-black px-3 py-1 rounded shadow hover:bg-gray-100 cursor-pointer z-50"
-      >
-        Logout
-      </button>
-      <h1 className="text-3xl md:text-4xl text-center md:text-left font-bold mb-4 justify-between">
-        Welcome to the PIS Platform
-      </h1>
+    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-12 pb-4 md:pb-6 relative">
+      <div className="flex items-center justify-between mb-2 md:mb-6">
+        <h1 className="text-2xl md:text-4xl font-bold text-left">
+          Welcome to the PIS Platform
+        </h1>
+        <button
+          onClick={() => signOut()}
+          className="bg-white border border-black px-1 md:px-3 py-1 rounded shadow hover:bg-gray-100 cursor-pointer"
+        >
+          Logout
+        </button>
+      </div>
       <SessionTimeout />
       <AddPropertyForm
         open={showAddModal}
