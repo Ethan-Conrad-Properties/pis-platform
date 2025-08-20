@@ -292,7 +292,6 @@ export default function PropertyGridView({ property }) {
           onAddRow={null}
           onCellValueChanged={onCellValueChanged}
           pinnedLeftField={group[0]?.field}
-          fixedHeight={120} 
         />
       ))}
 

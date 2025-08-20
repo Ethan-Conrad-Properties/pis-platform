@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect } from "react";
+import React, { useRef, useCallback, useEffect, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AddIcon } from "./GridCells";
 
@@ -7,9 +7,9 @@ export default function PropertyGridSection({
   columns,
   rows,
   onAddRow,
-  onDeleteRows,            
+  onDeleteRows,
   onCellValueChanged,
-  pinnedLeftField,        
+  pinnedLeftField,
 }) {
   const gridRef = useRef(null);
 
@@ -18,7 +18,10 @@ export default function PropertyGridSection({
     resizable: true,
     sortable: true,
     filter: true,
-    minWidth: 120,
+    cellEditor: 'agLargeTextCellEditor',
+    cellEditorPopup: true,
+    wrapText: true,
+    autoHeight: true,
   };
 
   const colDefs = pinnedLeftField
@@ -35,6 +38,11 @@ export default function PropertyGridSection({
     const col = params.column;
     params.api.autoSizeColumns([col.getColId()]);
   }, []);
+
+  const popupParent = useMemo(
+    () => (typeof document !== "undefined" ? document.body : null),
+    []
+  );
 
   useEffect(() => {
     const handle = () => gridRef.current?.api?.sizeColumnsToFit();
@@ -77,18 +85,17 @@ export default function PropertyGridSection({
           rowData={rows}
           defaultColDef={defaultColDef}
           rowSelection="multiple"
-
           undoRedoCellEditing
           singleClickEdit
-          enterNavigatesVertically
-          enterNavigatesVerticallyAfterEdit
+          stopEditingWhenCellsLoseFocus={true}
+          enterNavigatesVertically={true}
+          enterNavigatesVerticallyAfterEdit={true}
           animateRows
           domLayout="autoHeight"
+          popupParent={popupParent}
           onGridReady={onGridReady}
           onColumnHeaderDoubleClicked={onHeaderCellDblClicked}
           onCellValueChanged={onCellValueChanged}
-          // keep virtualization ON by not setting suppressColumnVirtualisation
-          // allow horizontal scroll if needed (no suppressHorizontalScroll)
         />
       </div>
     </div>

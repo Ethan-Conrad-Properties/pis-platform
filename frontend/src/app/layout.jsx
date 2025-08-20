@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import SessionWrapper from "./components/common/SessionWrapper";
 import "./globals.css";
 import QueryProvider from "./components/common/QueryProvider";
+import { Analytics } from '@vercel/analytics/next';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
         <QueryProvider>
           <SessionWrapper>{children}</SessionWrapper>
         </QueryProvider>
+        <Analytics />
       </body>
     </html>
   );
