@@ -3,6 +3,9 @@ import { useMutation } from "@tanstack/react-query";
 import ContactInfoModal from "../common/ContactInfoModal";
 import axiosInstance from "@/app/utils/axiosInstance";
 import SuccessModal from "../common/SuccessModal";
+import { isDirector, isPM, isIT, isBroker } from "@/app/constants/roles";
+import { useSession } from "next-auth/react";
+
 
 export function AutoExpandTextarea({ value, onChange, ...props }) {
   const ref = useRef(null);
@@ -73,6 +76,8 @@ const SubItem = memo(function SubItem({
   const [selectedContact, setSelectedContact] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const { data: session } = useSession();
+
 
   const addContactMutation = useMutation({
     mutationFn: (payload) => axiosInstance.post("/contacts", payload),
@@ -147,31 +152,36 @@ const SubItem = memo(function SubItem({
         onClose={() => setShowSuccess(false)}
         message="Contact saved!"
       />
-      <div className="flex items-center justify-end gap-2">
-        <button
-          onClick={handleDeleteClick}
-          className="border border-red-600 text-red-700 px-2 py-1 rounded hover:bg-red-50 hover:cursor-pointer mb-2"
-          type="button"
-          title="Delete"
-        >
-          Delete
-        </button>
-        {isEditing ? (
+      {(isDirector(session) ||
+        isPM(session) ||
+        isIT(session) ||
+        isBroker(session)) && (
+        <div className="flex items-center justify-end gap-2">
           <button
-            onClick={() => setEditingIdx(null)}
-            className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer mb-2"
+            onClick={handleDeleteClick}
+            className="border border-red-600 text-red-700 px-2 py-1 rounded hover:bg-red-50 hover:cursor-pointer mb-2"
+            type="button"
+            title="Delete"
           >
-            Cancel
+            Delete
           </button>
-        ) : (
-          <button
-            onClick={() => setEditingIdx(idx)}
-            className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer mb-2"
-          >
-            Edit
-          </button>
-        )}
-      </div>
+          {isEditing ? (
+            <button
+              onClick={() => setEditingIdx(null)}
+              className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer mb-2"
+            >
+              Cancel
+            </button>
+          ) : (
+            <button
+              onClick={() => setEditingIdx(idx)}
+              className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer mb-2"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
         {fields.map((field, id) => {
           let value = item[field.id];

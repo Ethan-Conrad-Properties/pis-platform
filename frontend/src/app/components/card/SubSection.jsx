@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import SuccessModal from "../common/SuccessModal";
 import SubItem from "./SubItem";
+import { isDirector, isPM, isIT, isBroker } from "@/app/constants/roles";
+import { useSession } from "next-auth/react";
 
 export default function SubSection({
   type,
@@ -13,10 +14,11 @@ export default function SubSection({
   onContactChange,
   renderContent,
   onAdd,
-  onDelete
+  onDelete,
 }) {
   const [editingIdx, setEditingIdx] = useState(null);
   const [expanded, setExpanded] = useState(false);
+  const { data: session } = useSession();
 
   const handleSaveWrapper = async (type, idx) => {
     await onSave(type, idx);
@@ -74,19 +76,23 @@ export default function SubSection({
               No {label.toLowerCase()} listed.
             </div>
           )}
-
-          <div className="flex justify-start">
-            <button
-              className="mt-2 text-xs text-green-700 border border-green-700 px-2 py-1 rounded hover:bg-green-50 hover:cursor-pointer inline-block"
-              type="button"
-              onClick={() => {
-                onAdd(type);
-                setEditingIdx(items?.length || 0);
-              }}
-            >
-              + Add {label.slice(0, -1)}
-            </button>
-          </div>
+          {(isDirector(session) ||
+            isPM(session) ||
+            isIT(session) ||
+            isBroker(session)) && (
+            <div className="flex justify-start">
+              <button
+                className="mt-2 text-xs text-green-700 border border-green-700 px-2 py-1 rounded hover:bg-green-50 hover:cursor-pointer inline-block"
+                type="button"
+                onClick={() => {
+                  onAdd(type);
+                  setEditingIdx(items?.length || 0);
+                }}
+              >
+                + Add {label.slice(0, -1)}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </>

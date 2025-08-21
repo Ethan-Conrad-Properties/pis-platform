@@ -147,7 +147,7 @@ export default function Home() {
   if (error) return <div>Error loading properties.</div>;
 
   return (
-    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-12 pb-4 md:pb-6 relative">
+    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-4 md:pt-10 pb-4 md:pb-6 relative">
       <div className="flex items-center justify-between mb-2 md:mb-6">
         <h1 className="text-2xl md:text-4xl font-bold text-left">
           Welcome to the PIS Platform
