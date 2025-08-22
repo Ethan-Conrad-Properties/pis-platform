@@ -6,8 +6,8 @@ Prereqs:
 - Have Python installed
 - Have Node.js + npm installed
 
-1. Inside of VS Code, type git clone https://github.com/Ethan-Conrad-Properties/pis-platform.git in a new terminal (note: this will create a local copy of this repository in the folder you're located in)
-2. Once cloned, run frontend server and backend server locally. Follow these steps in terminal. 
+1. Inside of VS Code, type ```git clone https://github.com/Ethan-Conrad-Properties/pis-platform.git``` in a new terminal (note: this will create a local copy of this repository in the folder you're located in)
+3. Once cloned, run frontend server and backend server locally. Follow these steps in terminal. 
 
 ```
 # Install frontend dependencies and run frontend server
@@ -23,7 +23,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-You will know be able to open up the app locally at http://localhost:3000/.
+You will now be able to open up the app locally at http://localhost:3000/.
 
 When making changes to any code, you need to push the changes to this repository to see the changes take effect in the deployed app.
 Follow these steps after changing code.
