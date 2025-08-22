@@ -6,7 +6,7 @@ Prereqs:
 - Have Python installed
 - Have Node.js + npm installed
 
-1. Inside of VS Code, type git clone [repository-name] in a new terminal (note: this will create a local copy of this repository in the folder you're located in)
+1. Inside of VS Code, type git clone https://github.com/Ethan-Conrad-Properties/pis-platform.git in a new terminal (note: this will create a local copy of this repository in the folder you're located in)
 2. Once cloned, run frontend server and backend server locally. Follow these steps in terminal. 
 
 ```
