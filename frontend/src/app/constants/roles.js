@@ -4,6 +4,7 @@ export const ROLES = {
   USER: "User",
   PM: "PropertyManager",
   Broker: "Broker",
+  AP: "AccountsPayable",
 };
 
 
@@ -25,4 +26,8 @@ export function isPM(session) {
 
 export function isBroker(session) {
   return hasRole(session, ROLES.Broker);
+}
+
+export function isAP(session) {
+  return hasRole(session, ROLES.AP);
 }

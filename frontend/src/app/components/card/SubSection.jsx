@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import SubItem from "./SubItem";
-import { isDirector, isPM, isIT, isBroker } from "@/app/constants/roles";
+import { isDirector, isPM, isIT, isAP } from "@/app/constants/roles";
 import { useSession } from "next-auth/react";
 
 export default function SubSection({
@@ -78,8 +78,8 @@ export default function SubSection({
           )}
           {(isDirector(session) ||
             isPM(session) ||
-            isIT(session) ||
-            isBroker(session)) && (
+            isIT(session)) ||
+            isAP(session) && (
             <div className="flex justify-start">
               <button
                 className="mt-2 text-xs text-green-700 border border-green-700 px-2 py-1 rounded hover:bg-green-50 hover:cursor-pointer inline-block"

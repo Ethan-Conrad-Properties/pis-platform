@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import ContactInfoModal from "../common/ContactInfoModal";
 import axiosInstance from "@/app/utils/axiosInstance";
 import SuccessModal from "../common/SuccessModal";
-import { isDirector, isPM, isIT, isBroker } from "@/app/constants/roles";
+import { isDirector, isPM, isIT, isAP } from "@/app/constants/roles";
 import { useSession } from "next-auth/react";
 
 
@@ -154,8 +154,8 @@ const SubItem = memo(function SubItem({
       />
       {(isDirector(session) ||
         isPM(session) ||
-        isIT(session) ||
-        isBroker(session)) && (
+        isIT(session)) ||
+        isAP(session) && (
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={handleDeleteClick}

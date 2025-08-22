@@ -17,7 +17,7 @@ import axiosInstance from "./utils/axiosInstance";
 import { filterBySearch, paginate, getTotalPages, sort } from "./utils/helpers";
 import { FaHistory } from "react-icons/fa";
 import Link from "next/link";
-import { isDirector, isIT, isPM, isBroker } from "./constants/roles";
+import { isDirector, isIT, isPM } from "./constants/roles";
 import { signOut } from "next-auth/react";
 import "@n8n/chat/style.css";
 import { createChat } from "@n8n/chat";
@@ -191,8 +191,7 @@ export default function Home() {
           )}
           {(isDirector(session) ||
             isPM(session) ||
-            isIT(session) ||
-            isBroker(session)) && (
+            isIT(session)) && (
             <>
               <ViewToggle view={view} onToggle={setView} />
             </>

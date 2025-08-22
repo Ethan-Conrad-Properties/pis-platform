@@ -20,7 +20,7 @@ import {
 import Image from "next/image";
 import PropertyPhotos from "./PropertyPhotos";
 import { useSession } from "next-auth/react";
-import { isDirector, isPM, isIT, isBroker } from "@/app/constants/roles";
+import { isDirector, isPM, isIT, isAP } from "@/app/constants/roles";
 
 export default function PropertyCard({ property, onUpdate }) {
   const queryClient = useQueryClient();
@@ -557,8 +557,8 @@ export default function PropertyCard({ property, onUpdate }) {
           )}
           {(isDirector(session) ||
             isPM(session) ||
-            isIT(session) ||
-            isBroker(session)) && (
+            isIT(session)) ||
+            isAP(session) && (
             <>
               <button
                 className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
