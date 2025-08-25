@@ -189,13 +189,9 @@ export default function Home() {
               + Add Property
             </button>
           )}
-          {(isDirector(session) ||
-            isPM(session) ||
-            isIT(session)) && (
-            <>
-              <ViewToggle view={view} onToggle={setView} />
-            </>
-          )}
+          <>
+            <ViewToggle view={view} onToggle={setView} />
+          </>
           <PropertyDropdown
             properties={sort(properties, "address")}
             selectedPropertyId={selectedPropertyId}

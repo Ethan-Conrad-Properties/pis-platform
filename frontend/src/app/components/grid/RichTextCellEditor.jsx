@@ -1,34 +1,52 @@
 "use client";
+import React, { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 
-import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
-
-// ✅ Use react-quill-new (React 19 compatible)
-const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
-
-export default function RichTextCellEditor({ value, onValueChange }) {
-  const [editorValue, setEditorValue] = useState(value || "");
+const RichTextCellEditor = forwardRef((props, ref) => {
+  const editorRef = useRef(null);
 
   useEffect(() => {
-    if (onValueChange) onValueChange(editorValue);
-  }, [editorValue]);
+    if (editorRef.current) {
+      editorRef.current.innerHTML = props.value || "";
+      editorRef.current.focus();
+    }
+  }, [props.value]);
+
+  useImperativeHandle(ref, () => ({
+    getValue: () => editorRef.current.innerHTML,
+  }));
+
+  const apply = (cmd, value = null) => {
+    editorRef.current.focus();
+    document.execCommand(cmd, false, value);
+  };
 
   return (
-    <div style={{ width: 220, minHeight: 120, background: "white" }}>
-      <ReactQuill
-        value={editorValue}
-        onChange={setEditorValue}
-        theme="snow"
-        formats={["bold", "italic", "underline", "color", "background"]}
-        modules={{
-          toolbar: [
-            ["bold", "italic", "underline"],
-            [{ color: [] }, { background: [] }],
-            ["clean"],
-          ],
+    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+      {/* small toolbar above text */}
+      <div className="flex gap-2 mb-1 text-xs">
+        <button type="button" onClick={() => apply("bold")}><b>B</b></button>
+        <button type="button" onClick={() => apply("italic")}><i>I</i></button>
+        <button type="button" onClick={() => apply("underline")}><u>U</u></button>
+        <button type="button" onClick={() => apply("foreColor", "red")}>🔴</button>
+        <button type="button" onClick={() => apply("foreColor", "blue")}>🔵</button>
+      </div>
+
+      {/* editable area */}
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        style={{
+          minHeight: "100%",
+          padding: "4px",
+          outline: "none",
+          border: "1px solid #ddd",
+          whiteSpace: "pre-wrap",
         }}
-        style={{ minHeight: "auto" }}
       />
     </div>
   );
-}
+});
+
+RichTextCellEditor.displayName = "RichTextCellEditor";
+export default RichTextCellEditor;
