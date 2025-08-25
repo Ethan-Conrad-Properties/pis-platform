@@ -124,7 +124,8 @@ export default function PropertyCard({ property, onUpdate }) {
         if (i !== idx) return item;
         let updatedContacts;
         if (action === "add") {
-          updatedContacts = [...(item.contacts || []), contact];
+          const { contact_id, ...rest } = contact || {};
+          updatedContacts = [...(item.contacts || []), rest];
         } else if (action === "edit") {
           updatedContacts = (item.contacts || []).map((c) =>
             c.contact_id === contact.contact_id ? contact : c
