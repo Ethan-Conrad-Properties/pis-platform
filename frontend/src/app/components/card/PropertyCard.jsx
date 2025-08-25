@@ -557,8 +557,8 @@ export default function PropertyCard({ property, onUpdate }) {
           )}
           {(isDirector(session) ||
             isPM(session) ||
-            isIT(session)) ||
-            isAP(session) && (
+            isIT(session) ||
+            isAP(session)) && (
             <>
               <button
                 className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"

@@ -1,6 +1,7 @@
 import React, { useRef, useCallback, useEffect, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AddIcon } from "./GridCells";
+import RichTextCellEditor from "./RichTextCellEditor";
 
 export default function PropertyGridSection({
   title,
@@ -30,8 +31,13 @@ export default function PropertyGridSection({
       resizable: true,
       sortable: true,
       filter: true,
-      cellEditor: "agLargeTextCellEditor",
+      cellEditor: RichTextCellEditor,
       cellEditorPopup: true,
+      cellEditorPopupPosition: "over",
+      cellRenderer: (params) =>
+      params.value ? (
+        <div dangerouslySetInnerHTML={{ __html: params.value }} />
+      ) : "",
       width: 600,
       minWidth: 160,
     }),

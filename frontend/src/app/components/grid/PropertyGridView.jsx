@@ -75,6 +75,18 @@ export default function PropertyGridView({ property }) {
     enabled: !!property.yardi,
   });
 
+  // Contacts
+  const { data: contacts = [], refetch: refetchContacts } = useQuery({
+    queryKey: ["contacts", property.yardi],
+    queryFn: async () => {
+      const res = await axiosInstance.get(
+        `/contacts?property_yardi=${property.yardi}`
+      );
+      return res.data;
+    },
+    enabled: !!property.yardi,
+  });
+
   // ---- Mutations: add/update ----
   const addSuiteMutation = useMutation({
     mutationFn: (payload) => axiosInstance.post("/suites", payload),
@@ -124,6 +136,19 @@ export default function PropertyGridView({ property }) {
     onError: () => alert("Error updating code"),
   });
 
+  const addContactMutation = useMutation({
+    mutationFn: (payload) => axiosInstance.post("/contacts", payload),
+    onSuccess: () => refetchContacts(),
+    onError: () => alert("Error adding contact"),
+  });
+
+  const updateContactMutation = useMutation({
+    mutationFn: (payload) =>
+      axiosInstance.put(`/contacts/${payload.contact_id}`, payload),
+    onSuccess: () => refetchContacts(),
+    onError: () => alert("Error updating contact"),
+  });
+
   // ---- delete mutations ----
   const deleteSuiteMutation = useMutation({
     mutationFn: (id) => axiosInstance.delete(`/suites/${id}`),
@@ -153,6 +178,12 @@ export default function PropertyGridView({ property }) {
       alert("Property status updated.");
     },
     onError: () => alert("Error updating property"),
+  });
+
+  const deleteContactMutation = useMutation({
+    mutationFn: (id) => axiosInstance.delete(`/contacts/${id}`),
+    onSuccess: () => refetchContacts(),
+    onError: () => alert("Error deleting contact"),
   });
 
   // Section refs
@@ -242,6 +273,12 @@ export default function PropertyGridView({ property }) {
       update: updateCodeMutation,
       del: deleteCodeMutation,
       idField: "code_id",
+    },
+    contacts: {
+      add: addContactMutation,
+      update: updateContactMutation,
+      del: deleteContactMutation,
+      idField: "contact_id",
     },
   };
 
@@ -357,7 +394,7 @@ export default function PropertyGridView({ property }) {
         columns={mainColumns}
         rows={[property]}
         onAddRow={null}
-        onCellValueChanged={onCellValueChanged}
+        onCellValueChanged={() => {}}
       />
 
       <div ref={suitesRef}>

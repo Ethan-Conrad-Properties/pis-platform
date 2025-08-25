@@ -154,8 +154,8 @@ const SubItem = memo(function SubItem({
       />
       {(isDirector(session) ||
         isPM(session) ||
-        isIT(session)) ||
-        isAP(session) && (
+        isIT(session) ||
+        isAP(session)) && (
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={handleDeleteClick}

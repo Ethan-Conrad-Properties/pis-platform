@@ -78,8 +78,8 @@ export default function SubSection({
           )}
           {(isDirector(session) ||
             isPM(session) ||
-            isIT(session)) ||
-            isAP(session) && (
+            isIT(session) ||
+            isAP(session)) && (
             <div className="flex justify-start">
               <button
                 className="mt-2 text-xs text-green-700 border border-green-700 px-2 py-1 rounded hover:bg-green-50 hover:cursor-pointer inline-block"
