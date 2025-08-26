@@ -15,9 +15,9 @@ import LoginForm from "./Login";
 import SessionTimeout from "./components/common/SessionTimeout";
 import axiosInstance from "./utils/axiosInstance";
 import { filterBySearch, paginate, getTotalPages, sort } from "./utils/helpers";
-import { FaHistory } from "react-icons/fa";
+import { FaHistory, FaLink } from "react-icons/fa";
 import Link from "next/link";
-import { isDirector, isIT, isPM } from "./constants/roles";
+import { isDirector, isIT } from "./constants/roles";
 import { signOut } from "next-auth/react";
 import "@n8n/chat/style.css";
 import { createChat } from "@n8n/chat";
@@ -175,6 +175,10 @@ export default function Home() {
           placeholder="Search properties..."
         />
         <div className="md:flex space-x-4 md:space-x-1 gap-2 items-center">
+          <button className=" flex p-1 items-center rounded mb-4 hover:cursor-pointer hover:underline">
+            <Link href="/quick-links">Quick Links</Link>
+            <FaLink className="ml-1" />
+          </button>
           {(isDirector(session) || isIT(session)) && (
             <button className=" flex p-1 items-center rounded mb-4 hover:cursor-pointer hover:underline">
               <Link href="/edit-history">View Edit History</Link>

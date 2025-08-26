@@ -21,12 +21,14 @@ export default function PropertyGridSection({
   autoExpand,
 }) {
   const gridRef = useRef(null);
-  const [collapsed, setCollapsed] = useState(true); // collapsed by default
+  const [collapsed, setCollapsed] = useState(true);
+  const [rowData, setRowData] = useState(rows);
   const { data: session } = useSession();
 
-  // ✅ Only these roles can edit
   const canEdit =
     isDirector(session) || isPM(session) || isAP(session) || isIT(session);
+
+  const storageKey = `${title}-gridState`;
 
   const getRowId = useCallback(
     (params) =>
@@ -40,12 +42,12 @@ export default function PropertyGridSection({
     []
   );
 
-  // ✅ Force all incoming columns to respect `canEdit`
+  // enforce editability per role
   const enforcedColDefs = useMemo(
     () =>
       columns.map((col) => ({
         ...col,
-        editable: canEdit, // override any per-column setting
+        editable: canEdit,
       })),
     [columns, canEdit]
   );
@@ -61,34 +63,94 @@ export default function PropertyGridSection({
       flex: 1,
       wrapText: true,
       autoHeight: true,
+      rowDrag: true,
     }),
     []
   );
 
   const onHeaderCellDblClicked = useCallback((params) => {
-    const col = params.column;
-    params.api.autoSizeColumns([col.getColId()]);
+    params.api.autoSizeColumns([params.column.getColId()]);
   }, []);
+
+  // restore row order whenever rows change
+  useEffect(() => {
+    if (!rows) return;
+
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const { rowOrder } = JSON.parse(saved);
+        if (rowOrder) {
+          const ordered = rowOrder
+            .map((id) => rows.find((r) => getRowId({ data: r }) === id))
+            .filter(Boolean);
+          const leftovers = rows.filter(
+            (r) => !rowOrder.includes(getRowId({ data: r }))
+          );
+          setRowData([...ordered, ...leftovers]);
+          return;
+        }
+      } catch {
+        console.warn("Bad grid state in storage");
+      }
+    }
+
+    setRowData(rows);
+  }, [rows, storageKey, getRowId]);
+
+  // restore column state
+  const restoreColumnState = useCallback(() => {
+    if (!gridRef.current?.columnApi) return;
+    const saved = localStorage.getItem(storageKey);
+    if (!saved) return;
+    try {
+      const { columnState } = JSON.parse(saved);
+      if (columnState && columnState.length) {
+        gridRef.current.columnApi.applyColumnState({
+          state: columnState,
+          applyOrder: true,
+        });
+      }
+    } catch {
+      console.warn("Bad column state in storage");
+    }
+  }, [storageKey]);
+
+  // save row order
+  const onRowDragEnd = useCallback(() => {
+    if (!gridRef.current?.api) return;
+    const allNodes = [];
+    gridRef.current.api.forEachNode((node) => allNodes.push(node));
+    const newData = allNodes.map((n) => n.data);
+    setRowData(newData);
+
+    const rowOrder = allNodes.map((n) => getRowId(n));
+    const existing = JSON.parse(localStorage.getItem(storageKey) || "{}");
+    localStorage.setItem(storageKey, JSON.stringify({ ...existing, rowOrder }));
+  }, [storageKey, getRowId]);
+
+  // save column state
+  const saveColumnState = useCallback(() => {
+    if (!gridRef.current?.columnApi) return;
+    const state = gridRef.current.columnApi.getColumnState();
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        ...JSON.parse(localStorage.getItem(storageKey) || "{}"),
+        columnState: state,
+      })
+    );
+  }, [storageKey]);
 
   const popupParent = useMemo(
     () => (typeof document !== "undefined" ? document.body : null),
     []
   );
 
-  useEffect(() => {
-    if (!collapsed && gridRef.current?.api) {
-      // run after next paint to ensure grid is ready
-      setTimeout(() => {
-        gridRef.current?.api?.sizeColumnsToFit();
-        gridRef.current?.api?.resetRowHeights();
-      }, 0);
-    }
-  }, [collapsed, rows]);
-
+  // auto expand on search
   useEffect(() => {
     if (search && rows && rows.length > 0 && autoExpand) {
       setCollapsed(false);
-      // scroll first match into view
       setTimeout(() => {
         if (gridRef.current?.api && rows.length > 0) {
           gridRef.current.api.ensureIndexVisible(0, "top");
@@ -97,9 +159,18 @@ export default function PropertyGridSection({
     }
   }, [search, rows, autoExpand]);
 
+  // resize to fit when opened
+  useEffect(() => {
+    if (!collapsed && gridRef.current?.api) {
+      setTimeout(() => {
+        gridRef.current.api.sizeColumnsToFit();
+        gridRef.current.api.resetRowHeights();
+      }, 0);
+    }
+  }, [collapsed, rowData]);
+
   return (
     <div className="mt-2 flex flex-col border rounded">
-      {/* Section Header */}
       <div
         className="flex items-center justify-between px-4 py-2 bg-gray-100 cursor-pointer"
         onClick={() => setCollapsed((c) => !c)}
@@ -110,10 +181,8 @@ export default function PropertyGridSection({
         </span>
       </div>
 
-      {/* Section Content */}
       {!collapsed && (
         <div className="p-2">
-          {/* Right-aligned Add/Delete */}
           <div className="flex items-center justify-end mb-2 gap-2">
             {canEdit && onAddRow && <AddIcon onClick={onAddRow} />}
             {canEdit && onDeleteRows && (
@@ -131,26 +200,35 @@ export default function PropertyGridSection({
             )}
           </div>
 
-          {/* Grid - auto expands vertically, no internal scroll */}
           <div className="ag-theme-alpine w-full">
             <AgGridReact
               ref={gridRef}
               columnDefs={enforcedColDefs}
-              rowData={rows}
+              rowData={rowData}
               defaultColDef={defaultColDef}
+              rowDragManaged={true}
+              animateRows={true}
               rowSelection="multiple"
               undoRedoCellEditing
               singleClickEdit
               stopEditingWhenCellsLoseFocus={true}
               enterNavigatesVertically={true}
               enterNavigatesVerticallyAfterEdit={true}
-              animateRows
               domLayout="autoHeight"
               getRowId={getRowId}
               deltaRowDataMode={true}
               popupParent={popupParent}
               onColumnHeaderDoubleClicked={onHeaderCellDblClicked}
-              onCellValueChanged={canEdit ? onCellValueChanged : undefined} // block edits from firing
+              onCellValueChanged={canEdit ? onCellValueChanged : undefined}
+              onRowDragEnd={onRowDragEnd}
+              onFirstDataRendered={() => {
+                restoreColumnState();
+                gridRef.current.api.sizeColumnsToFit();
+              }}
+              onColumnMoved={saveColumnState}
+              onColumnResized={saveColumnState}
+              onColumnPinned={saveColumnState}
+              onColumnVisible={saveColumnState}
             />
           </div>
         </div>

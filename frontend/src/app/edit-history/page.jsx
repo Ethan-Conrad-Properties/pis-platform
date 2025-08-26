@@ -15,7 +15,7 @@ export default function EditHistoryPage() {
   });
 
   return (
-    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-8 md:pt-16 pb-4 md:pb-6">
+    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-36 pt-8 md:pt-16 pb-4 md:pb-6">
       <Link href="/" className="underline text-blue-600 mb-4 block">← Back to Home</Link>
       <h1 className="text-2xl md:text-4xl text-center md:text-left font-bold mb-4 justify-between">
         Edit History
