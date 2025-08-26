@@ -402,6 +402,8 @@ export default function PropertyGridView({ property }) {
           title="Suites"
           columns={agSuiteColumns}
           rows={filteredSuites}
+          search={search}
+          autoExpand
           onAddRow={() => handleAddRow("suites")}
           onDeleteRows={(rows) => handleDeleteRows("suites", rows)}
           onCellValueChanged={(params) => onCellValueChanged("suites", params)}
@@ -413,6 +415,8 @@ export default function PropertyGridView({ property }) {
           title="Services"
           columns={agServiceColumns}
           rows={filteredServices}
+          search={search}
+          autoExpand
           onAddRow={() => handleAddRow("services")}
           onDeleteRows={(rows) => handleDeleteRows("services", rows)}
           onCellValueChanged={(params) =>
@@ -426,6 +430,8 @@ export default function PropertyGridView({ property }) {
           title="Utilities"
           columns={agUtilityColumns}
           rows={filteredUtilities}
+          search={search}
+          autoExpand
           onAddRow={() => handleAddRow("utilities")}
           onDeleteRows={(rows) => handleDeleteRows("utilities", rows)}
           onCellValueChanged={(params) =>
@@ -439,6 +445,8 @@ export default function PropertyGridView({ property }) {
           title="Codes"
           columns={agCodeColumns}
           rows={filteredCodes}
+          search={search}
+          autoExpand
           onAddRow={() => handleAddRow("codes")}
           onDeleteRows={(rows) => handleDeleteRows("codes", rows)}
           onCellValueChanged={(params) => onCellValueChanged("codes", params)}

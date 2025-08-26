@@ -17,13 +17,16 @@ export default function PropertyGridSection({
   onAddRow,
   onDeleteRows,
   onCellValueChanged,
+  search,
+  autoExpand,
 }) {
   const gridRef = useRef(null);
   const [collapsed, setCollapsed] = useState(true); // collapsed by default
   const { data: session } = useSession();
 
   // ✅ Only these roles can edit
-  const canEdit = isDirector(session) || isPM(session) || isAP(session) || isIT(session);
+  const canEdit =
+    isDirector(session) || isPM(session) || isAP(session) || isIT(session);
 
   const getRowId = useCallback(
     (params) =>
@@ -82,6 +85,18 @@ export default function PropertyGridSection({
     }
   }, [collapsed, rows]);
 
+  useEffect(() => {
+    if (search && rows && rows.length > 0 && autoExpand) {
+      setCollapsed(false);
+      // scroll first match into view
+      setTimeout(() => {
+        if (gridRef.current?.api && rows.length > 0) {
+          gridRef.current.api.ensureIndexVisible(0, "top");
+        }
+      }, 0);
+    }
+  }, [search, rows, autoExpand]);
+
   return (
     <div className="mt-2 flex flex-col border rounded">
       {/* Section Header */}
@@ -120,7 +135,7 @@ export default function PropertyGridSection({
           <div className="ag-theme-alpine w-full">
             <AgGridReact
               ref={gridRef}
-              columnDefs={enforcedColDefs} 
+              columnDefs={enforcedColDefs}
               rowData={rows}
               defaultColDef={defaultColDef}
               rowSelection="multiple"

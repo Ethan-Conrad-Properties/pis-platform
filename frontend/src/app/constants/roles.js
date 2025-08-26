@@ -4,7 +4,7 @@ export const ROLES = {
   USER: "User",
   PM: "PropertyManager",
   Broker: "Broker",
-  AP: "AccountsPayable",
+  AP: "AP",
 };
 
 
