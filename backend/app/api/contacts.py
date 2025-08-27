@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import SuiteContact, ServiceContact, UtilityContact, Contact
 from app.auth import verify_token
+from app.helpers import log_add, log_edit, log_delete
 
 # gets DB Session
 
@@ -16,7 +17,10 @@ async def update_contact(contact_id: int, updated: dict = Body(...), db: Session
         raise HTTPException(status_code=404, detail="Contact not found")
     for key, value in updated.items():
         if hasattr(contact, key):
-            setattr(contact, key, value)
+            old_value = getattr(contact, key)
+            if old_value != value:
+                setattr(contact, key, value)
+                log_edit(db, user["name"], "contact", contact.contact_id, key, old_value, value, contact)
     db.commit()
     db.refresh(contact)
     return {k: v for k, v in contact.__dict__.items() if not k.startswith('_')}
@@ -29,6 +33,7 @@ async def create_contact(contact: dict = Body(...), db: Session = Depends(get_db
     new_contact = Contact(**contact_data)
     db.add(new_contact)
     db.commit()
+    log_add(db, user["name"], "contact", new_contact.contact_id, new_contact.__dict__, new_contact)
     db.refresh(new_contact)
 
     # Link to suite/service/utility if provided
@@ -53,6 +58,8 @@ async def delete_contact(contact_id: int, db: Session = Depends(get_db), user=De
     db.query(SuiteContact).filter(SuiteContact.contact_id == contact_id).delete()
     db.query(ServiceContact).filter(ServiceContact.contact_id == contact_id).delete()
     db.query(UtilityContact).filter(UtilityContact.contact_id == contact_id).delete()
+
+    log_delete(db, user["name"], "contact", contact.contact_id, contact.__dict__, contact)
 
     # Remove the contact itself
     db.delete(contact)

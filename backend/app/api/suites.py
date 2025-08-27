@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Suite, Contact, SuiteContact
 from app.auth import verify_token
+from app.helpers import log_add, log_edit, log_delete
 
 
 router = APIRouter()
@@ -28,6 +29,7 @@ async def create_suite(suite: dict = Body(...), db: Session = Depends(get_db), u
     db.add(new_suite)
     db.commit()
     db.refresh(new_suite)
+    log_add(db, user["name"], "suite", new_suite.suite_id, new_suite.__dict__, new_suite)
     return {k: v for k, v in new_suite.__dict__.items() if not k.startswith('_')}
 
 # Update a suite
@@ -37,7 +39,11 @@ async def update_suite(suite_id: int, updated: dict = Body(...), db: Session = D
     if not suite:
         raise HTTPException(status_code=404, detail="Suite not found")
     for key, value in updated.items():
-        setattr(suite, key, value)
+        if hasattr(suite, key):
+            old_value = getattr(suite, key)
+            if old_value != value:
+                setattr(suite, key, value)
+                log_edit(db, user["name"], "suite", suite.suite_id, key, old_value, value, suite)
     db.commit()
     db.refresh(suite)
     return {k: v for k, v in suite.__dict__.items() if not k.startswith('_')}
@@ -48,6 +54,8 @@ async def delete_suite(suite_id: int, db: Session = Depends(get_db), user=Depend
     suite = db.query(Suite).filter(Suite.suite_id == suite_id).first()
     if not suite:
         raise HTTPException(status_code=404, detail="Suite not found")
+    log_delete(db, user["name"], "suite", suite.suite_id, suite.__dict__, suite)
+
     db.delete(suite)
     db.commit()
     return {"detail": "Suite deleted"}

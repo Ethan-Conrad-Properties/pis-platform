@@ -227,7 +227,7 @@ async def update_property(yardi: str, updated: dict = Body(...), db: Session = D
             if old_value != value:
                 setattr(property, key, value)
                 # Log the edit
-                log_edit(db, user["name"], "property", property.yardi, key, old_value, value)
+                log_edit(db, user["name"], "property", property.yardi, key, old_value, value, entity_obj=property)
     db.commit()
     db.refresh(property)
     return {"message": "Property updated successfully", "property": property}
@@ -240,6 +240,6 @@ async def create_property(property: dict = Body(...), db: Session = Depends(get_
     db.commit()
     db.refresh(new_property)
     # Log the creation
-    log_add(db, user["username"], "property", new_property.yardi, new_property)
+    log_add(db, user["name"], "property", new_property.yardi, new_property, entity_obj=new_property)
     return {k: v for k, v in new_property.__dict__.items() if not k.startswith('_')}
 
