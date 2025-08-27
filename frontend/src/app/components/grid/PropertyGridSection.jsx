@@ -9,9 +9,13 @@ import { AgGridReact } from "ag-grid-react";
 import { AddIcon } from "./GridCells";
 import { useSession } from "next-auth/react";
 import { isDirector, isPM, isAP, isIT } from "@/app/constants/roles";
+import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function PropertyGridSection({
   title,
+  yardi,
   columns,
   rows,
   onAddRow,
@@ -28,7 +32,7 @@ export default function PropertyGridSection({
   const canEdit =
     isDirector(session) || isPM(session) || isAP(session) || isIT(session);
 
-  const storageKey = `${title}-gridState`;
+  const rowOrderKey = `${yardi}-${title}-rowOrder`;
 
   const getRowId = useCallback(
     (params) =>
@@ -68,75 +72,38 @@ export default function PropertyGridSection({
     []
   );
 
-  // restore row order whenever rows change
+  // restore row order
   useEffect(() => {
     if (!rows) return;
-
-    const saved = localStorage.getItem(storageKey);
+    const saved = localStorage.getItem(rowOrderKey);
     if (saved) {
       try {
-        const { rowOrder } = JSON.parse(saved);
-        if (rowOrder) {
-          const ordered = rowOrder
-            .map((id) => rows.find((r) => getRowId({ data: r }) === id))
-            .filter(Boolean);
-          const leftovers = rows.filter(
-            (r) => !rowOrder.includes(getRowId({ data: r }))
-          );
-          setRowData([...ordered, ...leftovers]);
-          return;
-        }
+        const rowOrder = JSON.parse(saved);
+        const ordered = rowOrder
+          .map((id) => rows.find((r) => getRowId({ data: r }) === id))
+          .filter(Boolean);
+        const leftovers = rows.filter(
+          (r) => !rowOrder.includes(getRowId({ data: r }))
+        );
+        setRowData([...ordered, ...leftovers]);
+        return;
       } catch {
-        console.warn("Bad grid state in storage");
+        console.warn("Bad row order in storage");
       }
     }
-
     setRowData(rows);
-  }, [rows, storageKey, getRowId]);
-
-  // restore column state
-  const restoreColumnState = useCallback(() => {
-    if (!gridRef.current?.columnApi) return;
-    const saved = localStorage.getItem(storageKey);
-    if (!saved) return;
-    try {
-      const { columnState } = JSON.parse(saved);
-      if (columnState && columnState.length) {
-        gridRef.current.columnApi.applyColumnState({
-          state: columnState,
-          applyOrder: true,
-        });
-      }
-    } catch {
-      console.warn("Bad column state in storage");
-    }
-  }, [storageKey]);
+  }, [rows, rowOrderKey, getRowId]);
 
   // save row order
   const onRowDragEnd = useCallback(() => {
     if (!gridRef.current?.api) return;
     const allNodes = [];
     gridRef.current.api.forEachNode((node) => allNodes.push(node));
-    const newData = allNodes.map((n) => n.data);
-    setRowData(newData);
+    setRowData(allNodes.map((n) => n.data));
 
     const rowOrder = allNodes.map((n) => getRowId(n));
-    const existing = JSON.parse(localStorage.getItem(storageKey) || "{}");
-    localStorage.setItem(storageKey, JSON.stringify({ ...existing, rowOrder }));
-  }, [storageKey, getRowId]);
-
-  // save column state
-  const saveColumnState = useCallback(() => {
-    const state = gridRef.current.columnApi.getColumnState();
-    console.log(state)
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify({
-        ...JSON.parse(localStorage.getItem(storageKey) || "{}"),
-        columnState: state,
-      })
-    );
-  }, [storageKey]);
+    localStorage.setItem(rowOrderKey, JSON.stringify(rowOrder));
+  }, [rowOrderKey, getRowId]);
 
   const popupParent = useMemo(
     () => (typeof document !== "undefined" ? document.body : null),
@@ -204,13 +171,6 @@ export default function PropertyGridSection({
               popupParent={popupParent}
               onCellValueChanged={canEdit ? onCellValueChanged : undefined}
               onRowDragEnd={onRowDragEnd}
-              onFirstDataRendered={() => {
-                restoreColumnState();
-              }}
-              onColumnMoved={saveColumnState}
-              onColumnResized={saveColumnState}
-              onColumnPinned={saveColumnState}
-              onColumnVisible={saveColumnState}
             />
           </div>
         </div>

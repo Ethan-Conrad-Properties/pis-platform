@@ -74,10 +74,11 @@ export default function PropertyCard({ property, onUpdate }) {
     );
 
   // Suites
-  const orderedSuites = reorderFromStorage("Suites", form.suites, getRowId);
+  const orderedSuites = reorderFromStorage(property.yardi,"Suites", form.suites, getRowId);
 
   // Services
   const orderedServices = reorderFromStorage(
+    property.yardi,
     "Services",
     form.services,
     getRowId
@@ -85,13 +86,14 @@ export default function PropertyCard({ property, onUpdate }) {
 
   // Utilities
   const orderedUtilities = reorderFromStorage(
+    property.yardi,
     "Utilities",
     form.utilities,
     getRowId
   );
 
   // Codes
-  const orderedCodes = reorderFromStorage("Codes", form.codes, getRowId);
+  const orderedCodes = reorderFromStorage(property.yardi, "Codes", form.codes, getRowId);
 
   // getFields for each section
   const getSuiteFields = (item) => [

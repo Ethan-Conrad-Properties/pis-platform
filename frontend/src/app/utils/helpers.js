@@ -71,12 +71,16 @@ export function exportProperty(property) {
       keysToOmit.forEach((key) => delete newObj[key]);
       newObj.contacts =
         obj.contacts && obj.contacts.length
-          ? obj.contacts.map((c) => {
-              const office = c.office_number || "";
-              const cell = c.cell_number || "";
-              const phone = office || cell || c.phone || "";
-              return `${c.name}${c.title ? ", " + c.title : ""} (${phone}${phone && c.email ? ", " : ""}${c.email || ""})`;
-            }).join("\n")
+          ? obj.contacts
+              .map((c) => {
+                const office = c.office_number || "";
+                const cell = c.cell_number || "";
+                const phone = office || cell || c.phone || "";
+                return `${c.name}${c.title ? ", " + c.title : ""} (${phone}${
+                  phone && c.email ? ", " : ""
+                }${c.email || ""})`;
+              })
+              .join("\n")
           : "";
       return newObj;
     });
@@ -110,15 +114,17 @@ export function exportProperty(property) {
   XLSX.writeFile(workbook, fileName);
 }
 
-export function reorderFromStorage(title, items = [], getRowId) {
+export function reorderFromStorage(yardi, title, items = [], getRowId) {
   if (!items || items.length === 0) return [];
 
+  const rowOrderKey = `${yardi}-${title}-rowOrder`;
+
   try {
-    const saved = localStorage.getItem(`${title}-gridState`);
+    const saved = localStorage.getItem(rowOrderKey);
     if (!saved) return items;
 
-    const { rowOrder } = JSON.parse(saved);
-    if (!rowOrder) return items;
+    const rowOrder = JSON.parse(saved);
+    if (!Array.isArray(rowOrder)) return items;
 
     // put items into saved order
     const ordered = rowOrder

@@ -400,6 +400,7 @@ export default function PropertyGridView({ property }) {
       <div ref={suitesRef}>
         <PropertyGridSection
           title="Suites"
+          yardi={property.yardi}
           columns={agSuiteColumns}
           rows={filteredSuites}
           search={search}
@@ -413,6 +414,7 @@ export default function PropertyGridView({ property }) {
       <div ref={servicesRef}>
         <PropertyGridSection
           title="Services"
+          yardi={property.yardi}
           columns={agServiceColumns}
           rows={filteredServices}
           search={search}
@@ -428,6 +430,7 @@ export default function PropertyGridView({ property }) {
       <div ref={utilitiesRef}>
         <PropertyGridSection
           title="Utilities"
+          yardi={property.yardi}
           columns={agUtilityColumns}
           rows={filteredUtilities}
           search={search}
@@ -443,6 +446,7 @@ export default function PropertyGridView({ property }) {
       <div ref={codesRef}>
         <PropertyGridSection
           title="Codes"
+          yardi={property.yardi}
           columns={agCodeColumns}
           rows={filteredCodes}
           search={search}
