@@ -8,6 +8,7 @@ import {
   formatDate,
   filterBySearch,
   exportProperty,
+  reorderFromStorage,
   sort,
 } from "@/app/utils/helpers";
 import {
@@ -63,6 +64,35 @@ export default function PropertyCard({ property, onUpdate }) {
     });
   }, [propertyData]);
 
+  const getRowId = ({ data }) =>
+    String(
+      data.yardi ??
+        data.suite_id ??
+        data.service_id ??
+        data.utility_id ??
+        data.code_id
+    );
+
+  // Suites
+  const orderedSuites = reorderFromStorage("Suites", form.suites, getRowId);
+
+  // Services
+  const orderedServices = reorderFromStorage(
+    "Services",
+    form.services,
+    getRowId
+  );
+
+  // Utilities
+  const orderedUtilities = reorderFromStorage(
+    "Utilities",
+    form.utilities,
+    getRowId
+  );
+
+  // Codes
+  const orderedCodes = reorderFromStorage("Codes", form.codes, getRowId);
+
   // getFields for each section
   const getSuiteFields = (item) => [
     item.suite,
@@ -89,18 +119,18 @@ export default function PropertyCard({ property, onUpdate }) {
   const getCodeFields = (item) => [item.description, item.code, item.notes];
 
   // Filtered sub-items
-  const filteredSuites = filterBySearch(form.suites, getSuiteFields, search);
+  const filteredSuites = filterBySearch(orderedSuites, getSuiteFields, search);
   const filteredServices = filterBySearch(
-    sort(form.services, "service_type"),
+    orderedServices,
     getServiceFields,
     search
   );
   const filteredUtilities = filterBySearch(
-    form.utilities,
+    orderedUtilities,
     getUtilityFields,
     search
   );
-  const filteredCodes = filterBySearch(form.codes, getCodeFields, search);
+  const filteredCodes = filterBySearch(orderedCodes, getCodeFields, search);
 
   // Handle property field changes (local state for instant UI)
   const handleChange = (e) => {
@@ -164,7 +194,6 @@ export default function PropertyCard({ property, onUpdate }) {
       setEditing(false);
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
       if (onUpdate) onUpdate(form);
     },
     onError: (error) =>
@@ -177,7 +206,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error updating suite"),
   });
@@ -188,7 +216,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error updating service"),
   });
@@ -199,7 +226,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error updating utility"),
   });
@@ -209,7 +235,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error updating code"),
   });
@@ -224,7 +249,6 @@ export default function PropertyCard({ property, onUpdate }) {
       setForm((f) => ({ ...f, active: variables }));
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
       if (onUpdate) onUpdate({ ...form, active: variables });
     },
     onError: () => alert("Error updating property"),
@@ -240,7 +264,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error adding suite"),
   });
@@ -254,7 +277,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error adding service"),
   });
@@ -268,7 +290,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error adding utility"),
   });
@@ -279,7 +300,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error adding code"),
   });
@@ -290,7 +310,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error deleting suite"),
   });
@@ -299,7 +318,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error deleting service"),
   });
@@ -308,7 +326,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error deleting utility"),
   });
@@ -317,7 +334,6 @@ export default function PropertyCard({ property, onUpdate }) {
     onSuccess: () => {
       setShowModal(true);
       refetch();
-      queryClient.invalidateQueries(["properties"]);
     },
     onError: () => alert("Error deleting code"),
   });

@@ -109,3 +109,30 @@ export function exportProperty(property) {
   const fileName = `${property.address || property.yardi || "property"}.xlsx`;
   XLSX.writeFile(workbook, fileName);
 }
+
+export function reorderFromStorage(title, items = [], getRowId) {
+  if (!items || items.length === 0) return [];
+
+  try {
+    const saved = localStorage.getItem(`${title}-gridState`);
+    if (!saved) return items;
+
+    const { rowOrder } = JSON.parse(saved);
+    if (!rowOrder) return items;
+
+    // put items into saved order
+    const ordered = rowOrder
+      .map((id) => items.find((r) => getRowId({ data: r }) === id))
+      .filter(Boolean);
+
+    // append any leftovers not in saved order
+    const leftovers = items.filter(
+      (r) => !rowOrder.includes(getRowId({ data: r }))
+    );
+
+    return [...ordered, ...leftovers];
+  } catch (e) {
+    console.warn("Failed to restore order from storage", e);
+    return items;
+  }
+}

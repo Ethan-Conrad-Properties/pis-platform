@@ -68,10 +68,6 @@ export default function PropertyGridSection({
     []
   );
 
-  const onHeaderCellDblClicked = useCallback((params) => {
-    params.api.autoSizeColumns([params.column.getColId()]);
-  }, []);
-
   // restore row order whenever rows change
   useEffect(() => {
     if (!rows) return;
@@ -131,8 +127,8 @@ export default function PropertyGridSection({
 
   // save column state
   const saveColumnState = useCallback(() => {
-    if (!gridRef.current?.columnApi) return;
     const state = gridRef.current.columnApi.getColumnState();
+    console.log(state)
     localStorage.setItem(
       storageKey,
       JSON.stringify({
@@ -158,16 +154,6 @@ export default function PropertyGridSection({
       }, 0);
     }
   }, [search, rows, autoExpand]);
-
-  // resize to fit when opened
-  useEffect(() => {
-    if (!collapsed && gridRef.current?.api) {
-      setTimeout(() => {
-        gridRef.current.api.sizeColumnsToFit();
-        gridRef.current.api.resetRowHeights();
-      }, 0);
-    }
-  }, [collapsed, rowData]);
 
   return (
     <div className="mt-2 flex flex-col border rounded">
@@ -208,22 +194,18 @@ export default function PropertyGridSection({
               defaultColDef={defaultColDef}
               rowDragManaged={true}
               animateRows={true}
-              rowSelection="multiple"
-              undoRedoCellEditing
+              rowSelection={{ mode: "multiRow" }}
               singleClickEdit
               stopEditingWhenCellsLoseFocus={true}
               enterNavigatesVertically={true}
               enterNavigatesVerticallyAfterEdit={true}
               domLayout="autoHeight"
               getRowId={getRowId}
-              deltaRowDataMode={true}
               popupParent={popupParent}
-              onColumnHeaderDoubleClicked={onHeaderCellDblClicked}
               onCellValueChanged={canEdit ? onCellValueChanged : undefined}
               onRowDragEnd={onRowDragEnd}
               onFirstDataRendered={() => {
                 restoreColumnState();
-                gridRef.current.api.sizeColumnsToFit();
               }}
               onColumnMoved={saveColumnState}
               onColumnResized={saveColumnState}

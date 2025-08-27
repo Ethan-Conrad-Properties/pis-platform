@@ -24,10 +24,10 @@ async function refreshAccessToken(token) {
       ...token,
       accessToken: refreshed.access_token,
       accessTokenExpires: Date.now() + refreshed.expires_in * 1000,
-      refreshToken: refreshed.refresh_token ?? token.refreshToken,
+      refreshToken: refreshed.refresh_token ?? token.refreshToken, // fallback if not returned
     };
   } catch (error) {
-    console.error("Error refreshing access token", error);
+    console.error("❌ Error refreshing access token", error);
     return { ...token, error: "RefreshAccessTokenError" };
   }
 }
@@ -47,35 +47,47 @@ export default NextAuth({
   ],
   callbacks: {
     async jwt({ token, account }) {
+      // First login → set token data
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.accessTokenExpires = Date.now() + account.expires_in * 1000;
 
-        // Decode roles from access token
+        // Decode roles from token if present
         try {
           const base64Url = account.access_token.split(".")[1];
-          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-          const buff = Buffer.from(base64, "base64");
-          const jsonPayload = buff.toString("utf-8");
-          const payload = JSON.parse(jsonPayload);
+          const buff = Buffer.from(
+            base64Url.replace(/-/g, "+").replace(/_/g, "/"),
+            "base64"
+          );
+          const payload = JSON.parse(buff.toString("utf-8"));
           token.roles = payload.roles || [];
-        } catch (e) {
+        } catch {
           token.roles = [];
         }
+
+        return token;
       }
-      return token;
+
+      // If still valid → return as-is
+      if (Date.now() < token.accessTokenExpires) {
+        return token;
+      }
+
+      // Otherwise refresh
+      return await refreshAccessToken(token);
     },
+
     async session({ session, token }) {
       session.accessToken = token.accessToken;
       session.error = token.error;
-      // Add roles to session.user for easy access
       if (!session.user) session.user = {};
       session.user.roles = token.roles || [];
       return session;
     },
+
     async signIn({ user }) {
-      // Only allow ethanconradprop.com emails
+      // Restrict to company email domain
       return user.email.endsWith("@ethanconradprop.com");
     },
   },
