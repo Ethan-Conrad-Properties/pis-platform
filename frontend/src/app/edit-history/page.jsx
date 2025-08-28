@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/app/utils/axiosInstance";
-import { paginate, getTotalPages } from "@/app/utils/helpers";
+import { paginate } from "@/app/utils/helpers";
 import SessionTimeout from "../components/common/SessionTimeout";
 import Link from "next/link";
 import PaginationControls from "../components/common/PaginationControls";

@@ -10,6 +10,7 @@ import { AddIcon } from "./GridCells";
 import { useSession } from "next-auth/react";
 import { isDirector, isPM, isAP, isIT } from "@/app/constants/roles";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
+import RichTextCellEditor from "./RichTextCellEditor";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -33,6 +34,7 @@ export default function PropertyGridSection({
     isDirector(session) || isPM(session) || isAP(session) || isIT(session);
 
   const rowOrderKey = `${yardi}-${title}-rowOrder`;
+  const colStateKey = `${yardi}-${title}-colState`;
 
   const getRowId = useCallback(
     (params) =>
@@ -51,7 +53,7 @@ export default function PropertyGridSection({
     () =>
       columns.map((col) => ({
         ...col,
-        editable: canEdit,
+        editable: true,
       })),
     [columns, canEdit]
   );
@@ -110,6 +112,40 @@ export default function PropertyGridSection({
     []
   );
 
+  // restore col state
+  const restoreColState = useCallback(() => {
+    if (!gridRef.current?.api) {
+      console.warn("⚠️ restoreColState: api not ready");
+      return;
+    }
+    const saved = localStorage.getItem(`${yardi}-${title}-colState`);
+    if (saved) {
+      try {
+        const colState = JSON.parse(saved);
+        gridRef.current.api.applyColumnState({
+          state: colState,
+          applyOrder: true,
+        });
+        console.log("✅ Restored col state:", colState);
+      } catch {
+        console.warn("Bad col state in storage");
+      }
+    }
+  }, [yardi, title]);
+
+  // save col state
+  const saveColState = useCallback(() => {
+    if (!gridRef.current?.api) {
+      console.warn("⚠️ saveColState: api not ready");
+      return;
+    }
+    const colState = gridRef.current.api.getColumnState();
+    localStorage.setItem(
+      `${yardi}-${title}-colState`,
+      JSON.stringify(colState)
+    );
+  }, [yardi, title]);
+
   // auto expand on search
   useEffect(() => {
     if (search && rows && rows.length > 0 && autoExpand) {
@@ -162,7 +198,6 @@ export default function PropertyGridSection({
               rowDragManaged={true}
               animateRows={true}
               rowSelection={{ mode: "multiRow" }}
-              singleClickEdit
               stopEditingWhenCellsLoseFocus={true}
               enterNavigatesVertically={true}
               enterNavigatesVerticallyAfterEdit={true}
@@ -171,6 +206,11 @@ export default function PropertyGridSection({
               popupParent={popupParent}
               onCellValueChanged={canEdit ? onCellValueChanged : undefined}
               onRowDragEnd={onRowDragEnd}
+              onGridReady={restoreColState}
+              onColumnMoved={saveColState}
+              onColumnResized={saveColState}
+              onColumnVisible={saveColState}
+              onColumnPinned={saveColState}
             />
           </div>
         </div>
