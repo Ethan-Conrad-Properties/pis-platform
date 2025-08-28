@@ -1,52 +1,59 @@
-"use client";
-import React, { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import dynamic from "next/dynamic";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
+
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 const RichTextCellEditor = forwardRef((props, ref) => {
-  const editorRef = useRef(null);
+  const [value, setValue] = useState(props.value || "");
+  const quillRef = useRef(null);
 
   useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.innerHTML = props.value || "";
-      editorRef.current.focus();
+    console.log("🟢 RichTextCellEditor mounted");
+
+    if (quillRef.current) {
+      const editor = quillRef.current.getEditor();
+      console.log("🟢 Quill editor object:", editor);
+
+      editor.root.addEventListener("focus", () => {
+        console.log("✨ Quill got focus");
+      });
+      editor.root.addEventListener("blur", () => {
+        console.log("💤 Quill lost focus");
+      });
+      editor.root.addEventListener("keydown", (e) => {
+        console.log("⌨️ Quill keydown:", e.key);
+      });
     }
-  }, [props.value]);
+
+    return () => console.log("🔴 RichTextCellEditor unmounted");
+  }, []);
 
   useImperativeHandle(ref, () => ({
-    getValue: () => editorRef.current.innerHTML,
+    getValue: () => value,
   }));
 
-  const apply = (cmd, value = null) => {
-    editorRef.current.focus();
-    document.execCommand(cmd, false, value);
-  };
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-      {/* small toolbar above text */}
-      <div className="flex gap-2 mb-1 text-xs">
-        <button type="button" onClick={() => apply("bold")}><b>B</b></button>
-        <button type="button" onClick={() => apply("italic")}><i>I</i></button>
-        <button type="button" onClick={() => apply("underline")}><u>U</u></button>
-        <button type="button" onClick={() => apply("foreColor", "red")}>🔴</button>
-        <button type="button" onClick={() => apply("foreColor", "blue")}>🔵</button>
-      </div>
-
-      {/* editable area */}
-      <div
-        ref={editorRef}
-        contentEditable
-        suppressContentEditableWarning
-        style={{
-          minHeight: "100%",
-          padding: "4px",
-          outline: "none",
-          border: "1px solid #ddd",
-          whiteSpace: "pre-wrap",
-        }}
-      />
-    </div>
+    <ReactQuill
+      ref={quillRef}
+      value={value}
+      onChange={(val) => {
+        console.log("✏️ Value changed:", val);
+        setValue(val);
+      }}
+      theme="bubble"
+      modules={{
+        toolbar: false, // still hide toolbar
+        keyboard: true, // enable keyboard shortcuts
+      }}
+      formats={["bold", "italic", "underline", "color"]} // allow formatting
+    />
   );
 });
 
-RichTextCellEditor.displayName = "RichTextCellEditor";
 export default RichTextCellEditor;

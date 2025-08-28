@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import SessionTimeout from "../components/common/SessionTimeout";
 
