@@ -44,11 +44,9 @@ const RichTextCellEditor = forwardRef((props, ref) => {
           toolbar: [
             ["bold", "italic", "underline"],
             [{ color: [] }],
-            [{ list: "ordered" }, { list: "bullet" }],
-            ["clean"],
           ],
         }}
-        formats={["bold", "italic", "underline", "color", "list"]}
+        formats={["bold", "italic", "underline", "color"]}
       />
   );
 });

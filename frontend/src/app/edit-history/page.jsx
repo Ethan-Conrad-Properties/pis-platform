@@ -8,6 +8,24 @@ import SessionTimeout from "../components/common/SessionTimeout";
 import Link from "next/link";
 import PaginationControls from "../components/common/PaginationControls";
 
+// ✅ helper to clean up Quill HTML for logs
+const stripQuillHtml = (html = "") => {
+  if (!html) return "";
+
+  return html
+    // turn paragraphs and breaks into line breaks
+    .replace(/<p[^>]*>/gi, "")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    // remove formatting tags but keep text
+    .replace(/<\/?(b|i|u)[^>]*>/gi, "")
+    .replace(/<span[^>]*>/gi, "")
+    .replace(/<\/span>/gi, "")
+    // strip anything else just in case
+    .replace(/<[^>]+>/g, "")
+    .trim();
+};
+
 export default function EditHistoryPage() {
   const { data, error, isLoading } = useQuery({
     queryKey: ["edit-history"],
@@ -38,6 +56,7 @@ export default function EditHistoryPage() {
         Edit History
       </h1>
       <SessionTimeout />
+
       <ul className="space-y-3">
         {currentItems.map((h) => {
           let badgeColor = "bg-gray-300 text-gray-800";
@@ -61,13 +80,15 @@ export default function EditHistoryPage() {
                     <span className="font-semibold">{h.entity_type}</span> (
                     <span className="italic">{h.entity_id}</span>) field{" "}
                     <span className="font-semibold">{h.field}</span> from "
-                    {h.old_value}" to "{h.new_value}"
+                    {stripQuillHtml(h.old_value)}" to "
+                    {stripQuillHtml(h.new_value)}"
                   </>
                 )}
                 {h.action === "add" && (
                   <>
-                    added <span className="font-semibold">{h.entity_type}</span>{" "}
-                    (<span className="italic">{h.entity_id}</span>)
+                    added{" "}
+                    <span className="font-semibold">{h.entity_type}</span> (
+                    <span className="italic">{h.entity_id}</span>)
                   </>
                 )}
                 {h.action === "delete" && (
