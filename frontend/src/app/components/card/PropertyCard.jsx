@@ -9,7 +9,6 @@ import {
   filterBySearch,
   exportProperty,
   reorderFromStorage,
-  sort,
 } from "@/app/utils/helpers";
 import {
   propertyFields,
@@ -24,7 +23,6 @@ import { useSession } from "next-auth/react";
 import { isDirector, isPM, isIT, isAP } from "@/app/constants/roles";
 
 export default function PropertyCard({ property, onUpdate }) {
-  const queryClient = useQueryClient();
   const { data: session } = useSession();
   const [editing, setEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);

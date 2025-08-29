@@ -13,17 +13,25 @@ const stripQuillHtml = (html = "") => {
   if (!html) return "";
 
   return html
-    // turn paragraphs and breaks into line breaks
     .replace(/<p[^>]*>/gi, "")
     .replace(/<\/p>/gi, "\n")
     .replace(/<br\s*\/?>/gi, "\n")
-    // remove formatting tags but keep text
     .replace(/<\/?(b|i|u)[^>]*>/gi, "")
     .replace(/<span[^>]*>/gi, "")
     .replace(/<\/span>/gi, "")
-    // strip anything else just in case
     .replace(/<[^>]+>/g, "")
     .trim();
+};
+
+const formatTime = (iso) => {
+  if (!iso) return "";
+  return new Date(iso).toLocaleString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 export default function EditHistoryPage() {
@@ -35,17 +43,11 @@ export default function EditHistoryPage() {
     },
   });
 
-  // pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error loading edit history.</div>;
-  if (!data || data.length === 0) return <div>No edits found.</div>;
-
-  // paginate data
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-  const currentItems = paginate(data, currentPage, itemsPerPage);
+  const totalPages = data ? Math.ceil(data.length / itemsPerPage) : 1;
+  const currentItems = data ? paginate(data, currentPage, itemsPerPage) : [];
 
   return (
     <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-36 pt-8 md:pt-16 pb-4 md:pb-6">
@@ -57,59 +59,73 @@ export default function EditHistoryPage() {
       </h1>
       <SessionTimeout />
 
-      <ul className="space-y-3">
-        {currentItems.map((h) => {
-          let badgeColor = "bg-gray-300 text-gray-800";
-          if (h.action === "add") badgeColor = "bg-green-200 text-green-800";
-          if (h.action === "edit") badgeColor = "bg-yellow-200 text-yellow-800";
-          if (h.action === "delete") badgeColor = "bg-red-200 text-red-800";
+      {/* Status handling */}
+      {isLoading && <div>Loading...</div>}
+      {error && <div>Error loading edit history.</div>}
+      {!isLoading && !error && data?.length === 0 && <div>No edits found.</div>}
 
-          return (
-            <li key={h.id} className="bg-white rounded-lg shadow px-4 py-2">
-              <div className="text-sm text-gray-600">{h.edited_at}</div>
-              <div>
-                <span className="font-semibold">{h.edited_by}</span>{" "}
-                <span
-                  className={`px-2 py-0.5 rounded text-xs font-semibold ${badgeColor}`}
-                >
-                  {h.action.toUpperCase()}
-                </span>{" "}
-                {h.action === "edit" && (
-                  <>
-                    changed{" "}
-                    <span className="font-semibold">{h.entity_type}</span> (
-                    <span className="italic">{h.entity_id}</span>) field{" "}
-                    <span className="font-semibold">{h.field}</span> from "
-                    {stripQuillHtml(h.old_value)}" to "
-                    {stripQuillHtml(h.new_value)}"
-                  </>
-                )}
-                {h.action === "add" && (
-                  <>
-                    added{" "}
-                    <span className="font-semibold">{h.entity_type}</span> (
-                    <span className="italic">{h.entity_id}</span>)
-                  </>
-                )}
-                {h.action === "delete" && (
-                  <>
-                    deleted{" "}
-                    <span className="font-semibold">{h.entity_type}</span> (
-                    <span className="italic">{h.entity_id}</span>)
-                  </>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      {/* Data list */}
+      {!isLoading && !error && data?.length > 0 && (
+        <>
+          <ul className="space-y-3">
+            {currentItems.map((h) => {
+              let badgeColor = "bg-gray-300 text-gray-800";
+              if (h.action === "add")
+                badgeColor = "bg-green-200 text-green-800";
+              if (h.action === "edit")
+                badgeColor = "bg-yellow-200 text-yellow-800";
+              if (h.action === "delete") badgeColor = "bg-red-200 text-red-800";
 
-      <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPrev={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-        onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-      />
+              return (
+                <li key={h.id} className="bg-white rounded-lg shadow px-4 py-2">
+                  <div className="text-sm text-gray-600">
+                    {formatTime(h.edited_at)}
+                  </div>
+                  <div>
+                    <span className="font-semibold">{h.edited_by}</span>{" "}
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-semibold ${badgeColor}`}
+                    >
+                      {h.action.toUpperCase()}
+                    </span>{" "}
+                    {h.action === "edit" && (
+                      <>
+                        changed{" "}
+                        <span className="font-semibold">{h.entity_type}</span> (
+                        <span className="italic">{h.entity_id}</span>) field{" "}
+                        <span className="font-semibold">{h.field}</span> from "
+                        {stripQuillHtml(h.old_value)}" to "
+                        {stripQuillHtml(h.new_value)}"
+                      </>
+                    )}
+                    {h.action === "add" && (
+                      <>
+                        added{" "}
+                        <span className="font-semibold">{h.entity_type}</span> (
+                        <span className="italic">{h.entity_id}</span>)
+                      </>
+                    )}
+                    {h.action === "delete" && (
+                      <>
+                        deleted{" "}
+                        <span className="font-semibold">{h.entity_type}</span> (
+                        <span className="italic">{h.entity_id}</span>)
+                      </>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPrev={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+          />
+        </>
+      )}
     </div>
   );
 }

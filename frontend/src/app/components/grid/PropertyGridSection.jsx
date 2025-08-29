@@ -57,6 +57,7 @@ export default function PropertyGridSection({
           ...col,
           editable: canEdit,
           cellEditor: RichTextCellEditor,
+          rowDrag: true,
         };
       }
       return { ...col, editable: canEdit };

@@ -41,6 +41,7 @@ export default function Home() {
   const {
     data: firstPageData,
     error,
+    isLoading,
     refetch,
   } = useQuery({
     queryKey: ["properties", "page1", 20],
@@ -144,8 +145,6 @@ export default function Home() {
     return <LoginForm />;
   }
 
-  if (error) return <div>Error loading properties.</div>;
-
   return (
     <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-4 md:pt-10 pb-4 md:pb-6 relative">
       <div className="flex items-center justify-between mb-2 md:mb-6">
@@ -204,7 +203,10 @@ export default function Home() {
         </div>
       </div>
       {view === "grid" ? (
-        <PropertyGridView property={selectedProperty || currentProperties[0]} />
+        <PropertyGridView property={selectedProperty || currentProperties[0]}
+          isLoading={isLoading}
+          error={error}
+        />
       ) : (
         <div
           className={`properties-list grid ${

@@ -19,9 +19,17 @@ import { isDirector } from "@/app/constants/roles";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-export default function PropertyGridView({ property }) {
-  if (!property) {
+export default function PropertyGridView({ property, isLoading, error }) {
+    if (isLoading) {
     return <div className="p-4 text-sm text-gray-500">Loading property…</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 text-sm text-red-500">Error loading property.</div>;
+  }
+
+  if (!property) {
+    return <div className="p-4 text-sm text-gray-500">Property not found.</div>;
   }
 
   const [search, setSearch] = useState("");
