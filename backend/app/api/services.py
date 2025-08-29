@@ -10,7 +10,7 @@ router = APIRouter()
 # Get all services for a property
 @router.get("/services")
 async def get_services(property_yardi: str, db: Session = Depends(get_db), user=Depends(verify_token)):
-    services = db.query(Service).filter(Service.property_yardi == property_yardi).all()
+    services = db.query(Service).filter(Service.property_yardi == property_yardi).order_by(Service.service_type.asc(), Service.vendor.asc()).all()
     services_data = []
     for sv in services:
         contact_links = db.query(ServiceContact).filter(ServiceContact.service_id == sv.service_id).all()
