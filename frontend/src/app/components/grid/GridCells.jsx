@@ -4,20 +4,22 @@ import { formatDate } from "@/app/utils/helpers";
 export const ExpandingCell = (props) => {
   const [expanded, setExpanded] = useState(false);
   const maxLength = 200;
+
   let value = props.value == null ? "" : String(props.value);
   if (props.colDef.field === "coe" && value) {
-    value = formatDate(value);
+    value = formatDate(value); // keep your custom rule
   }
 
-  if (value === "") return null;
+  if (!value) return null;
 
   const isLong = value.length > maxLength;
-  const displayValue =
-    !expanded && isLong ? value.slice(0, maxLength) + "..." : value;
+  const truncated = isLong ? value.slice(0, maxLength) + "..." : value;
 
   return (
     <div className="whitespace-pre-line break-words">
-      {displayValue}
+      <span
+        dangerouslySetInnerHTML={{ __html: expanded ? value : truncated }}
+      />
       {isLong && !expanded && (
         <button
           className="text-blue-600 cursor-pointer ml-1 text-sm"

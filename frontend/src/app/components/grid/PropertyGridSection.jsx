@@ -48,28 +48,34 @@ export default function PropertyGridSection({
     []
   );
 
-  // enforce editability per role
+  // enforce column defs
   const enforcedColDefs = useMemo(
-    () =>
-      columns.map((col) => ({
-        ...col,
-        editable: true,
-      })),
-    [columns, canEdit]
-  );
+  () =>
+    columns.map((col) => {
+      if (col.field !== "contacts") {
+        return {
+          ...col,
+          editable: canEdit,
+          cellEditor: RichTextCellEditor,
+        };
+      }
+      return { ...col, editable: canEdit };
+    }),
+  [columns, canEdit]
+);
 
   const defaultColDef = useMemo(
     () => ({
       resizable: true,
       sortable: true,
       filter: true,
-      cellEditor: "agLargeTextCellEditor",
-      cellEditorPopup: true,
       minWidth: 160,
       flex: 1,
       wrapText: true,
       autoHeight: true,
-      rowDrag: true,
+      editable: true,
+      cellEditor: "agLargeTextCellEditor",
+      cellEditorPopup: true,
     }),
     []
   );
@@ -107,18 +113,10 @@ export default function PropertyGridSection({
     localStorage.setItem(rowOrderKey, JSON.stringify(rowOrder));
   }, [rowOrderKey, getRowId]);
 
-  const popupParent = useMemo(
-    () => (typeof document !== "undefined" ? document.body : null),
-    []
-  );
-
   // restore col state
   const restoreColState = useCallback(() => {
-    if (!gridRef.current?.api) {
-      console.warn("⚠️ restoreColState: api not ready");
-      return;
-    }
-    const saved = localStorage.getItem(`${yardi}-${title}-colState`);
+    if (!gridRef.current?.api) return;
+    const saved = localStorage.getItem(colStateKey);
     if (saved) {
       try {
         const colState = JSON.parse(saved);
@@ -126,25 +124,18 @@ export default function PropertyGridSection({
           state: colState,
           applyOrder: true,
         });
-        console.log("✅ Restored col state:", colState);
       } catch {
         console.warn("Bad col state in storage");
       }
     }
-  }, [yardi, title]);
+  }, [colStateKey]);
 
   // save col state
   const saveColState = useCallback(() => {
-    if (!gridRef.current?.api) {
-      console.warn("⚠️ saveColState: api not ready");
-      return;
-    }
+    if (!gridRef.current?.api) return;
     const colState = gridRef.current.api.getColumnState();
-    localStorage.setItem(
-      `${yardi}-${title}-colState`,
-      JSON.stringify(colState)
-    );
-  }, [yardi, title]);
+    localStorage.setItem(colStateKey, JSON.stringify(colState));
+  }, [colStateKey]);
 
   // auto expand on search
   useEffect(() => {
@@ -198,13 +189,22 @@ export default function PropertyGridSection({
               rowDragManaged={true}
               animateRows={true}
               rowSelection={{ mode: "multiRow" }}
-              stopEditingWhenCellsLoseFocus={true}
+              stopEditingWhenCellsLoseFocus={false}
               enterNavigatesVertically={true}
               enterNavigatesVerticallyAfterEdit={true}
               domLayout="autoHeight"
               getRowId={getRowId}
-              popupParent={popupParent}
-              onCellValueChanged={canEdit ? onCellValueChanged : undefined}
+              popupParent={typeof document !== "undefined" ? document.body : null}
+              onCellValueChanged={(params) => {
+                console.log("✅ Cell updated:", {
+                  colId: params.colDef.field,
+                  oldValue: params.oldValue,
+                  newValue: params.newValue,
+                });
+                if (canEdit && onCellValueChanged) {
+                  onCellValueChanged(params);
+                }
+              }}
               onRowDragEnd={onRowDragEnd}
               onGridReady={restoreColState}
               onColumnMoved={saveColState}

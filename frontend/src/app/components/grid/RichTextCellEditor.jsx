@@ -1,3 +1,5 @@
+"use client";
+
 import dynamic from "next/dynamic";
 import React, {
   useState,
@@ -6,6 +8,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
+import "react-quill-new/dist/quill.snow.css";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
@@ -14,45 +17,39 @@ const RichTextCellEditor = forwardRef((props, ref) => {
   const quillRef = useRef(null);
 
   useEffect(() => {
-    console.log("🟢 RichTextCellEditor mounted");
+    setValue(props.value || "");
+  }, [props.value]);
 
-    if (quillRef.current) {
-      const editor = quillRef.current.getEditor();
-      console.log("🟢 Quill editor object:", editor);
-
-      editor.root.addEventListener("focus", () => {
-        console.log("✨ Quill got focus");
-      });
-      editor.root.addEventListener("blur", () => {
-        console.log("💤 Quill lost focus");
-      });
-      editor.root.addEventListener("keydown", (e) => {
-        console.log("⌨️ Quill keydown:", e.key);
-      });
-    }
-
-    return () => console.log("🔴 RichTextCellEditor unmounted");
-  }, []);
+  const handleChange = (v) => {
+    console.log("✏️ Quill onChange, new value:", v);
+    setValue(v);
+    props.onValueChange(v);
+  };
 
   useImperativeHandle(ref, () => ({
-    getValue: () => value,
+    getValue: () => {
+      console.log("📤 getValue called, returning:", value);
+      return value;
+    },
   }));
 
   return (
-    <ReactQuill
-      ref={quillRef}
-      value={value}
-      onChange={(val) => {
-        console.log("✏️ Value changed:", val);
-        setValue(val);
-      }}
-      theme="bubble"
-      modules={{
-        toolbar: false, // still hide toolbar
-        keyboard: true, // enable keyboard shortcuts
-      }}
-      formats={["bold", "italic", "underline", "color"]} // allow formatting
-    />
+      <ReactQuill
+        className="bg-white"
+        ref={quillRef}
+        value={value}
+        onChange={handleChange}
+        theme="snow"
+        modules={{
+          toolbar: [
+            ["bold", "italic", "underline"],
+            [{ color: [] }],
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["clean"],
+          ],
+        }}
+        formats={["bold", "italic", "underline", "color", "list"]}
+      />
   );
 });
 
