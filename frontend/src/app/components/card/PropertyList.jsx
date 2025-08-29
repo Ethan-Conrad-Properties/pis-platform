@@ -6,7 +6,22 @@ export default function PropertyList({
   editingYardi,
   setEditingYardi,
   searchLower,
+  isLoading, 
+  error
 }) {
+  if (isLoading) {
+    return <div className="p-4 text-sm text-gray-500">Loading properties...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-sm text-red-500">Error loading property.</div>
+    );
+  }
+
+  if (!properties || properties.length === 0) {
+    return <div className="p-4 text-sm text-gray-500">Property not found.</div>;
+  }
   return properties
     .map((property) => {
       const isEditing = editingYardi === property.yardi;

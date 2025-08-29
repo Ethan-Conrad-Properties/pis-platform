@@ -20,12 +20,14 @@ import { isDirector } from "@/app/constants/roles";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function PropertyGridView({ property, isLoading, error }) {
-    if (isLoading) {
+  if (isLoading) {
     return <div className="p-4 text-sm text-gray-500">Loading property…</div>;
   }
 
   if (error) {
-    return <div className="p-4 text-sm text-red-500">Error loading property.</div>;
+    return (
+      <div className="p-4 text-sm text-red-500">Error loading property.</div>
+    );
   }
 
   if (!property) {

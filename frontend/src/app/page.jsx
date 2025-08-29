@@ -214,6 +214,7 @@ export default function Home() {
               ? "grid-cols-1"
               : "grid-cols-1 md:grid-cols-2"
           } gap-4`}
+          
         >
           {selectedPropertyId ? (
             <PropertyCard
@@ -233,6 +234,8 @@ export default function Home() {
               editingYardi={editingYardi}
               setEditingYardi={setEditingYardi}
               searchLower={searchLower}
+              isLoading={isLoading}
+              error={error}
             />
           )}
         </div>
