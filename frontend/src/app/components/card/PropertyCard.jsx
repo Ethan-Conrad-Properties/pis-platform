@@ -1,5 +1,23 @@
+/**
+ * PropertyCard.jsx
+ * -----------------
+ * Displays a detailed view of a property in a "card" layout.
+ * Includes editable property details, suites, services, utilities,
+ * codes, and photos. Supports CRUD operations, search, and export.
+ *
+ * Features:
+ *  - Edit mode toggle (inline editing of fields)
+ *  - CRUD for suites, services, utilities, codes
+ *  - Contact management inside suites/services/utilities
+ *  - Local row ordering persistence with localStorage
+ *  - Search with auto-scroll to the first matching section
+ *  - Export property data to Excel
+ *  - Mark property as sold/unsold
+ *  - Property photos section with upload support
+ */
+
 import React, { useState, useEffect, useRef } from "react";
-import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import SubSection from "./SubSection";
 import SuccessModal from "../common/SuccessModal";
 import PropertySearch from "../common/PropertySearch";
@@ -24,6 +42,8 @@ import { isDirector, isPM, isIT, isAP } from "@/app/constants/roles";
 
 export default function PropertyCard({ property, onUpdate }) {
   const { data: session } = useSession();
+
+  // State
   const [editing, setEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
@@ -35,12 +55,17 @@ export default function PropertyCard({ property, onUpdate }) {
     codes: property.codes || [],
   });
 
+
+// Section refs for smooth scroll on search
   const suitesRef = useRef(null);
   const servicesRef = useRef(null);
   const utilitiesRef = useRef(null);
   const codesRef = useRef(null);
 
-  // Fetch latest property data
+  /**
+   * Query: fetch full property details from backend.
+   * Keeps card in sync with latest data.
+   */
   const { data: propertyData, refetch } = useQuery({
     queryKey: ["property", property.yardi],
     queryFn: async () => {
@@ -51,7 +76,7 @@ export default function PropertyCard({ property, onUpdate }) {
     initialData: property,
   });
 
-  // Keep local form in sync with server data
+  // Sync local form state when query data updates
   useEffect(() => {
     setForm({
       ...propertyData,
@@ -71,66 +96,28 @@ export default function PropertyCard({ property, onUpdate }) {
         data.code_id
     );
 
-  // Suites
-  const orderedSuites = reorderFromStorage(property.yardi,"Suites", form.suites, getRowId);
-
-  // Services
-  const orderedServices = reorderFromStorage(
-    property.yardi,
-    "Services",
-    form.services,
-    getRowId
-  );
-
-  // Utilities
-  const orderedUtilities = reorderFromStorage(
-    property.yardi,
-    "Utilities",
-    form.utilities,
-    getRowId
-  );
-
-  // Codes
+  // Preserve row order from localStorage
+  const orderedSuites = reorderFromStorage(property.yardi, "Suites", form.suites, getRowId);
+  const orderedServices = reorderFromStorage(property.yardi, "Services", form.services, getRowId);
+  const orderedUtilities = reorderFromStorage(property.yardi, "Utilities", form.utilities, getRowId);
   const orderedCodes = reorderFromStorage(property.yardi, "Codes", form.codes, getRowId);
 
-  // getFields for each section
-  const getSuiteFields = (item) => [
-    item.suite,
-    item.name,
-    item.sqft,
-    item.hvac,
-    item.hvac_info,
-    item.notes,
-  ];
-  const getServiceFields = (item) => [
-    item.service_type,
-    item.vendor,
-    item.paid_by,
-    item.notes,
-  ];
-  const getUtilityFields = (item) => [
-    item.service,
-    item.vendor,
-    item.account_number,
-    item.meter_number,
-    item.paid_by,
-    item.notes,
-  ];
-  const getCodeFields = (item) => [item.description, item.code, item.notes];
+  // Search filtering
+  const filteredSuites = filterBySearch(orderedSuites, (item) => [
+    item.suite, item.name, item.sqft, item.hvac, item.hvac_info, item.notes,
+  ], search);
 
-  // Filtered sub-items
-  const filteredSuites = filterBySearch(orderedSuites, getSuiteFields, search);
-  const filteredServices = filterBySearch(
-    orderedServices,
-    getServiceFields,
-    search
-  );
-  const filteredUtilities = filterBySearch(
-    orderedUtilities,
-    getUtilityFields,
-    search
-  );
-  const filteredCodes = filterBySearch(orderedCodes, getCodeFields, search);
+  const filteredServices = filterBySearch(orderedServices, (item) => [
+    item.service_type, item.vendor, item.paid_by, item.notes,
+  ], search);
+
+  const filteredUtilities = filterBySearch(orderedUtilities, (item) => [
+    item.service, item.vendor, item.account_number, item.meter_number, item.paid_by, item.notes,
+  ], search);
+
+  const filteredCodes = filterBySearch(orderedCodes, (item) => [
+    item.description, item.code, item.notes,
+  ], search);
 
   // Handle property field changes (local state for instant UI)
   const handleChange = (e) => {
@@ -186,7 +173,6 @@ export default function PropertyCard({ property, onUpdate }) {
   }
 
   // Mutations for saving property and sub-records
-  // TODO: handle errors and success modal showing up improperly (apply to all mutations)
   const propertyMutation = useMutation({
     mutationFn: (updated) =>
       axiosInstance.put(`/properties/${property.yardi}`, updated),
@@ -418,61 +404,6 @@ export default function PropertyCard({ property, onUpdate }) {
     }
   };
 
-  const handleDelete = async (section, idx) => {
-    const list = form[section] || [];
-    const item = list[idx];
-    if (!item) return;
-
-    const idKey = entityMap[section].idKey;
-    const id = item[idKey];
-
-    try {
-      // If not persisted yet, just remove locally
-      if (!id) {
-        setForm((prev) => {
-          const next = [...(prev[section] || [])];
-          next.splice(idx, 1);
-          return { ...prev, [section]: next };
-        });
-        setShowModal(true); // feedback for local delete
-        return;
-      }
-
-      // Persisted: call DELETE
-      await entityMap[section].remove.mutateAsync(id);
-
-      // Remove from local state
-      setForm((prev) => {
-        const next = [...(prev[section] || [])];
-        next.splice(idx, 1);
-        return { ...prev, [section]: next };
-      });
-    } catch {
-      alert("Error deleting item");
-    }
-  };
-
-  const handleCloseModal = () => setShowModal(false);
-
-  const renderField = (label, name, type = "text") => (
-    <div className="mb-2">
-      <label className="block font-semibold">{label}:</label>
-      {editing ? (
-        <input
-          type={type}
-          name={name}
-          value={name === "coe" ? formatDate(form[name]) : form[name] ?? ""}
-          onChange={handleChange}
-          className="p-1 border border-gray-300 rounded w-full"
-        />
-      ) : (
-        <span className="break-all inline-block align-bottom">
-          {name === "coe" ? formatDate(property[name]) : property[name]}
-        </span>
-      )}
-    </div>
-  );
-
   // handle adding entity
   const handleAdd = (type) => {
     const empty =
@@ -524,6 +455,64 @@ export default function PropertyCard({ property, onUpdate }) {
     }));
   };
 
+  const handleDelete = async (section, idx) => {
+    const list = form[section] || [];
+    const item = list[idx];
+    if (!item) return;
+
+    const idKey = entityMap[section].idKey;
+    const id = item[idKey];
+
+    try {
+      // If not persisted yet, just remove locally
+      if (!id) {
+        setForm((prev) => {
+          const next = [...(prev[section] || [])];
+          next.splice(idx, 1);
+          return { ...prev, [section]: next };
+        });
+        setShowModal(true); // feedback for local delete
+        return;
+      }
+
+      // Persisted: call DELETE
+      await entityMap[section].remove.mutateAsync(id);
+
+      // Remove from local state
+      setForm((prev) => {
+        const next = [...(prev[section] || [])];
+        next.splice(idx, 1);
+        return { ...prev, [section]: next };
+      });
+    } catch {
+      alert("Error deleting item");
+    }
+  };
+
+  const handleCloseModal = () => setShowModal(false);
+
+  /**
+   * Field renderer (edit vs. view mode)
+   */
+  const renderField = (label, name, type = "text") => (
+    <div className="mb-2">
+      <label className="block font-semibold">{label}:</label>
+      {editing ? (
+        <input
+          type={type}
+          name={name}
+          value={name === "coe" ? formatDate(form[name]) : form[name] ?? ""}
+          onChange={handleChange}
+          className="p-1 border border-gray-300 rounded w-full"
+        />
+      ) : (
+        <span className="break-all inline-block align-bottom">
+          {name === "coe" ? formatDate(property[name]) : property[name]}
+        </span>
+      )}
+    </div>
+  );
+
   // Scroll to first matching section when search changes and matches found
   useEffect(() => {
     if (!search) return;
@@ -557,6 +546,9 @@ export default function PropertyCard({ property, onUpdate }) {
     filteredCodes,
   ]);
 
+   /**
+   * Render
+   */
   return (
     <div className="bg-white rounded shadow-2xl p-4">
       <SuccessModal open={showModal} onClose={handleCloseModal} />

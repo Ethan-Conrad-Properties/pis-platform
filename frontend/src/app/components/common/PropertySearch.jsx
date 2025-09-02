@@ -1,5 +1,16 @@
 import React from "react";
 
+// -------------------------------------------------------------------
+// PropertySearch
+// Reusable search input for filtering properties.
+// - Controlled input → value comes from parent via `value` prop.
+// - Calls `onChange` whenever user types.
+// - Props:
+//   • value: string → current search query.
+//   • onChange: function(event) → updates search query in parent.
+//   • placeholder: string → placeholder text to guide user.
+// -------------------------------------------------------------------
+
 export default function PropertySearch({ value, onChange, placeholder }) {
   return (
     <input

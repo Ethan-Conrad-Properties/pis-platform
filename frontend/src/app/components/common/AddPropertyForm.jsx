@@ -1,7 +1,18 @@
 import React, { useState } from "react";
 import axiosInstance from "@/app/utils/axiosInstance";
 
+// -------------------------------------------------------------------
+// AddPropertyForm
+// Modal form for creating a new Property record.
+// - Opens as a centered popup when `open` is true.
+// - Uses local state to track form fields.
+// - Submits data to backend POST /properties API.
+// - Provides cancel and close functionality.
+// - Calls `onSuccess` (to refresh data) and `onClose` (to close modal).
+// -------------------------------------------------------------------
+
 export default function AddPropertyForm({ open, onClose, onSuccess }) {
+  // Form state for all property fields
   const [form, setForm] = useState({
     yardi: null,
     address: null,
@@ -28,21 +39,28 @@ export default function AddPropertyForm({ open, onClose, onSuccess }) {
     building_type: null,
     total_sq_ft: null,
   });
+
+  // Loading + error states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // If modal not open → render nothing
   if (!open) return null;
 
+  // Update form state on input change
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Submit new property
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
       await axiosInstance.post(`/properties`, form);
+
+      // Reset form after successful submission
       setForm({
         yardi: null,
         address: null,
@@ -69,8 +87,10 @@ export default function AddPropertyForm({ open, onClose, onSuccess }) {
         building_type: null,
         total_sq_ft: null,
       });
-      if (onSuccess) onSuccess();
-      if (onClose) onClose();
+
+      // Trigger callbacks
+      if (onSuccess) onSuccess(); // e.g. refetch property list
+      if (onClose) onClose(); // close modal
     } catch (err) {
       setError(
         "Failed to add property. Make sure all required fields are filled and yardi is unique."
@@ -80,9 +100,11 @@ export default function AddPropertyForm({ open, onClose, onSuccess }) {
     }
   };
 
+  // Modal UI
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs">
       <div className="bg-white rounded shadow-lg p-6 min-w-[350px] max-w-2xl w-full relative">
+        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl hover:cursor-pointer"
@@ -90,8 +112,12 @@ export default function AddPropertyForm({ open, onClose, onSuccess }) {
         >
           ×
         </button>
+
         <h2 className="text-xl font-bold mb-4 text-center">Add New Property</h2>
+
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-2">
+          {/* First group of inputs */}
           <div className="flex flex-wrap gap-2">
             <input
               name="yardi"
@@ -152,6 +178,8 @@ export default function AddPropertyForm({ open, onClose, onSuccess }) {
               className="border px-2 py-1 rounded"
             />
           </div>
+
+          {/* Second group of inputs */}
           <div className="flex flex-wrap gap-2">
             <input
               name="coe"
@@ -266,7 +294,11 @@ export default function AddPropertyForm({ open, onClose, onSuccess }) {
               className="border px-2 py-1 rounded"
             />
           </div>
+
+          {/* Error message */}
           {error && <div className="text-red-500">{error}</div>}
+
+          {/* Action buttons */}
           <div className="flex justify-end gap-2 mt-4">
             <button
               type="button"

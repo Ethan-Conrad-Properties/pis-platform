@@ -1,3 +1,10 @@
+// -------------------------------------------------------------------
+// Grid Column Definitions
+// Define the column headers/keys for different property entities.
+// Used by AG Grid / custom grid views to ensure consistent labels.
+// -------------------------------------------------------------------
+
+// Columns for Property entity
 export const propertyColumns = [
   { key: "coe", name: "COE" },
   { key: "num_buildings", name: "# Buildings" },
@@ -17,6 +24,7 @@ export const propertyColumns = [
   { key: "roof_cover", name: "Roof Cover" },
 ];
 
+// Columns for Suite entity
 export const suiteColumns = [
   { key: "suite", name: "Suite" },
   { key: "sqft", name: "Sqft" },
@@ -27,6 +35,7 @@ export const suiteColumns = [
   { key: "misc", name: "Misc" },
 ];
 
+// Columns for Service entity
 export const serviceColumns = [
   { key: "service_type", name: "Service Type" },
   { key: "vendor", name: "Vendor" },
@@ -34,6 +43,7 @@ export const serviceColumns = [
   { key: "notes", name: "Notes" },
 ];
 
+// Columns for Utility entity
 export const utilityColumns = [
   { key: "service", name: "Service" },
   { key: "vendor", name: "Vendor" },
@@ -44,6 +54,7 @@ export const utilityColumns = [
   { key: "paid_by", name: "Paid By" },
 ];
 
+// Columns for Code entity
 export const codeColumns = [
   { key: "code", name: "Code" },
   { key: "description", name: "Description" },

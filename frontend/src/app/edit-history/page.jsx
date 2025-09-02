@@ -8,10 +8,18 @@ import SessionTimeout from "../components/common/SessionTimeout";
 import Link from "next/link";
 import PaginationControls from "../components/common/PaginationControls";
 
-// ✅ helper to clean up Quill HTML for logs
+// -------------------------------------------------------------------
+// EditHistoryPage
+// Displays a paginated list of all edit logs from the backend.
+// - Fetches edit history from `/edit-history` API.
+// - Shows action type (add/edit/delete) with a colored badge.
+// - Formats timestamps for readability.
+// - Strips rich-text/Quill HTML from stored values for cleaner display.
+// -------------------------------------------------------------------
+
+// Helper: remove Quill formatting tags and return plain text
 const stripQuillHtml = (html = "") => {
   if (!html) return "";
-
   return html
     .replace(/<p[^>]*>/gi, "")
     .replace(/<\/p>/gi, "\n")
@@ -23,6 +31,7 @@ const stripQuillHtml = (html = "") => {
     .trim();
 };
 
+// Helper: format ISO timestamp into readable date/time
 const formatTime = (iso) => {
   if (!iso) return "";
   return new Date(iso).toLocaleString("en-US", {
@@ -35,6 +44,7 @@ const formatTime = (iso) => {
 };
 
 export default function EditHistoryPage() {
+  // Fetch edit history logs
   const { data, error, isLoading } = useQuery({
     queryKey: ["edit-history"],
     queryFn: async () => {
@@ -43,6 +53,7 @@ export default function EditHistoryPage() {
     },
   });
 
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
@@ -51,30 +62,34 @@ export default function EditHistoryPage() {
 
   return (
     <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-36 pt-8 md:pt-16 pb-4 md:pb-6">
+      {/* Back navigation */}
       <Link href="/" className="underline text-blue-600 mb-4 block">
         ← Back to Home
       </Link>
+
       <h1 className="text-2xl md:text-4xl text-center md:text-left font-bold mb-4">
         Edit History
       </h1>
+
+      {/* Auto-logout if session expires */}
       <SessionTimeout />
 
-      {/* Status handling */}
+      {/* Loading / error / empty states */}
       {isLoading && <div>Loading...</div>}
       {error && <div>Error loading edit history.</div>}
       {!isLoading && !error && data?.length === 0 && <div>No edits found.</div>}
 
-      {/* Data list */}
+      {/* Logs list */}
       {!isLoading && !error && data?.length > 0 && (
         <>
           <ul className="space-y-3">
             {currentItems.map((h) => {
               let badgeColor = "bg-gray-300 text-gray-800";
-              if (h.action === "add")
-                badgeColor = "bg-green-200 text-green-800";
+              if (h.action === "add") badgeColor = "bg-green-200 text-green-800";
               if (h.action === "edit")
                 badgeColor = "bg-yellow-200 text-yellow-800";
-              if (h.action === "delete") badgeColor = "bg-red-200 text-red-800";
+              if (h.action === "delete")
+                badgeColor = "bg-red-200 text-red-800";
 
               return (
                 <li key={h.id} className="bg-white rounded-lg shadow px-4 py-2">
@@ -118,6 +133,7 @@ export default function EditHistoryPage() {
             })}
           </ul>
 
+          {/* Pagination controls */}
           <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}

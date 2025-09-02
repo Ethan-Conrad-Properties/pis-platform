@@ -1,6 +1,11 @@
 import NextAuth from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 
+// ---------------------------------------------------
+// Refresh Access Token
+// Called when the current access token is expired.
+// Uses Azure AD's token endpoint + refresh_token to get a new one.
+// ---------------------------------------------------
 async function refreshAccessToken(token) {
   try {
     const response = await fetch(
@@ -24,7 +29,7 @@ async function refreshAccessToken(token) {
       ...token,
       accessToken: refreshed.access_token,
       accessTokenExpires: Date.now() + refreshed.expires_in * 1000,
-      refreshToken: refreshed.refresh_token ?? token.refreshToken, // fallback if not returned
+      refreshToken: refreshed.refresh_token ?? token.refreshToken, // fallback if none returned
     };
   } catch (error) {
     console.error("❌ Error refreshing access token", error);
@@ -33,6 +38,7 @@ async function refreshAccessToken(token) {
 }
 
 export default NextAuth({
+  // ---------------- Providers ----------------
   providers: [
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID,
@@ -40,12 +46,21 @@ export default NextAuth({
       tenantId: process.env.AZURE_AD_TENANT_ID,
       authorization: {
         params: {
+          // Request offline_access so we get refresh tokens
           scope: `openid profile email offline_access api://${process.env.AZURE_AD_CLIENT_ID}/access_as_user`,
         },
       },
     }),
   ],
+
+  // ---------------- Callbacks ----------------
   callbacks: {
+    /**
+     * JWT callback
+     * - Runs whenever a JWT is created/updated.
+     * - Handles first login (save access + refresh tokens).
+     * - Refreshes tokens when expired.
+     */
     async jwt({ token, account }) {
       // First login → set token data
       if (account) {
@@ -53,7 +68,7 @@ export default NextAuth({
         token.refreshToken = account.refresh_token;
         token.accessTokenExpires = Date.now() + account.expires_in * 1000;
 
-        // Decode roles from token if present
+        // Decode roles if present in JWT payload
         try {
           const base64Url = account.access_token.split(".")[1];
           const buff = Buffer.from(
@@ -69,7 +84,7 @@ export default NextAuth({
         return token;
       }
 
-      // If still valid → return as-is
+      // If access token still valid → return as-is
       if (Date.now() < token.accessTokenExpires) {
         return token;
       }
@@ -78,6 +93,11 @@ export default NextAuth({
       return await refreshAccessToken(token);
     },
 
+    /**
+     * Session callback
+     * - Runs when session object is created.
+     * - Adds accessToken and roles to session for frontend use.
+     */
     async session({ session, token }) {
       session.accessToken = token.accessToken;
       session.error = token.error;
@@ -86,8 +106,12 @@ export default NextAuth({
       return session;
     },
 
+    /**
+     * signIn callback
+     * - Runs on login attempt.
+     * - Restricts access to company email domain only.
+     */
     async signIn({ user }) {
-      // Restrict to company email domain
       return user.email.endsWith("@ethanconradprop.com");
     },
   },

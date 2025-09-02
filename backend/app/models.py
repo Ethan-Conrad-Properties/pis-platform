@@ -2,13 +2,28 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Bool
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 
+# -------------------------------------------------------------------
+# SQLAlchemy Models
+# Defines all database tables for the PIS Platform.
+# Each class represents a table, with relationships handled via
+# foreign keys and association tables.
+# -------------------------------------------------------------------
+
 Base = declarative_base()
 
+
 class Property(Base):
-    __tablename__ = 'properties'
-    
+    """
+    Core property table.
+
+    Each property is identified by a Yardi code (primary key) and
+    contains high-level details like address, building type, size,
+    tax info, etc.
+    """
+    __tablename__ = "properties"
+
     yardi = Column(String, primary_key=True)
-    address = Column(String, index=True) # index when u want a fast search (do it for stuff you search often)
+    address = Column(String, index=True)
     prop_photo = Column(String)
     city = Column(String, index=True)
     state = Column(String)
@@ -35,20 +50,34 @@ class Property(Base):
     misc = Column(String)
     active = Column(Boolean, default=True)
 
+
 class Contact(Base):
-    __tablename__ = 'contacts'
+    """
+    Generic contact table.
+
+    Contacts can be linked to suites, services, or utilities via
+    join tables.
+    """
+    __tablename__ = "contacts"
 
     contact_id = Column(Integer, primary_key=True, autoincrement=True)
-    name= Column(String, index=True)
+    name = Column(String, index=True)
     office_number = Column(String)
     cell_number = Column(String)
     email = Column(String)
 
+
 class Suite(Base):
-    __tablename__ = 'suites'
+    """
+    Suite within a property.
+
+    Each suite belongs to a property (property_yardi).
+    Can store notes, HVAC details, codes, parking, etc.
+    """
+    __tablename__ = "suites"
 
     suite_id = Column(Integer, primary_key=True, autoincrement=True)
-    property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
+    property_yardi = Column(String, ForeignKey("properties.yardi"), nullable=False)
     suite = Column(String)
     sqft = Column(String)
     name = Column(String, index=True)
@@ -63,21 +92,35 @@ class Suite(Base):
     electrical_amperage = Column(Text)
     misc = Column(Text)
 
+
 class Service(Base):
-    __tablename__ = 'services'
+    """
+    Service record for a property.
+
+    Example: Landscaping, janitorial, security.
+    Linked to a property and optionally linked to contacts.
+    """
+    __tablename__ = "services"
 
     service_id = Column(Integer, primary_key=True, autoincrement=True)
-    property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
+    property_yardi = Column(String, ForeignKey("properties.yardi"), nullable=False)
     service_type = Column(String, index=True)
     vendor = Column(String, index=True)
     notes = Column(Text)
     paid_by = Column(String)
 
+
 class Utility(Base):
-    __tablename__ = 'utilities'
+    """
+    Utility record for a property.
+
+    Example: Electricity, water, gas.
+    Linked to a property and optionally linked to contacts.
+    """
+    __tablename__ = "utilities"
 
     utility_id = Column(Integer, primary_key=True, autoincrement=True)
-    property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
+    property_yardi = Column(String, ForeignKey("properties.yardi"), nullable=False)
     service = Column(String, index=True)
     vendor = Column(String, index=True)
     account_number = Column(String)
@@ -85,65 +128,88 @@ class Utility(Base):
     notes = Column(Text)
     paid_by = Column(String)
 
+
 class Code(Base):
-    __tablename__ = 'codes'
+    """
+    Code record for a property.
+
+    Example: Security code, alarm code, access code.
+    """
+    __tablename__ = "codes"
 
     code_id = Column(Integer, primary_key=True, autoincrement=True)
-    property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
+    property_yardi = Column(String, ForeignKey("properties.yardi"), nullable=False)
     description = Column(String, index=True)
     code = Column(String)
     notes = Column(Text)
 
+
 class PropertyPhoto(Base):
-    __tablename__ = 'property_photos'
+    """
+    Photo record for a property.
+
+    Stores a photo URL + optional caption.
+    """
+    __tablename__ = "property_photos"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    property_yardi = Column(String, ForeignKey('properties.yardi'), nullable=False)
+    property_yardi = Column(String, ForeignKey("properties.yardi"), nullable=False)
     photo_url = Column(String, nullable=False)
     caption = Column(Text)
 
-# Association tables for many-to-many relationships
+
+# -------------------------------------------------------------------
+# Association Tables (Many-to-Many)
+# -------------------------------------------------------------------
+
 class SuiteContact(Base):
-    __tablename__ = 'suite_contacts'
+    """
+    Join table linking suites <-> contacts.
+    """
+    __tablename__ = "suite_contacts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    suite_id = Column(Integer, ForeignKey('suites.suite_id'), nullable=False)
-    contact_id = Column(Integer, ForeignKey('contacts.contact_id'), nullable=False)
+    suite_id = Column(Integer, ForeignKey("suites.suite_id"), nullable=False)
+    contact_id = Column(Integer, ForeignKey("contacts.contact_id"), nullable=False)
+
 
 class ServiceContact(Base):
-    __tablename__ = 'service_contacts'
+    """
+    Join table linking services <-> contacts.
+    """
+    __tablename__ = "service_contacts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    service_id = Column(Integer, ForeignKey('services.service_id'), nullable=False)
-    contact_id = Column(Integer, ForeignKey('contacts.contact_id'), nullable=False)
+    service_id = Column(Integer, ForeignKey("services.service_id"), nullable=False)
+    contact_id = Column(Integer, ForeignKey("contacts.contact_id"), nullable=False)
+
 
 class UtilityContact(Base):
-    __tablename__ = 'utility_contacts'
+    """
+    Join table linking utilities <-> contacts.
+    """
+    __tablename__ = "utility_contacts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    utility_id = Column(Integer, ForeignKey('utilities.utility_id'), nullable=False)
-    contact_id = Column(Integer, ForeignKey('contacts.contact_id'), nullable=False)
+    utility_id = Column(Integer, ForeignKey("utilities.utility_id"), nullable=False)
+    contact_id = Column(Integer, ForeignKey("contacts.contact_id"), nullable=False)
+
 
 class EditHistory(Base):
-    __tablename__ = 'edit_history'
+    """
+    Audit log table.
+
+    Records all add/edit/delete actions performed on entities,
+    including who made the change, when, and what field/value changed.
+    """
+    __tablename__ = "edit_history"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     edited_by = Column(String, index=True)
     edited_at = Column(DateTime, default=datetime.now())
-    entity_type = Column(String, index=True)  
-    entity_id = Column(String, index=True)  
-    changes = Column(Text)  
+    entity_type = Column(String, index=True)   # e.g. "property", "suite"
+    entity_id = Column(String, index=True)     # ID of the entity affected
+    changes = Column(Text)                     # Field changed or action
     old_value = Column(Text)
     new_value = Column(Text)
-    action = Column(String, index=True)  
-
-
-
-
-
-
-
-
-
-
-
+    action = Column(String, index=True)        # "add", "edit", "delete"

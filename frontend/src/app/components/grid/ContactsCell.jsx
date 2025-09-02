@@ -12,8 +12,23 @@ const emptyContact = {
   email: "",
 };
 
+// -------------------------------------------------------------------
+// ContactsCell
+// AG Grid cell renderer for displaying + managing contacts
+// tied to a suite, service, or utility.
+// - Lists contacts vertically inside the grid cell.
+// - Each contact opens an edit modal when clicked.
+// - Includes a "+ Add Contact" button at the bottom.
+// - Uses React Query mutations for API calls.
+// - Props (from AG Grid):
+//   • data: row data (must contain contacts + suite_id/service_id/utility_id).
+//   • api: AG Grid API (used here to refresh cells after edits).
+// -------------------------------------------------------------------
+
 export default function ContactsCell(props) {
   const contacts = props.data?.contacts || [];
+
+  // Determine parent entity type (suite/service/utility)
   const parentId =
     props.data?.suite_id || props.data?.service_id || props.data?.utility_id;
   const parentType = props.data?.suite_id
@@ -24,30 +39,36 @@ export default function ContactsCell(props) {
     ? "utility"
     : null;
 
-  const [modalContact, setModalContact] = useState(null);
-  const [editMode, setEditMode] = useState(false);
+  const [modalContact, setModalContact] = useState(null); // contact currently being edited/viewed
+  const [editMode, setEditMode] = useState(false); // edit vs. view mode
 
+  // Mutation → Add new contact
   const addContactMutation = useMutation({
     mutationFn: (payload) => axiosInstance.post("/contacts", payload),
     onError: () => alert("Failed to save contact."),
   });
 
+  // Mutation → Edit existing contact
   const editContactMutation = useMutation({
     mutationFn: (payload) =>
       axiosInstance.put(`/contacts/${payload.contact_id}`, payload),
     onError: () => alert("Failed to save contact."),
   });
 
+  // Save handler: decides whether to add or edit
   const handleContactSave = async (contact, isNew) => {
     const payload = {
       ...contact,
-      [`${parentType}_id`]: parentId,
+      [`${parentType}_id`]: parentId, // link contact to correct parent
     };
+
     if (isNew) {
       await addContactMutation.mutateAsync(payload);
     } else {
       await editContactMutation.mutateAsync(payload);
     }
+
+    // Close modal + refresh grid
     setModalContact(null);
     setEditMode(false);
     props.api?.refreshCells?.();
@@ -55,7 +76,7 @@ export default function ContactsCell(props) {
 
   return (
     <div className="flex flex-col gap-1">
-      {/* Existing contacts stacked vertically */}
+      {/* Existing contacts listed */}
       {contacts.map((contact) => (
         <button
           key={contact.contact_id}
@@ -70,7 +91,7 @@ export default function ContactsCell(props) {
         </button>
       ))}
 
-      {/* Add button always below */}
+      {/* Add new contact button */}
       <button
         className="w-fit my-1 text-xs text-green-700 border border-green-700 px-2 py-1 rounded hover:bg-green-50 hover:cursor-pointer"
         onClick={() => {
@@ -82,7 +103,7 @@ export default function ContactsCell(props) {
         + Add Contact
       </button>
 
-      {/* Modal */}
+      {/* Modal for editing/adding */}
       {modalContact &&
         createPortal(
           <ContactInfoModal

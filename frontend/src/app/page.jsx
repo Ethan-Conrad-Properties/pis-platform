@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { FaHistory, FaLink } from "react-icons/fa";
+
 import PropertyList from "./components/card/PropertyList";
 import PropertyCard from "./components/card/PropertyCard";
 import PropertyDropdown from "./components/common/PropertyDropdown";
@@ -13,15 +16,18 @@ import PropertyGridView from "./components/grid/PropertyGridView";
 import AddPropertyForm from "./components/common/AddPropertyForm";
 import LoginForm from "./Login";
 import SessionTimeout from "./components/common/SessionTimeout";
+
 import axiosInstance from "./utils/axiosInstance";
 import { filterBySearch, paginate, getTotalPages, sort } from "./utils/helpers";
-import { FaHistory, FaLink } from "react-icons/fa";
-import Link from "next/link";
 import { isDirector, isIT } from "./constants/roles";
-import { signOut } from "next-auth/react";
+
 import "@n8n/chat/style.css";
 import { createChat } from "@n8n/chat";
 
+// ---------------------------------------------------
+// Fetch first page of properties from backend
+// (React Query handles caching/retries)
+// ---------------------------------------------------
 async function fetchFirstPage() {
   const res = await axiosInstance.get("/properties", {
     params: { page: 1, per_page: 10 },
@@ -29,15 +35,31 @@ async function fetchFirstPage() {
   return res.data;
 }
 
+/**
+ * Home Page
+ *
+ * Main landing page of the PIS Platform.
+ * Responsibilities:
+ * - Fetch all properties (with nested suites, services, utilities, codes).
+ * - Support search, sorting, pagination.
+ * - Switch between card view and grid view.
+ * - Allow directors/IT to add new properties.
+ * - Provide quick navigation (Quick Links, Edit History).
+ * - Integrate chatbot (via n8n).
+ */
 export default function Home() {
+  // ---------------- State ----------------
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPropertyId, setSelectedPropertyId] = useState("");
+  const [properties, setProperties] = useState([]); // all properties loaded progressively
+  const [editingYardi, setEditingYardi] = useState(null);
+  const [view, setView] = useState("card"); // "card" | "grid"
+  const [showAddModal, setShowAddModal] = useState(false);
+
   const { data: session } = useSession();
 
-  // local accumulator so we can append subsequent pages
-  const [properties, setProperties] = useState([]);
-
+  // ---------------- Data fetching ----------------
   const {
     data: firstPageData,
     error,
@@ -46,15 +68,15 @@ export default function Home() {
   } = useQuery({
     queryKey: ["properties", "page1", 20],
     queryFn: fetchFirstPage,
-    enabled: !!session,
+    enabled: !!session, // only fetch if logged in
   });
 
-  // After page 1 arrives, append it, then fetch pages 2..N in the background
+  // Progressive loading: load page 1, then fetch rest in background
   useEffect(() => {
     if (!firstPageData) return;
 
     let isCancelled = false;
-    setProperties(firstPageData.properties); // paint immediately
+    setProperties(firstPageData.properties);
 
     (async () => {
       const totalPages = firstPageData.total_pages || 1;
@@ -73,12 +95,7 @@ export default function Home() {
     };
   }, [firstPageData]);
 
-  const searchLower = search.toLowerCase();
-  const PropertiesPerPage = 20;
-  const [editingYardi, setEditingYardi] = useState(null);
-  const [view, setView] = useState("card");
-  const [showAddModal, setShowAddModal] = useState(false);
-
+  // ---------------- Filtering + sorting ----------------
   const getFieldsToSearch = (prop) => [
     prop.address,
     prop.yardi,
@@ -93,38 +110,27 @@ export default function Home() {
     ...(prop.codes ? prop.codes.map((code) => code.description) : []),
   ];
 
-  // Use the progressively loaded `properties`
-  const filteredProperties = filterBySearch(
-    properties,
-    getFieldsToSearch,
-    search
-  );
-
+  const filteredProperties = filterBySearch(properties, getFieldsToSearch, search);
   const sortedProperties = sort(filteredProperties, "address");
 
-  const currentProperties = paginate(
-    sortedProperties,
-    currentPage,
-    PropertiesPerPage
-  );
+  // Paginate results
+  const PropertiesPerPage = 20;
+  const currentProperties = paginate(sortedProperties, currentPage, PropertiesPerPage);
   const totalPages = getTotalPages(filteredProperties, PropertiesPerPage);
 
+  // Reset page to 1 when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
 
-  const selectedProperty = filteredProperties.find(
-    (p) => p.yardi === selectedPropertyId
-  );
+  const selectedProperty = filteredProperties.find((p) => p.yardi === selectedPropertyId);
 
+  // ---------------- Chatbot integration ----------------
   useEffect(() => {
     if (properties.length > 0) {
       createChat({
-        webhookUrl:
-          "https://n8n.srv945784.hstgr.cloud/webhook/82cc73c3-a75f-4542-b7bf-a036201b1351/chat",
-        initialMessages: [
-          "I am your personal PIS chatbot. How can I assist you today?",
-        ],
+        webhookUrl: "https://n8n.srv945784.hstgr.cloud/webhook/82cc73c3-a75f-4542-b7bf-a036201b1351/chat",
+        initialMessages: ["I am your personal PIS chatbot. How can I assist you today?"],
         i18n: {
           en: {
             title: "Hi there! 👋",
@@ -136,17 +142,21 @@ export default function Home() {
     }
   }, [properties]);
 
+  // Debug logging
   useEffect(() => {
     console.log("Session object:", session);
     console.log("Properties: ", properties);
   }, [properties, session]);
 
+  // ---------------- Auth guard ----------------
   if (!session) {
     return <LoginForm />;
   }
 
+  // ---------------- Render ----------------
   return (
     <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-4 md:pt-10 pb-4 md:pb-6 relative">
+      {/* Header */}
       <div className="flex items-center justify-between mb-2 md:mb-6">
         <h1 className="text-2xl md:text-4xl font-bold text-left">
           Welcome to the PIS Platform
@@ -158,12 +168,18 @@ export default function Home() {
           Logout
         </button>
       </div>
+
+      {/* Session timeout handler */}
       <SessionTimeout />
+
+      {/* Modal for adding properties */}
       <AddPropertyForm
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSuccess={refetch}
       />
+
+      {/* Search + top controls */}
       <div className="md:flex justify-between">
         <PropertySearch
           value={search}
@@ -174,16 +190,21 @@ export default function Home() {
           placeholder="Search properties..."
         />
         <div className="md:flex space-x-4 md:space-x-1 gap-2 items-center">
-          <button className=" flex p-1 items-center rounded mb-4 hover:cursor-pointer hover:underline">
+          {/* Quick Links */}
+          <button className="flex p-1 items-center rounded mb-4 hover:cursor-pointer hover:underline">
             <Link href="/quick-links">Quick Links</Link>
             <FaLink className="ml-1" />
           </button>
+
+          {/* Edit history (directors + IT only) */}
           {(isDirector(session) || isIT(session)) && (
-            <button className=" flex p-1 items-center rounded mb-4 hover:cursor-pointer hover:underline">
+            <button className="flex p-1 items-center rounded mb-4 hover:cursor-pointer hover:underline">
               <Link href="/edit-history">View Edit History</Link>
               <FaHistory className="ml-1" />
             </button>
           )}
+
+          {/* Add property (directors only) */}
           {isDirector(session) && (
             <button
               className="border bg-white px-3 py-1 mb-4 rounded hover:bg-gray-100 hover:cursor-pointer"
@@ -192,9 +213,11 @@ export default function Home() {
               + Add Property
             </button>
           )}
-          <>
-            <ViewToggle view={view} onToggle={setView} />
-          </>
+
+          {/* View toggle: card vs grid */}
+          <ViewToggle view={view} onToggle={setView} />
+
+          {/* Dropdown: jump to a property */}
           <PropertyDropdown
             properties={sort(properties, "address")}
             selectedPropertyId={selectedPropertyId}
@@ -202,8 +225,11 @@ export default function Home() {
           />
         </div>
       </div>
+
+      {/* Main content: grid or card view */}
       {view === "grid" ? (
-        <PropertyGridView property={selectedProperty || currentProperties[0]}
+        <PropertyGridView
+          property={selectedProperty || currentProperties[0]}
           isLoading={isLoading}
           error={error}
         />
@@ -214,7 +240,6 @@ export default function Home() {
               ? "grid-cols-1"
               : "grid-cols-1 md:grid-cols-2"
           } gap-4`}
-          
         >
           {selectedPropertyId ? (
             <PropertyCard
@@ -233,13 +258,15 @@ export default function Home() {
               properties={currentProperties}
               editingYardi={editingYardi}
               setEditingYardi={setEditingYardi}
-              searchLower={searchLower}
+              searchLower={search.toLowerCase()}
               isLoading={isLoading}
               error={error}
             />
           )}
         </div>
       )}
+
+      {/* Pagination */}
       <PaginationControls
         currentPage={currentPage}
         totalPages={totalPages}

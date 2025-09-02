@@ -12,8 +12,35 @@ import { isDirector, isPM, isAP, isIT } from "@/app/constants/roles";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import RichTextCellEditor from "./RichTextCellEditor";
 
+// Register AG Grid modules (required for grid functionality)
 ModuleRegistry.registerModules([AllCommunityModule]);
 
+/**
+ * PropertyGridSection
+ * --------------------
+ * Renders a collapsible AG Grid section for one entity type
+ * (Suites, Services, Utilities, Codes, etc.) inside a property card.
+ *
+ * Features:
+ *  - Collapsible container with title
+ *  - Row reordering with drag + localStorage persistence
+ *  - Column resizing, visibility, and ordering persistence
+ *  - Inline cell editing with RichTextCellEditor
+ *  - Role-based permissions (edit/add/delete restricted by user role)
+ *  - Auto-expand when a search query matches
+ *  - Delete selected rows + add new row button
+ *
+ * Props:
+ *  - title: string → header shown at top
+ *  - yardi: string → property ID (used for localStorage keys)
+ *  - columns: array → column definitions
+ *  - rows: array → data rows for this section
+ *  - onAddRow: fn → called when +Add clicked
+ *  - onDeleteRows: fn → called with array of selected rows to delete
+ *  - onCellValueChanged: fn → callback when a cell is edited
+ *  - search: string → triggers auto-expand if matches
+ *  - autoExpand: boolean → whether to expand on search
+ */
 export default function PropertyGridSection({
   title,
   yardi,
@@ -30,12 +57,15 @@ export default function PropertyGridSection({
   const [rowData, setRowData] = useState(rows);
   const { data: session } = useSession();
 
+  // ✅ Only directors, PMs, APs, and IT can edit
   const canEdit =
     isDirector(session) || isPM(session) || isAP(session) || isIT(session);
 
+  // LocalStorage keys for persistence
   const rowOrderKey = `${yardi}-${title}-rowOrder`;
   const colStateKey = `${yardi}-${title}-colState`;
 
+  // Unique row ID selector (used by AG Grid + persistence)
   const getRowId = useCallback(
     (params) =>
       String(
@@ -48,23 +78,24 @@ export default function PropertyGridSection({
     []
   );
 
-  // enforce column defs
+  // Column definitions with enforced behavior
   const enforcedColDefs = useMemo(
-  () =>
-    columns.map((col) => {
-      if (col.field !== "contacts") {
-        return {
-          ...col,
-          editable: canEdit,
-          cellEditor: RichTextCellEditor,
-          rowDrag: true,
-        };
-      }
-      return { ...col, editable: canEdit };
-    }),
-  [columns, canEdit]
-);
+    () =>
+      columns.map((col) => {
+        if (col.field !== "contacts") {
+          return {
+            ...col,
+            editable: canEdit,
+            cellEditor: RichTextCellEditor,
+            rowDrag: true, // allow row reordering
+          };
+        }
+        return { ...col, editable: canEdit };
+      }),
+    [columns, canEdit]
+  );
 
+  // Default column behavior (applied globally)
   const defaultColDef = useMemo(
     () => ({
       resizable: true,
@@ -75,13 +106,13 @@ export default function PropertyGridSection({
       wrapText: true,
       autoHeight: true,
       editable: true,
-      cellEditor: "agLargeTextCellEditor",
+      cellEditor: "agLargeTextCellEditor", // fallback for text cells
       cellEditorPopup: true,
     }),
     []
   );
 
-  // restore row order
+  // 🔄 Restore row order from localStorage
   useEffect(() => {
     if (!rows) return;
     const saved = localStorage.getItem(rowOrderKey);
@@ -103,7 +134,7 @@ export default function PropertyGridSection({
     setRowData(rows);
   }, [rows, rowOrderKey, getRowId]);
 
-  // save row order
+  // 💾 Save row order when drag ends
   const onRowDragEnd = useCallback(() => {
     if (!gridRef.current?.api) return;
     const allNodes = [];
@@ -114,7 +145,7 @@ export default function PropertyGridSection({
     localStorage.setItem(rowOrderKey, JSON.stringify(rowOrder));
   }, [rowOrderKey, getRowId]);
 
-  // restore col state
+  // 🔄 Restore column state from localStorage
   const restoreColState = useCallback(() => {
     if (!gridRef.current?.api) return;
     const saved = localStorage.getItem(colStateKey);
@@ -131,14 +162,14 @@ export default function PropertyGridSection({
     }
   }, [colStateKey]);
 
-  // save col state
+  // 💾 Save column state changes
   const saveColState = useCallback(() => {
     if (!gridRef.current?.api) return;
     const colState = gridRef.current.api.getColumnState();
     localStorage.setItem(colStateKey, JSON.stringify(colState));
   }, [colStateKey]);
 
-  // auto expand on search
+  // 🔍 Auto-expand when search is active
   useEffect(() => {
     if (search && rows && rows.length > 0 && autoExpand) {
       setCollapsed(false);
@@ -152,6 +183,7 @@ export default function PropertyGridSection({
 
   return (
     <div className="mt-2 flex flex-col border rounded">
+      {/* Header (collapsible) */}
       <div
         className="flex items-center justify-between px-4 py-2 bg-gray-100 cursor-pointer"
         onClick={() => setCollapsed((c) => !c)}
@@ -162,8 +194,10 @@ export default function PropertyGridSection({
         </span>
       </div>
 
+      {/* Grid body */}
       {!collapsed && (
         <div className="p-2">
+          {/* Toolbar */}
           <div className="flex items-center justify-end mb-2 gap-2">
             {canEdit && onAddRow && <AddIcon onClick={onAddRow} />}
             {canEdit && onDeleteRows && (
@@ -181,6 +215,7 @@ export default function PropertyGridSection({
             )}
           </div>
 
+          {/* AG Grid */}
           <div className="ag-theme-alpine w-full">
             <AgGridReact
               ref={gridRef}

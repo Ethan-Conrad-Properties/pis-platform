@@ -3,6 +3,13 @@
 import Link from "next/link";
 import SessionTimeout from "../components/common/SessionTimeout";
 
+// -------------------------------------------------------------------
+// Quick Links Page
+// Central hub of important company resources.
+// Groups links by category (Accounting, Forms, Security, etc.).
+// Each group is displayed in a card with clickable links.
+// -------------------------------------------------------------------
+
 const links = {
   "Accounting & Finance": [
     {
