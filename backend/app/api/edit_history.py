@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.auth import verify_token
+from datetime import timezone
 
 router = APIRouter()
 
@@ -16,7 +17,7 @@ async def get_all_edit_history(db: Session = Depends(get_db), user=Depends(verif
             {
                 "id": h.id,
                 "edited_by": h.edited_by,
-                "edited_at": h.edited_at.isoformat() if h.edited_at else None,
+                "edited_at": h.edited_at.astimezone(timezone.utc).isoformat() if h.edited_at else None,
                 "entity_type": h.entity_type,
                 "entity_id": h.entity_id,
                 "field": h.changes,   
