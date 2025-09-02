@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@n8n/chat": "^0.50.0",
+    "@sentry/nextjs": "^10.8.0",
     "@tanstack/react-query": "^5.83.0",
     "@vercel/analytics": "^1.5.0",
     "ag-grid-community": "^34.0.1",

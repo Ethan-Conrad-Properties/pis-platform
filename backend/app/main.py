@@ -8,6 +8,7 @@ from app.api import (
     codes, contacts, edit_history, property_photos,
 )
 import time
+import sentry_sdk
 
 # -------------------------------------------------------------------
 # FastAPI Application Entry Point
@@ -15,6 +16,11 @@ import time
 # - Mounts uploads directory for property photos
 # - Includes all API routers
 # -------------------------------------------------------------------
+
+sentry_sdk.init(
+    dsn="https://d4b1ff890486f6098433ce8e56ab8ac4@o4509952283049984.ingest.us.sentry.io/4509952406126592",
+    send_default_pii=True, # captures user data, IPs, request headers
+)
 
 # Use ORJSON for fast JSON responses
 app = FastAPI(default_response_class=ORJSONResponse)
