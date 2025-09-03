@@ -15,3 +15,10 @@ __pycache__/
 
 # User uploads
 backend/static/uploads/
+
+# Test & coverage junk
+.coverage
+htmlcov/
+pytest_cache/
+test.db
+.memory
