@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: sqlite:///:memory
 
     steps:
       - name: Checkout code
@@ -24,8 +26,6 @@ jobs:
           cd backend
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
-        env: 
-          DATABASE_URL=sqlite:///:memory:
 
       - name: Run tests with coverage
         run: |
