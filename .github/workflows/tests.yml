@@ -22,9 +22,10 @@ jobs:
       - name: Install dependencies
         run: |
           cd backend
-          export DATABASE_URL=sqlite:///:memory:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
+        env: 
+          DATABASE_URL=sqlite:///:memory:
 
       - name: Run tests with coverage
         run: |
