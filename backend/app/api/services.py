@@ -52,7 +52,7 @@ async def get_services(
     return services_data
 
 
-@router.post("/services")
+@router.post("/services", status_code=201)
 async def create_service(
     service: dict = Body(...),
     db: Session = Depends(get_db),

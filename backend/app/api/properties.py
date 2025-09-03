@@ -310,7 +310,7 @@ async def update_property(
     return {"message": "Property updated successfully", "property": property}
 
 
-@router.post("/properties")
+@router.post("/properties", status_code=201)
 async def create_property(
     property: dict = Body(...),
     db: Session = Depends(get_db),

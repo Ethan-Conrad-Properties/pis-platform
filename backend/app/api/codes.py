@@ -39,7 +39,7 @@ async def get_codes(
     return [c.__dict__ for c in codes]
 
 
-@router.post("/codes")
+@router.post("/codes", status_code=201)
 async def create_code(
     code: dict = Body(...),
     db: Session = Depends(get_db),

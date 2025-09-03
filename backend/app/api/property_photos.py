@@ -19,7 +19,7 @@ UPLOAD_DIR = "static/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)  # Ensure directory exists
 
 
-@router.post("/property-photos/upload")
+@router.post("/property-photos/upload", status_code=201)
 def upload_photo(
     file: UploadFile = File(...),
     user=Depends(verify_token),

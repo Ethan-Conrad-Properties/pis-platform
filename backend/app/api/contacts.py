@@ -53,7 +53,7 @@ async def update_contact(
     return {k: v for k, v in contact.__dict__.items() if not k.startswith("_")}
 
 
-@router.post("/contacts")
+@router.post("/contacts", status_code=201)
 async def create_contact(
     contact: dict = Body(...),
     db: Session = Depends(get_db),

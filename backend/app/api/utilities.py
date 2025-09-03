@@ -52,7 +52,7 @@ async def get_utilities(
     return utilities_data
 
 
-@router.post("/utilities")
+@router.post("/utilities", status_code=201)
 async def create_utility(
     utility: dict = Body(...),
     db: Session = Depends(get_db),

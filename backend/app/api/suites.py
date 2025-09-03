@@ -52,7 +52,7 @@ async def get_suites(
     return suites_data
 
 
-@router.post("/suites")
+@router.post("/suites", status_code=201)
 async def create_suite(
     suite: dict = Body(...),
     db: Session = Depends(get_db),
