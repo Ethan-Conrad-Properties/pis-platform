@@ -3,6 +3,7 @@ import SessionWrapper from "./components/common/SessionWrapper";
 import "./globals.css";
 import QueryProvider from "./components/common/QueryProvider";
 import { Analytics } from "@vercel/analytics/next";
+import Header from "./components/common/Header";
 
 // -------------------------------------------------------------------
 // Root Layout
@@ -36,7 +37,10 @@ export default function RootLayout({ children }) {
         {/* React Query provider for data fetching/caching */}
         <QueryProvider>
           {/* NextAuth session wrapper (ensures user auth state available) */}
-          <SessionWrapper>{children}</SessionWrapper>
+          <SessionWrapper>
+            <Header />
+            {children}
+          </SessionWrapper>
         </QueryProvider>
 
         {/* Vercel analytics (usage tracking) */}

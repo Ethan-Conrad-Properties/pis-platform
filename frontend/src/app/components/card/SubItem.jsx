@@ -206,6 +206,10 @@ const SubItem = memo(function SubItem({
     <div
       key={uniqueKey}
       className="flex flex-col border rounded-lg p-4 shadow-sm bg-gray-50 relative"
+      style={{
+        background: "var(--surface)",
+        color: "var(--surface-foreground)",
+      }}
     >
       {/* Toast on successful contact save */}
       <SuccessModal

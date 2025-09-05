@@ -48,10 +48,15 @@ export default function ContactInfoModal({
     <div
       className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-xs"
       onClick={onClose} // Clicking outside modal closes it
+      
     >
       <div
-        className="bg-white p-6 rounded shadow-lg min-w-[250px]"
+        className="bg-white border border-white p-6 rounded shadow-lg min-w-[250px]"
         onClick={(e) => e.stopPropagation()} // Prevent backdrop close
+        style={{
+          background: "var(--surface)",
+          color: "var(--surface-foreground)",
+      }}
       >
         {isEdit ? (
           // ----------------------------

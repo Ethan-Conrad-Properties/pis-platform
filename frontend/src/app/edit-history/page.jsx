@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/app/utils/axiosInstance";
 import { paginate } from "@/app/utils/helpers";
-import SessionTimeout from "../components/common/SessionTimeout";
 import Link from "next/link";
 import PaginationControls from "../components/common/PaginationControls";
+import LoginForm from "@/app/Login";
+import { useSession } from "next-auth/react";
 
 // -------------------------------------------------------------------
 // EditHistoryPage
@@ -44,6 +45,12 @@ const formatTime = (iso) => {
 };
 
 export default function EditHistoryPage() {
+  // auth guard
+  const { data: session } = useSession();
+    if (!session) {
+      return <LoginForm />;
+    }
+
   // Fetch edit history logs
   const { data, error, isLoading } = useQuery({
     queryKey: ["edit-history"],
@@ -61,18 +68,15 @@ export default function EditHistoryPage() {
   const currentItems = data ? paginate(data, currentPage, itemsPerPage) : [];
 
   return (
-    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-36 pt-8 md:pt-16 pb-4 md:pb-6">
+    <div className="px-4 md:px-36 pt-8 md:pt-16 pb-4 md:pb-6">
       {/* Back navigation */}
-      <Link href="/" className="underline text-blue-600 mb-4 block">
+      <Link href="/" className="underline mb-4 block">
         ← Back to Home
       </Link>
 
       <h1 className="text-2xl md:text-4xl text-center md:text-left font-bold mb-4">
         Edit History
       </h1>
-
-      {/* Auto-logout if session expires */}
-      <SessionTimeout />
 
       {/* Loading / error / empty states */}
       {isLoading && <div>Loading...</div>}
@@ -85,14 +89,21 @@ export default function EditHistoryPage() {
           <ul className="space-y-3">
             {currentItems.map((h) => {
               let badgeColor = "bg-gray-300 text-gray-800";
-              if (h.action === "add") badgeColor = "bg-green-200 text-green-800";
+              if (h.action === "add")
+                badgeColor = "bg-green-200 text-green-800";
               if (h.action === "edit")
                 badgeColor = "bg-yellow-200 text-yellow-800";
-              if (h.action === "delete")
-                badgeColor = "bg-red-200 text-red-800";
+              if (h.action === "delete") badgeColor = "bg-red-200 text-red-800";
 
               return (
-                <li key={h.id} className="bg-white rounded-lg shadow px-4 py-2">
+                <li
+                  key={h.id}
+                  className="bg-white rounded-lg shadow px-4 py-2"
+                  style={{
+                    background: "var(--surface)",
+                    color: "var(--surface-foreground)",
+                  }}
+                >
                   <div className="text-sm text-gray-600">
                     {formatTime(h.edited_at)}
                   </div>

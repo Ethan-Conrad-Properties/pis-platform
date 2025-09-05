@@ -29,7 +29,8 @@ export const ExpandingCell = (props) => {
   const truncated = isLong ? value.slice(0, maxLength) + "..." : value;
 
   return (
-    <div className="whitespace-pre-line break-words">
+    <div className="whitespace-pre-line break-words"
+    >
       {/* Toggle between truncated and full text */}
       <span
         dangerouslySetInnerHTML={{ __html: expanded ? value : truncated }}

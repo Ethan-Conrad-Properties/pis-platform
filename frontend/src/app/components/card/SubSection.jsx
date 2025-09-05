@@ -72,9 +72,14 @@ export default function SubSection({
     <>
       {/* Section header with expand/collapse toggle */}
       <div className="flex items-center mt-4 mb-2">
-        <h3 className="text-lg font-bold">{label}</h3>
+        <h3
+          className="text-lg font-bold cursor-pointer"
+          onClick={() => setExpanded((e) => !e)}
+        >
+          {label}
+        </h3>
         <button
-          className="font-bold ml-1 text-sm"
+          className="font-bold ml-1 text-sm cursor-pointer"
           onClick={() => setExpanded((e) => !e)}
         >
           {expanded ? ` ▲` : `▼`}

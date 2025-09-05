@@ -29,6 +29,10 @@ export default function ViewToggle({
     <button
       className="border bg-white px-3 py-1 mb-4 rounded hover:bg-gray-100 hover:cursor-pointer"
       onClick={() => onToggle(nextView)}
+      style={{
+        background: "var(--surface)",
+        color: "var(--surface-foreground)",
+      }}
     >
       Switch to {labels[nextView] || nextView}
     </button>

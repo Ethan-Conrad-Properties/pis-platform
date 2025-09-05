@@ -62,7 +62,8 @@ export default function PropertyGridView({ property, isLoading, error }) {
   const { data: suites = [], refetch: refetchSuites } = useQuery({
     queryKey: ["suites", property.yardi],
     queryFn: async () =>
-      (await axiosInstance.get(`/suites?property_yardi=${property.yardi}`)).data,
+      (await axiosInstance.get(`/suites?property_yardi=${property.yardi}`))
+        .data,
     enabled: !!property.yardi,
   });
 
@@ -268,14 +269,11 @@ export default function PropertyGridView({ property, isLoading, error }) {
   };
 
   // Handles inline cell edits (decides add vs update)
-  const onCellValueChanged = useCallback(
-    (section, params) => {
-      const { add, update, idField } = mutationMap[section];
-      const id = params.data[idField];
-      id ? update.mutate(params.data) : add.mutate(params.data);
-    },
-    []
-  );
+  const onCellValueChanged = useCallback((section, params) => {
+    const { add, update, idField } = mutationMap[section];
+    const id = params.data[idField];
+    id ? update.mutate(params.data) : add.mutate(params.data);
+  }, []);
 
   // Handles deleting selected rows
   const handleDeleteRows = useCallback((section, rows) => {
@@ -308,7 +306,13 @@ export default function PropertyGridView({ property, isLoading, error }) {
       }
     }, 400);
     return () => clearTimeout(handler);
-  }, [search, filteredSuites, filteredServices, filteredUtilities, filteredCodes]);
+  }, [
+    search,
+    filteredSuites,
+    filteredServices,
+    filteredUtilities,
+    filteredCodes,
+  ]);
 
   // Data passed to export function
   const propertyData = { property, suites, services, utilities, codes };
@@ -317,7 +321,13 @@ export default function PropertyGridView({ property, isLoading, error }) {
   // Render
   // -----------------------------
   return (
-    <div className="bg-white px-6 py-10 rounded shadow-xl flex flex-col min-h-screen">
+    <div
+      className="bg-white px-6 py-10 rounded shadow-xl flex flex-col min-h-screen"
+      style={{
+        background: "var(--surface)",
+        color: "var(--surface-foreground)",
+      }}
+    >
       <h2 className="text-xl md:text-3xl font-bold mb-4 text-center">
         {property.address} {property.city}, {property.state} {property.zip}
       </h2>
@@ -371,7 +381,9 @@ export default function PropertyGridView({ property, isLoading, error }) {
           rows={filteredSuites}
           search={search}
           autoExpand
-          onAddRow={() => addSuiteMutation.mutate({ property_yardi: property.yardi })}
+          onAddRow={() =>
+            addSuiteMutation.mutate({ property_yardi: property.yardi })
+          }
           onDeleteRows={(rows) => handleDeleteRows("suites", rows)}
           onCellValueChanged={(params) => onCellValueChanged("suites", params)}
         />
@@ -386,9 +398,13 @@ export default function PropertyGridView({ property, isLoading, error }) {
           rows={filteredServices}
           search={search}
           autoExpand
-          onAddRow={() => addServiceMutation.mutate({ property_yardi: property.yardi })}
+          onAddRow={() =>
+            addServiceMutation.mutate({ property_yardi: property.yardi })
+          }
           onDeleteRows={(rows) => handleDeleteRows("services", rows)}
-          onCellValueChanged={(params) => onCellValueChanged("services", params)}
+          onCellValueChanged={(params) =>
+            onCellValueChanged("services", params)
+          }
         />
       </div>
 
@@ -401,9 +417,13 @@ export default function PropertyGridView({ property, isLoading, error }) {
           rows={filteredUtilities}
           search={search}
           autoExpand
-          onAddRow={() => addUtilityMutation.mutate({ property_yardi: property.yardi })}
+          onAddRow={() =>
+            addUtilityMutation.mutate({ property_yardi: property.yardi })
+          }
           onDeleteRows={(rows) => handleDeleteRows("utilities", rows)}
-          onCellValueChanged={(params) => onCellValueChanged("utilities", params)}
+          onCellValueChanged={(params) =>
+            onCellValueChanged("utilities", params)
+          }
         />
       </div>
 
@@ -416,7 +436,9 @@ export default function PropertyGridView({ property, isLoading, error }) {
           rows={filteredCodes}
           search={search}
           autoExpand
-          onAddRow={() => addCodeMutation.mutate({ property_yardi: property.yardi })}
+          onAddRow={() =>
+            addCodeMutation.mutate({ property_yardi: property.yardi })
+          }
           onDeleteRows={(rows) => handleDeleteRows("codes", rows)}
           onCellValueChanged={(params) => onCellValueChanged("codes", params)}
         />

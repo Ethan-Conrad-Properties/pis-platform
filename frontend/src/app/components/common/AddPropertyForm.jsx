@@ -109,6 +109,10 @@ export default function AddPropertyForm({ open, onClose, onSuccess }) {
           onClick={onClose}
           className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl hover:cursor-pointer"
           aria-label="Close"
+          style={{
+            background: "var(--surface)",
+            color: "var(--surface-foreground)",
+          }}
         >
           ×
         </button>
@@ -116,7 +120,14 @@ export default function AddPropertyForm({ open, onClose, onSuccess }) {
         <h2 className="text-xl font-bold mb-4 text-center">Add New Property</h2>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-2">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-2"
+          style={{
+            background: "var(--surface)",
+            color: "var(--surface-foreground)",
+          }}
+        >
           {/* First group of inputs */}
           <div className="flex flex-wrap gap-2">
             <input

@@ -22,6 +22,10 @@ export default function PropertyDropdown({
       className="border bg-white rounded px-2 py-1 mb-4 w-full sm:w-[220px] text-xs md:text-lg"
       value={selectedPropertyId}
       onChange={(e) => onSelect(e.target.value)}
+      style={{
+        background: "var(--surface)",
+        color: "var(--surface-foreground)",
+      }}
     >
       {/* Default option */}
       <option value="">-- Select Property --</option>

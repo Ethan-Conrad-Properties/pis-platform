@@ -1,27 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
   --foreground: #171717;
+  --background: linear-gradient(to right, #fef08a, #fdba74);
+  --surface: #ffffff;
+  --surface-foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html.dark {
+  --foreground: #ffffff;
+  --background: linear-gradient(to right, #28376d, #1e3a8a);
+  --surface: #1e293b;
+  --surface-foreground: #f1f5f9;
+}
+
+html.dark button:hover,
+html.dark a:hover {
+  background: none !important;
 }
 
 body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 /* Excel-like theme */
-.ag-theme-alpine {
+.ag-theme-balham {
   /* compact sizing */
-  --ag-row-height: 24px;          
+  --ag-row-height: 24px;
   --ag-header-height: 32px;
   --ag-font-size: 13px;
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { FaHistory, FaLink } from "react-icons/fa";
@@ -15,14 +15,12 @@ import ViewToggle from "./components/common/ViewToggle";
 import PropertyGridView from "./components/grid/PropertyGridView";
 import AddPropertyForm from "./components/common/AddPropertyForm";
 import LoginForm from "./Login";
-import SessionTimeout from "./components/common/SessionTimeout";
 
 import axiosInstance from "./utils/axiosInstance";
 import { filterBySearch, paginate, getTotalPages, sort } from "./utils/helpers";
 import { isDirector, isIT } from "./constants/roles";
 
 import "@n8n/chat/style.css";
-import { createChat } from "@n8n/chat";
 
 // ---------------------------------------------------
 // Fetch first page of properties from backend
@@ -125,23 +123,6 @@ export default function Home() {
 
   const selectedProperty = filteredProperties.find((p) => p.yardi === selectedPropertyId);
 
-  // ---------------- Chatbot integration ----------------
-  useEffect(() => {
-    if (properties.length > 0) {
-      createChat({
-        webhookUrl: "https://n8n.srv945784.hstgr.cloud/webhook/82cc73c3-a75f-4542-b7bf-a036201b1351/chat",
-        initialMessages: ["I am your personal PIS chatbot. How can I assist you today?"],
-        i18n: {
-          en: {
-            title: "Hi there! 👋",
-            subtitle: "Start a chat. I'm here to help you 24/7.",
-            inputPlaceholder: "Type your question..",
-          },
-        },
-      });
-    }
-  }, [properties]);
-
   // Debug logging
   useEffect(() => {
     console.log("Session object:", session);
@@ -155,22 +136,11 @@ export default function Home() {
 
   // ---------------- Render ----------------
   return (
-    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-8 pt-4 md:pt-10 pb-4 md:pb-6 relative">
+    <div className="px-4 md:px-8 pt-4 md:pt-10 pb-4 md:pb-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-2 md:mb-6">
-        <h1 className="text-2xl md:text-4xl font-bold text-left">
+        <h1 className="text-2xl md:text-4xl font-bold text-left mb-2 md:mb-6">
           Welcome to the PIS Platform
         </h1>
-        <button
-          onClick={() => signOut()}
-          className="bg-white border border-black px-1 md:px-3 py-1 rounded shadow hover:bg-gray-100 cursor-pointer"
-        >
-          Logout
-        </button>
-      </div>
-
-      {/* Session timeout handler */}
-      <SessionTimeout />
 
       {/* Modal for adding properties */}
       <AddPropertyForm

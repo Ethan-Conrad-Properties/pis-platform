@@ -55,8 +55,7 @@ export default function PropertyCard({ property, onUpdate }) {
     codes: property.codes || [],
   });
 
-
-// Section refs for smooth scroll on search
+  // Section refs for smooth scroll on search
   const suitesRef = useRef(null);
   const servicesRef = useRef(null);
   const utilitiesRef = useRef(null);
@@ -97,27 +96,69 @@ export default function PropertyCard({ property, onUpdate }) {
     );
 
   // Preserve row order from localStorage
-  const orderedSuites = reorderFromStorage(property.yardi, "Suites", form.suites, getRowId);
-  const orderedServices = reorderFromStorage(property.yardi, "Services", form.services, getRowId);
-  const orderedUtilities = reorderFromStorage(property.yardi, "Utilities", form.utilities, getRowId);
-  const orderedCodes = reorderFromStorage(property.yardi, "Codes", form.codes, getRowId);
+  const orderedSuites = reorderFromStorage(
+    property.yardi,
+    "Suites",
+    form.suites,
+    getRowId
+  );
+  const orderedServices = reorderFromStorage(
+    property.yardi,
+    "Services",
+    form.services,
+    getRowId
+  );
+  const orderedUtilities = reorderFromStorage(
+    property.yardi,
+    "Utilities",
+    form.utilities,
+    getRowId
+  );
+  const orderedCodes = reorderFromStorage(
+    property.yardi,
+    "Codes",
+    form.codes,
+    getRowId
+  );
 
   // Search filtering
-  const filteredSuites = filterBySearch(orderedSuites, (item) => [
-    item.suite, item.name, item.sqft, item.hvac, item.hvac_info, item.notes,
-  ], search);
+  const filteredSuites = filterBySearch(
+    orderedSuites,
+    (item) => [
+      item.suite,
+      item.name,
+      item.sqft,
+      item.hvac,
+      item.hvac_info,
+      item.notes,
+    ],
+    search
+  );
 
-  const filteredServices = filterBySearch(orderedServices, (item) => [
-    item.service_type, item.vendor, item.paid_by, item.notes,
-  ], search);
+  const filteredServices = filterBySearch(
+    orderedServices,
+    (item) => [item.service_type, item.vendor, item.paid_by, item.notes],
+    search
+  );
 
-  const filteredUtilities = filterBySearch(orderedUtilities, (item) => [
-    item.service, item.vendor, item.account_number, item.meter_number, item.paid_by, item.notes,
-  ], search);
+  const filteredUtilities = filterBySearch(
+    orderedUtilities,
+    (item) => [
+      item.service,
+      item.vendor,
+      item.account_number,
+      item.meter_number,
+      item.paid_by,
+      item.notes,
+    ],
+    search
+  );
 
-  const filteredCodes = filterBySearch(orderedCodes, (item) => [
-    item.description, item.code, item.notes,
-  ], search);
+  const filteredCodes = filterBySearch(
+    orderedCodes,
+    (item) => [item.description, item.code, item.notes],
+    search
+  );
 
   // Handle property field changes (local state for instant UI)
   const handleChange = (e) => {
@@ -546,11 +587,17 @@ export default function PropertyCard({ property, onUpdate }) {
     filteredCodes,
   ]);
 
-   /**
+  /**
    * Render
    */
   return (
-    <div className="bg-white rounded shadow-2xl p-4">
+    <div
+      className="bg-white rounded shadow-2xl p-4 "
+      style={{
+        background: "var(--surface)",
+        color: "var(--surface-foreground)",
+      }}
+    >
       <SuccessModal open={showModal} onClose={handleCloseModal} />
       <div className="flex items-center justify-between text-lg mb-2">
         {renderField("Address", "address")}

@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react";
 import { isDirector, isPM, isAP, isIT } from "@/app/constants/roles";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import RichTextCellEditor from "./RichTextCellEditor";
+import "ag-grid-community/styles/ag-theme-balham.css";
 
 // Register AG Grid modules (required for grid functionality)
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -187,6 +188,10 @@ export default function PropertyGridSection({
       <div
         className="flex items-center justify-between px-4 py-2 bg-gray-100 cursor-pointer"
         onClick={() => setCollapsed((c) => !c)}
+        style={{
+          background: "var(--surface)",
+          color: "var(--surface-foreground)",
+        }}
       >
         <h3 className="text-lg font-semibold">{title}</h3>
         <span className="text-sm text-gray-600">
@@ -216,7 +221,7 @@ export default function PropertyGridSection({
           </div>
 
           {/* AG Grid */}
-          <div className="ag-theme-alpine w-full">
+          <div className="w-full ag-theme-balham">
             <AgGridReact
               ref={gridRef}
               columnDefs={enforcedColDefs}
@@ -230,7 +235,9 @@ export default function PropertyGridSection({
               enterNavigatesVerticallyAfterEdit={true}
               domLayout="autoHeight"
               getRowId={getRowId}
-              popupParent={typeof document !== "undefined" ? document.body : null}
+              popupParent={
+                typeof document !== "undefined" ? document.body : null
+              }
               onCellValueChanged={(params) => {
                 console.log("✅ Cell updated:", {
                   colId: params.colDef.field,

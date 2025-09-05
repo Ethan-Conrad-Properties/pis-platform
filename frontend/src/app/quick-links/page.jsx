@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import SessionTimeout from "../components/common/SessionTimeout";
 
 // -------------------------------------------------------------------
 // Quick Links Page
@@ -145,10 +144,14 @@ const links = {
 };
 
 export default function ResourcesPage() {
+  // auth guard
+  const { data: session } = useSession();
+  if (!session) {
+    return <LoginForm />;
+  }
   return (
-    <div className="bg-gradient-to-r from-yellow-200 to-orange-200 w-full min-h-screen px-4 md:px-36 pt-8 md:pt-16 pb-4 md:pb-6">
-      <SessionTimeout />
-      <Link href="/" className="underline text-blue-600 mb-4 block">
+    <div className="px-4 md:px-36 pt-8 md:pt-16 pb-4 md:pb-6">
+      <Link href="/" className="underline mb-4 block">
         ← Back to Home
       </Link>
       <h1 className="text-3xl font-bold mb-10">Quick Links</h1>
@@ -158,6 +161,10 @@ export default function ResourcesPage() {
           <div
             key={section}
             className="bg-white shadow rounded-2xl p-6 flex flex-col border border-gray-100"
+            style={{
+              background: "var(--surface)",
+              color: "var(--surface-foreground)",
+            }}
           >
             <h2 className="text-xl font-semibold mb-4 border-b pb-2">
               {section}
@@ -168,7 +175,7 @@ export default function ResourcesPage() {
                   <Link
                     href={link.url}
                     target="_blank"
-                    className="text-blue-600 hover:underline"
+                    className="hover:underline"
                   >
                     {link.label}
                   </Link>

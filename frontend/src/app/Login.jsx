@@ -14,7 +14,7 @@ import { signIn } from "next-auth/react";
  */
 export default function LoginForm() {
   return (
-    <div className="flex items-center px-6 justify-center min-h-screen bg-gradient-to-r from-yellow-200 to-orange-200">
+    <div className="flex items-center px-6 justify-center min-h-screen">
       <div className="bg-white shadow-lg rounded-lg py-6 md:py-12 px-6 md:px-8 flex flex-col items-center">
         <h1 className="text-xl md:text-2xl text-center font-bold mb-2">
           Welcome to the PIS Platform
