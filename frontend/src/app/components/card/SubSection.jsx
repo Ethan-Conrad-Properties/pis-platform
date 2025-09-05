@@ -63,10 +63,8 @@ export default function SubSection({
   useEffect(() => {
     if ((search && items && items.length > 0) || editingIdx !== null) {
       setExpanded(true);
-    } else {
-      setExpanded(false);
-    }
-  }, [search, items, editingIdx]);
+    } 
+  }, [search, editingIdx]);
 
   return (
     <>
