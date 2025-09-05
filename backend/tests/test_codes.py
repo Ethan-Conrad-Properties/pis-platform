@@ -32,3 +32,14 @@ async def test_code_crud(client):
     # Delete
     res = await client.delete(f"/codes/{code_id}")
     assert res.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_update_nonexistent_code(client):
+    res = await client.put("/codes/999", json={"description": "Test"})
+    assert res.status_code == 404
+
+@pytest.mark.asyncio
+async def test_delete_nonexistent_code(client):
+    res = await client.delete("/codes/999")
+    assert res.status_code == 404

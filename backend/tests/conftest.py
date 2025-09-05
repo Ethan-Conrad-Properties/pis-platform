@@ -3,17 +3,20 @@ import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 from app.models import Base
 from app.main import app
 from app.auth import verify_token
 from app.database import get_db
+from app import models
 
 # Use SQLite in-memory for tests
 SQLALCHEMY_DATABASE_URL = "sqlite+pysqlite:///:memory:"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    connect_args={"check_same_thread": False},
+    poolclass = StaticPool
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

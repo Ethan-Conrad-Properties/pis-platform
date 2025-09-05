@@ -23,12 +23,27 @@ async def test_suite_crud(client):
     })
     assert res.status_code == 201
 
+    # Get suites for property
+    res = await client.get("/suites", params={"property_yardi": "P300"})
+    assert res.status_code == 200
+    assert any(s["suite_id"] == suite_id for s in res.json())
+
     # Update
     res = await client.put(f"/suites/{suite_id}", json={"name": "Updated Office"})
     assert res.status_code == 200
-    updated = res.json()  # ✅ match your API response
+    updated = res.json()  
     assert updated["name"] == "Updated Office"
 
     # Delete
     res = await client.delete(f"/suites/{suite_id}")
     assert res.status_code == 200
+
+@pytest.mark.asyncio
+async def test_update_nonexistent_suite(client):
+    res = await client.put("/suites/999", json={"name": "GhostSuite"})
+    assert res.status_code == 404
+
+@pytest.mark.asyncio
+async def test_delete_nonexistent_suite(client):
+    res = await client.delete("/suites/999")
+    assert res.status_code == 404
