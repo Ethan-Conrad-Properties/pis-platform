@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 // -------------------------------------------------------------------
 // Quick Links Page
