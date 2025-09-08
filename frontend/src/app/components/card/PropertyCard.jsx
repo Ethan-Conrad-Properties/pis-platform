@@ -536,23 +536,27 @@ export default function PropertyCard({ property, onUpdate }) {
    * Field renderer (edit vs. view mode)
    */
   const renderField = (label, name, type = "text") => (
-    <div className="mb-2">
-      <label className="block font-semibold">{label}:</label>
-      {editing ? (
-        <input
-          type={type}
-          name={name}
-          value={name === "coe" ? formatDate(form[name]) : form[name] ?? ""}
-          onChange={handleChange}
-          className="p-1 border border-gray-300 rounded w-full"
-        />
-      ) : (
-        <span className="break-all inline-block align-bottom">
-          {name === "coe" ? formatDate(property[name]) : property[name]}
-        </span>
-      )}
-    </div>
-  );
+  <div className="mb-2">
+    <label className="block font-semibold">{label}:</label>
+    {editing ? (
+      <input
+        type={type}
+        name={name}
+        value={name === "coe" ? formatDate(form[name]) : form[name] ?? ""}
+        onChange={handleChange}
+        className="p-1 border border-gray-300 rounded w-full"
+      />
+    ) : (
+      <span
+        className="break-all inline-block align-bottom"
+        dangerouslySetInnerHTML={{
+          __html: name === "coe" ? formatDate(property[name]) : property[name] || "",
+        }}
+      />
+    )}
+  </div>
+);
+
 
   // Scroll to first matching section when search changes and matches found
   useEffect(() => {

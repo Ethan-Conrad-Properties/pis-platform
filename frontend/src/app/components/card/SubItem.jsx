@@ -67,16 +67,30 @@ const emptyContact = {
  * - text: string to display
  * - maxLength (default 500): truncation threshold
  */
-function SeeMoreText({ text, maxLength = 500 }) {
+function SeeMoreHtml({ html, maxLength = 500 }) {
   const [expanded, setExpanded] = useState(false);
-  if (!text) return <span className="text-gray-400">N/A</span>;
-  if (text.length <= maxLength) return <span>{text}</span>;
+
+  if (!html) return <span className="text-gray-400">N/A</span>;
+
+  // Strip tags for measuring raw text length
+  const plainText = html.replace(/<[^>]+>/g, "");
+  if (plainText.length <= maxLength) {
+    return <span dangerouslySetInnerHTML={{ __html: html }} />;
+  }
 
   return (
     <span>
-      {expanded ? text : text.slice(0, maxLength) + "... "}
+      {expanded ? (
+        <span dangerouslySetInnerHTML={{ __html: html }} />
+      ) : (
+        <span
+          dangerouslySetInnerHTML={{
+            __html: plainText.slice(0, maxLength) + "...",
+          }}
+        />
+      )}
       <button
-        className="text-blue-600 underline text-xs hover:cursor-pointer"
+        className="text-blue-600 underline text-xs hover:cursor-pointer ml-1"
         type="button"
         onClick={() => setExpanded(!expanded)}
       >
@@ -219,7 +233,10 @@ const SubItem = memo(function SubItem({
       />
 
       {/* Role-based action buttons (delete, edit, cancel) */}
-      {(isDirector(session) || isPM(session) || isIT(session) || isAP(session)) && (
+      {(isDirector(session) ||
+        isPM(session) ||
+        isIT(session) ||
+        isAP(session)) && (
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={handleDeleteClick}
@@ -346,9 +363,7 @@ const SubItem = memo(function SubItem({
                     }
                   />
                 ) : (
-                  <span className="break-all whitespace-pre-line max-w-full inline-block align-bottom">
-                    <SeeMoreText text={value} />
-                  </span>
+                  <SeeMoreHtml html={value} />
                 )}
               </div>
             </div>
