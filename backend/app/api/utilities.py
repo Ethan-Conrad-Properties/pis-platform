@@ -69,14 +69,25 @@ async def create_utility(
     Returns:
         dict: Newly created utility (cleaned of SQLAlchemy internals).
     """
+    contacts = utility.pop("contacts", [])  # remove contacts if present
+
     new_utility = Utility(**utility)
     db.add(new_utility)
     db.commit()
     db.refresh(new_utility)
 
-    # Log creation for audit trail
-    log_add(db, user["name"], "utility", new_utility.utility_id, new_utility.__dict__, new_utility)
+    # Link contacts
+    for c in contacts:
+        new_contact = Contact(**c)
+        db.add(new_contact)
+        db.commit()
+        db.refresh(new_contact)
 
+        link = UtilityContact(utility_id=new_utility.utility_id, contact_id=new_contact.contact_id)
+        db.add(link)
+        db.commit()
+
+    log_add(db, user["name"], "utility", new_utility.utility_id, new_utility.__dict__, new_utility)
     return {k: v for k, v in new_utility.__dict__.items() if not k.startswith("_")}
 
 

@@ -69,14 +69,25 @@ async def create_service(
     Returns:
         dict: Newly created service (cleaned of SQLAlchemy internals).
     """
+    contacts = service.pop("contacts", [])
+
     new_service = Service(**service)
     db.add(new_service)
     db.commit()
     db.refresh(new_service)
 
-    # Log creation for audit trail
-    log_add(db, user["name"], "service", new_service.service_id, new_service.__dict__, new_service)
+    # Link contacts
+    for c in contacts:
+        new_contact = Contact(**c)
+        db.add(new_contact)
+        db.commit()
+        db.refresh(new_contact)
 
+        link = ServiceContact(service_id=new_service.service_id, contact_id=new_contact.contact_id)
+        db.add(link)
+        db.commit()
+
+    log_add(db, user["name"], "service", new_service.service_id, new_service.__dict__, new_service)
     return {k: v for k, v in new_service.__dict__.items() if not k.startswith("_")}
 
 

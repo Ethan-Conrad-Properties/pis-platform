@@ -69,14 +69,26 @@ async def create_suite(
     Returns:
         dict: Newly created suite (cleaned of SQLAlchemy internals).
     """
+
+    contacts = suite.pop("contacts", [])
+
     new_suite = Suite(**suite)
     db.add(new_suite)
     db.commit()
     db.refresh(new_suite)
 
-    # Log creation for audit trail
-    log_add(db, user["name"], "suite", new_suite.suite_id, new_suite.__dict__, new_suite)
+    # Link contacts
+    for c in contacts:
+        new_contact = Contact(**c)
+        db.add(new_contact)
+        db.commit()
+        db.refresh(new_contact)
 
+        link = SuiteContact(suite_id=new_suite.suite_id, contact_id=new_contact.contact_id)
+        db.add(link)
+        db.commit()
+
+    log_add(db, user["name"], "suite", new_suite.suite_id, new_suite.__dict__, new_suite)
     return {k: v for k, v in new_suite.__dict__.items() if not k.startswith("_")}
 
 

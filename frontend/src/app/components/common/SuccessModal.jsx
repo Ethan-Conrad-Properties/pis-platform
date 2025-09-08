@@ -30,7 +30,7 @@ export default function SuccessModal({
 
   return (
     <div className="fixed top-6 right-6 z-50">
-      <div className="bg-gray-100 rounded-lg shadow-lg p-2 min-w-[180px] flex flex-col items-center">
+      <div className="bg-gray-100 text-black rounded-lg shadow-lg p-2 min-w-[180px] flex flex-col items-center">
         <span className="text-xl font-bold">✅ {message}</span>
       </div>
     </div>

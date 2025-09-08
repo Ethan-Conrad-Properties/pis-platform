@@ -375,7 +375,7 @@ const SubItem = memo(function SubItem({
           <div>
             <button
               onClick={() => onSave(type, idx)}
-              className="border border-black bg-blue-100 px-2 py-1 rounded hover:bg-blue-200 hover:cursor-pointer"
+              className="border border-black px-2 py-1 rounded hover:bg-blue-200 hover:cursor-pointer"
             >
               Save
             </button>

@@ -52,7 +52,7 @@ export default function SessionTimeout() {
 
   // Render session expiration warning
   return showWarning ? (
-    <div className="fixed top-4 right-4 bg-yellow-200 border border-yellow-600 px-4 py-2 rounded shadow-lg z-50">
+    <div className="fixed top-4 right-4 bg-yellow-200 text-black border border-yellow-600 px-4 py-2 rounded shadow-lg z-50">
       Your session will expire in 2 minutes due to inactivity.
     </div>
   ) : null;
