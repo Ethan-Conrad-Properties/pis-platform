@@ -5,6 +5,7 @@ import axiosInstance from "@/app/utils/axiosInstance";
 import SuccessModal from "../common/SuccessModal";
 import { isDirector, isPM, isIT, isAP } from "@/app/constants/roles";
 import { useSession } from "next-auth/react";
+import { stripHtml } from "@/app/utils/helpers";
 
 /**
  * AutoExpandTextarea
@@ -67,30 +68,16 @@ const emptyContact = {
  * - text: string to display
  * - maxLength (default 500): truncation threshold
  */
-function SeeMoreHtml({ html, maxLength = 500 }) {
+function SeeMoreText({ text, maxLength = 500 }) {
   const [expanded, setExpanded] = useState(false);
-
-  if (!html) return <span className="text-gray-400">N/A</span>;
-
-  // Strip tags for measuring raw text length
-  const plainText = html.replace(/<[^>]+>/g, "");
-  if (plainText.length <= maxLength) {
-    return <span dangerouslySetInnerHTML={{ __html: html }} />;
-  }
+  if (!text) return <span className="text-gray-400">N/A</span>;
+  if (text.length <= maxLength) return <span>{text}</span>;
 
   return (
     <span>
-      {expanded ? (
-        <span dangerouslySetInnerHTML={{ __html: html }} />
-      ) : (
-        <span
-          dangerouslySetInnerHTML={{
-            __html: plainText.slice(0, maxLength) + "...",
-          }}
-        />
-      )}
+      {expanded ? text : text.slice(0, maxLength) + "... "}
       <button
-        className="text-blue-600 underline text-xs hover:cursor-pointer ml-1"
+        className="text-blue-600 underline text-xs hover:cursor-pointer"
         type="button"
         onClick={() => setExpanded(!expanded)}
       >
@@ -142,6 +129,7 @@ const SubItem = memo(function SubItem({
   const [selectedContact, setSelectedContact] = useState(null);
   const [editMode, setEditMode] = useState(false); // toggle between view vs edit contact
   const [showSuccess, setShowSuccess] = useState(false);
+  const [editBuffers, setEditBuffers] = useState({});
   const { data: session } = useSession();
 
   // Mutations for contacts
@@ -215,6 +203,16 @@ const SubItem = memo(function SubItem({
     if (!window.confirm(`Delete this ${singular}?`)) return;
     onDelete(type, idx);
   };
+
+  useEffect(() => {
+    if (isEditing) {
+      const init = {};
+      fields.forEach((f) => {
+        init[f.id] = stripHtml(item[f.id] ?? "");
+      });
+      setEditBuffers(init);
+    }
+  }, [isEditing, item, fields]);
 
   return (
     <div
@@ -357,13 +355,16 @@ const SubItem = memo(function SubItem({
               <div className="flex-1">
                 {isEditing ? (
                   <AutoExpandTextarea
-                    value={value ?? ""}
-                    onChange={(e) =>
-                      onChange(type, idx, field.id, e.target.value)
-                    }
+                    value={editBuffers[field.id] ?? ""}
+                    onChange={(e) => {
+                      setEditBuffers((prev) => ({ ...prev, [field.id]: e.target.value }));
+                      onChange(type, idx, field.id, e.target.value);
+                    }}
                   />
                 ) : (
-                  <SeeMoreHtml html={value} />
+                  <span className="break-all whitespace-pre-line max-w-full inline-block align-bottom">
+                    <SeeMoreText text={stripHtml(value)} />
+                  </span>
                 )}
               </div>
             </div>
@@ -389,7 +390,10 @@ const SubItem = memo(function SubItem({
         {isEditing && (
           <div>
             <button
-              onClick={() => onSave(type, idx)}
+              onClick={() => {
+                onSave(type, idx);
+                setEditingIdx(null);
+              }}
               className="border border-black px-2 py-1 rounded hover:bg-blue-200 hover:cursor-pointer"
             >
               Save

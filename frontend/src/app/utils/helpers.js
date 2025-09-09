@@ -175,3 +175,13 @@ export function reorderFromStorage(yardi, title, items = [], getRowId) {
     return items;
   }
 }
+
+/**
+ * Strip all HTML tags from a string
+ * Keeps only plain text
+ * 
+ */
+export function stripHtml(html) {
+  if (!html) return "";
+  return html.replace(/<[^>]+>/g, '');
+}
