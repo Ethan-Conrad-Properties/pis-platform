@@ -52,7 +52,19 @@ export default function Home() {
   const [selectedPropertyId, setSelectedPropertyId] = useState("");
   const [properties, setProperties] = useState([]); // all properties loaded progressively
   const [editingYardi, setEditingYardi] = useState(null);
-  const [view, setView] = useState("card"); // "card" | "grid"
+  const [view, setView] = useState(() => {
+    if (typeof window !== "undefined") {
+      // Check for client-side to avoid SSR issues
+      const saved = localStorage.getItem("propertyView");
+      return saved === "card" ? "card" : "grid";
+    }
+    return "grid"; // Fallback for server-side rendering
+  });
+
+  useEffect(() => {
+    localStorage.setItem("propertyView", view);
+  }, [view]);
+
   const [showAddModal, setShowAddModal] = useState(false);
 
   const { data: session } = useSession();
@@ -108,12 +120,20 @@ export default function Home() {
     ...(prop.codes ? prop.codes.map((code) => code.description) : []),
   ];
 
-  const filteredProperties = filterBySearch(properties, getFieldsToSearch, search);
+  const filteredProperties = filterBySearch(
+    properties,
+    getFieldsToSearch,
+    search
+  );
   const sortedProperties = sort(filteredProperties, "address");
 
   // Paginate results
   const PropertiesPerPage = 20;
-  const currentProperties = paginate(sortedProperties, currentPage, PropertiesPerPage);
+  const currentProperties = paginate(
+    sortedProperties,
+    currentPage,
+    PropertiesPerPage
+  );
   const totalPages = getTotalPages(filteredProperties, PropertiesPerPage);
 
   // Reset page to 1 when search changes
@@ -121,7 +141,9 @@ export default function Home() {
     setCurrentPage(1);
   }, [search]);
 
-  const selectedProperty = filteredProperties.find((p) => p.yardi === selectedPropertyId);
+  const selectedProperty = filteredProperties.find(
+    (p) => p.yardi === selectedPropertyId
+  );
 
   // Debug logging
   useEffect(() => {
@@ -138,9 +160,9 @@ export default function Home() {
   return (
     <div className="px-4 md:px-8 pt-4 md:pt-10 pb-4 md:pb-6">
       {/* Header */}
-        <h1 className="text-2xl md:text-4xl font-bold text-left mb-2 md:mb-6">
-          Welcome to the PIS Platform
-        </h1>
+      <h1 className="text-2xl md:text-4xl font-bold text-left mb-2 md:mb-6">
+        Welcome to the PIS Platform
+      </h1>
 
       {/* Modal for adding properties */}
       <AddPropertyForm
@@ -185,7 +207,7 @@ export default function Home() {
           )}
 
           {/* View toggle: card vs grid */}
-          <ViewToggle view={view} onToggle={setView} />
+          <ViewToggle view={view} onChange={setView} />
 
           {/* Dropdown: jump to a property */}
           <PropertyDropdown

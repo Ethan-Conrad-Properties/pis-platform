@@ -64,6 +64,8 @@ export const serviceFields = [
   { id: "contact", label: "Contacts" },
   { id: "notes", label: "Notes" },
   { id: "paid_by", label: "Paid By" },
+  { id: "tenant_specifics", label: "Tenant Specifics" },
+  { id: "suite_specifics", label: "Suite Specifics" },
 ];
 
 export const utilityFields = [

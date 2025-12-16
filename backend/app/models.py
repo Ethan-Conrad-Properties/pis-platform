@@ -108,6 +108,8 @@ class Service(Base):
     vendor = Column(String, index=True)
     notes = Column(Text)
     paid_by = Column(String)
+    tenant_specifics = Column(Text)
+    suite_specifics = Column(Text)
 
 
 class Utility(Base):

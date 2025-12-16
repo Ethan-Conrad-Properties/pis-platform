@@ -472,6 +472,8 @@ export default function PropertyCard({ property, onUpdate }) {
             vendor: "",
             notes: "",
             paid_by: "",
+            tenant_specifics: "",
+            suite_specifics: "",
           }
         : type === "utilities"
         ? {

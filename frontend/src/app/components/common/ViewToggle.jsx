@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 // -------------------------------------------------------------------
 // ViewToggle
@@ -11,24 +11,23 @@ import React from "react";
 //   • views: array → list of available views (default: ["card", "grid"]).
 // -------------------------------------------------------------------
 
-export default function ViewToggle({
-  view,
-  onToggle,
-  views = ["card", "grid"],
-}) {
-  // Human-friendly labels for known views
+export default function ViewToggle({ view, onChange }) {
+  const handleToggle = () => {
+    const newView = view === "card" ? "grid" : "card";
+    if (onChange) onChange(newView);
+  };
+
   const labels = {
     card: "Card View",
     grid: "Excel View",
   };
 
-  // Figure out the "next" view (the one not currently active)
-  const nextView = views.find((v) => v !== view);
+  const nextView = view === "card" ? "grid" : "card";
 
   return (
     <button
       className="border bg-white px-3 py-1 mb-4 rounded hover:bg-gray-100 hover:cursor-pointer"
-      onClick={() => onToggle(nextView)}
+      onClick={handleToggle}
       style={{
         background: "var(--surface)",
         color: "var(--surface-foreground)",
