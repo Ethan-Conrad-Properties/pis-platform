@@ -47,8 +47,11 @@ export default function ContactInfoModal({
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-xs"
-      onClick={onClose} // Clicking outside modal closes it
-      
+      onClick={(e) => {
+        // Prevent close if text is selected (e.g., user is highlighting)
+        if (window.getSelection().toString()) return;
+        onClose();
+      }}
     >
       <div
         className="bg-white border border-white p-6 rounded shadow-lg min-w-[250px]"
@@ -56,7 +59,7 @@ export default function ContactInfoModal({
         style={{
           background: "var(--surface)",
           color: "var(--surface-foreground)",
-      }}
+        }}
       >
         {isEdit ? (
           // ----------------------------
