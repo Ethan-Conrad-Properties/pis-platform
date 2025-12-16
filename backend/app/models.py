@@ -171,7 +171,7 @@ class SuiteContact(Base):
     __tablename__ = "suite_contacts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    suite_id = Column(Integer, ForeignKey("suites.suite_id"), nullable=False)
+    suite_id = Column(Integer, ForeignKey("suites.suite_id", ondelete="CASCADE"), nullable=False)
     contact_id = Column(Integer, ForeignKey("contacts.contact_id"), nullable=False)
 
 
@@ -182,7 +182,7 @@ class ServiceContact(Base):
     __tablename__ = "service_contacts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    service_id = Column(Integer, ForeignKey("services.service_id"), nullable=False)
+    service_id = Column(Integer, ForeignKey("services.service_id", ondelete="CASCADE"), nullable=False)
     contact_id = Column(Integer, ForeignKey("contacts.contact_id"), nullable=False)
 
 
@@ -193,7 +193,7 @@ class UtilityContact(Base):
     __tablename__ = "utility_contacts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    utility_id = Column(Integer, ForeignKey("utilities.utility_id"), nullable=False)
+    utility_id = Column(Integer, ForeignKey("utilities.utility_id", ondelete="CASCADE"), nullable=False)
     contact_id = Column(Integer, ForeignKey("contacts.contact_id"), nullable=False)
 
 
