@@ -246,7 +246,18 @@ const SubItem = memo(function SubItem({
           </button>
           {isEditing ? (
             <button
-              onClick={() => setEditingIdx(null)}
+              onClick={() => {
+                // If new item (no ID), remove it on cancel
+                const isNew =
+                  !item.suite_id &&
+                  !item.service_id &&
+                  !item.utility_id &&
+                  !item.code_id;
+                if (isNew) {
+                  onDelete(type, idx);
+                }
+                setEditingIdx(null);
+              }}
               className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer mb-2"
             >
               Cancel
@@ -357,7 +368,10 @@ const SubItem = memo(function SubItem({
                   <AutoExpandTextarea
                     value={editBuffers[field.id] ?? ""}
                     onChange={(e) => {
-                      setEditBuffers((prev) => ({ ...prev, [field.id]: e.target.value }));
+                      setEditBuffers((prev) => ({
+                        ...prev,
+                        [field.id]: e.target.value,
+                      }));
                       onChange(type, idx, field.id, e.target.value);
                     }}
                   />
