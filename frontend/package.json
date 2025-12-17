@@ -17,6 +17,7 @@
     "ag-grid-react": "^34.0.1",
     "axios": "^1.10.0",
     "jwt-decode": "^4.0.0",
+    "linkify-react": "^4.3.2",
     "next": "15.3.5",
     "next-auth": "^4.24.11",
     "react": "^19.0.0",

@@ -6,6 +6,7 @@ import SuccessModal from "../common/SuccessModal";
 import { isDirector, isPM, isIT, isAP } from "@/app/constants/roles";
 import { useSession } from "next-auth/react";
 import { stripHtml } from "@/app/utils/helpers";
+import Linkify from "linkify-react";
 
 /**
  * AutoExpandTextarea
@@ -70,20 +71,44 @@ const emptyContact = {
  */
 function SeeMoreText({ text, maxLength = 500 }) {
   const [expanded, setExpanded] = useState(false);
+
   if (!text) return <span className="text-gray-400">N/A</span>;
-  if (text.length <= maxLength) return <span>{text}</span>;
+
+  const isString = typeof text === "string";
+  const displayText = isString && !expanded ? text.slice(0, maxLength) : text;
 
   return (
     <span>
-      {expanded ? text : text.slice(0, maxLength) + "... "}
-      <button
-        className="text-blue-600 underline text-xs hover:cursor-pointer"
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-      >
-        {expanded ? "Show less" : "Show more"}
-      </button>
+      {displayText}
+      {isString && text.length > maxLength && (
+        <>
+          {!expanded && "... "}
+          <button
+            className="text-blue-600 underline text-xs hover:cursor-pointer"
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? "Show less" : "Show more"}
+          </button>
+        </>
+      )}
     </span>
+  );
+}
+
+function RenderTextWithLinks({ text }) {
+  if (!text) return <span className="text-gray-400">N/A</span>;
+
+  return (
+    <Linkify
+      options={{
+        target: "_blank",
+        rel: "noopener noreferrer",
+        className: "text-blue-600 underline",
+      }}
+    >
+      {text}
+    </Linkify>
   );
 }
 
@@ -377,7 +402,9 @@ const SubItem = memo(function SubItem({
                   />
                 ) : (
                   <span className="break-all whitespace-pre-line max-w-full inline-block align-bottom">
-                    <SeeMoreText text={stripHtml(value)} />
+                    <SeeMoreText
+                      text={<RenderTextWithLinks text={stripHtml(value)} />}
+                    />
                   </span>
                 )}
               </div>

@@ -131,7 +131,7 @@ export default function PropertyCard({ property, onUpdate }) {
     "Codes",
     sortedCodes,
     getRowId
-  );
+  ); 
 
   // Search filtering
   const filteredSuites = filterBySearch(
