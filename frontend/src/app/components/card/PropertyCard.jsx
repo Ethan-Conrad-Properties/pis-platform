@@ -95,29 +95,41 @@ export default function PropertyCard({ property, onUpdate }) {
         data.code_id
     );
 
-  // Preserve row order from localStorage
+  const alphaSort = (items, keyFn) =>
+    [...items].sort((a, b) =>
+      (keyFn(a) || "")
+        .toLowerCase()
+        .localeCompare((keyFn(b) || "").toLowerCase())
+    );
+
+  const sortedSuites = alphaSort(form.suites, (item) => item.suite);
+  const sortedServices = alphaSort(form.services, (item) => item.service_type);
+  const sortedUtilities = alphaSort(form.utilities, (item) => item.service);
+  const sortedCodes = alphaSort(form.codes, (item) => item.description);
+
+  // Preserve row order from localStorage (Excel/grid ordering takes precedence)
   const orderedSuites = reorderFromStorage(
     property.yardi,
     "Suites",
-    form.suites,
+    sortedSuites,
     getRowId
   );
   const orderedServices = reorderFromStorage(
     property.yardi,
     "Services",
-    form.services,
+    sortedServices,
     getRowId
   );
   const orderedUtilities = reorderFromStorage(
     property.yardi,
     "Utilities",
-    form.utilities,
+    sortedUtilities,
     getRowId
   );
   const orderedCodes = reorderFromStorage(
     property.yardi,
     "Codes",
-    form.codes,
+    sortedCodes,
     getRowId
   );
 
@@ -538,27 +550,29 @@ export default function PropertyCard({ property, onUpdate }) {
    * Field renderer (edit vs. view mode)
    */
   const renderField = (label, name, type = "text") => (
-  <div className="mb-2">
-    <label className="block font-semibold">{label}:</label>
-    {editing ? (
-      <input
-        type={type}
-        name={name}
-        value={name === "coe" ? formatDate(form[name]) : form[name] ?? ""}
-        onChange={handleChange}
-        className="p-1 border border-gray-300 rounded w-full"
-      />
-    ) : (
-      <span
-        className="break-all inline-block align-bottom"
-        dangerouslySetInnerHTML={{
-          __html: name === "coe" ? formatDate(property[name]) : property[name] || "",
-        }}
-      />
-    )}
-  </div>
-);
-
+    <div className="mb-2">
+      <label className="block font-semibold">{label}:</label>
+      {editing ? (
+        <input
+          type={type}
+          name={name}
+          value={name === "coe" ? formatDate(form[name]) : form[name] ?? ""}
+          onChange={handleChange}
+          className="p-1 border border-gray-300 rounded w-full"
+        />
+      ) : (
+        <span
+          className="break-all inline-block align-bottom"
+          dangerouslySetInnerHTML={{
+            __html:
+              name === "coe"
+                ? formatDate(property[name])
+                : property[name] || "",
+          }}
+        />
+      )}
+    </div>
+  );
 
   // Scroll to first matching section when search changes and matches found
   useEffect(() => {
