@@ -17,7 +17,7 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import SubSection from "./SubSection";
 import SuccessModal from "../common/SuccessModal";
 import PropertySearch from "../common/PropertySearch";
@@ -42,6 +42,7 @@ import { isDirector, isPM, isIT, isAP } from "@/app/constants/roles";
 
 export default function PropertyCard({ property, onUpdate }) {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
 
   // State
   const [editing, setEditing] = useState(false);
@@ -131,7 +132,7 @@ export default function PropertyCard({ property, onUpdate }) {
     "Codes",
     sortedCodes,
     getRowId
-  ); 
+  );
 
   // Search filtering
   const filteredSuites = filterBySearch(
@@ -229,82 +230,119 @@ export default function PropertyCard({ property, onUpdate }) {
   const propertyMutation = useMutation({
     mutationFn: (updated) =>
       axiosInstance.put(`/properties/${property.yardi}`, updated),
-    onSuccess: () => {
-      setEditing(false);
-      setShowModal(true);
-      refetch();
-      if (onUpdate) onUpdate(form);
+    onMutate: async (updatedProperty) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        ...updatedProperty,
+      }));
+      return { previousData };
     },
-    onError: (error) =>
-      alert("Error updating property", error.response?.data?.message),
+    onError: (err, variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      }
+      alert("Error updating property");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(["property", property.yardi]);
+      setShowModal(true);
+    },
   });
 
-  const suiteUpdate = useMutation({
-    mutationFn: (suite) =>
-      axiosInstance.put(`/suites/${suite.suite_id}`, suite),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
-    },
-    onError: () => alert("Error updating suite"),
-  });
-
-  const serviceUpdate = useMutation({
-    mutationFn: (service) =>
-      axiosInstance.put(`/services/${service.service_id}`, service),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
-    },
-    onError: () => alert("Error updating service"),
-  });
-
-  const utilityUpdate = useMutation({
-    mutationFn: (utility) =>
-      axiosInstance.put(`/utilities/${utility.utility_id}`, utility),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
-    },
-    onError: () => alert("Error updating utility"),
-  });
-
-  const codeUpdate = useMutation({
-    mutationFn: (code) => axiosInstance.put(`/codes/${code.code_id}`, code),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
-    },
-    onError: () => alert("Error updating code"),
-  });
-
-  const toggleActiveMutation = useMutation({
-    mutationFn: (newActive) =>
-      axiosInstance.put(`/properties/${property.yardi}`, {
-        ...form,
-        active: newActive,
-      }),
-    onSuccess: (_, variables) => {
-      setForm((f) => ({ ...f, active: variables }));
-      setShowModal(true);
-      refetch();
-      if (onUpdate) onUpdate({ ...form, active: variables });
-    },
-    onError: () => alert("Error updating property"),
-  });
-
-  // --- Create (POST) mutations ---
   const suiteCreate = useMutation({
     mutationFn: (suite) =>
       axiosInstance.post(`/suites`, {
         ...suite,
         property_yardi: property.yardi,
       }),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
+    onMutate: async (newSuite) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        suites: [
+          ...(old?.suites || []),
+          { ...newSuite, suite_id: "temp-" + Date.now() },
+        ],
+      }));
+      return { previousData };
     },
-    onError: () => alert("Error adding suite"),
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error adding suite");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
+  });
+
+  const suiteUpdate = useMutation({
+    mutationFn: (suite) =>
+      axiosInstance.put(`/suites/${suite.suite_id}`, suite),
+    onMutate: async (updatedSuite) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        suites: old.suites.map((s) =>
+          s.suite_id === updatedSuite.suite_id ? updatedSuite : s
+        ),
+      }));
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error updating suite");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
+  });
+
+  const suiteDelete = useMutation({
+    mutationFn: (id) => axiosInstance.delete(`/suites/${id}`),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        suites: old.suites.filter((s) => s.suite_id !== id),
+      }));
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error deleting suite");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
   });
 
   const serviceCreate = useMutation({
@@ -313,11 +351,86 @@ export default function PropertyCard({ property, onUpdate }) {
         ...service,
         property_yardi: property.yardi,
       }),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
+    onMutate: async (newService) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        services: [
+          ...(old?.services || []),
+          { ...newService, service_id: "temp-" + Date.now() },
+        ],
+      }));
+      return { previousData };
     },
-    onError: () => alert("Error adding service"),
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error adding service");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
+  });
+
+  const serviceUpdate = useMutation({
+    mutationFn: (service) =>
+      axiosInstance.put(`/services/${service.service_id}`, service),
+    onMutate: async (updatedService) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        services: old.services.map((s) =>
+          s.service_id === updatedService.service_id ? updatedService : s
+        ),
+      }));
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error updating service");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
+  });
+
+  const serviceDelete = useMutation({
+    mutationFn: (id) => axiosInstance.delete(`/services/${id}`),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        services: old.services.filter((s) => s.service_id !== id),
+      }));
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error deleting service");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
   });
 
   const utilityCreate = useMutation({
@@ -326,55 +439,170 @@ export default function PropertyCard({ property, onUpdate }) {
         ...utility,
         property_yardi: property.yardi,
       }),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
+    onMutate: async (newUtility) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        utilities: [
+          ...(old?.utilities || []),
+          { ...newUtility, utility_id: "temp-" + Date.now() },
+        ],
+      }));
+      return { previousData };
     },
-    onError: () => alert("Error adding utility"),
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error adding utility");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
+  });
+
+  const utilityUpdate = useMutation({
+    mutationFn: (utility) =>
+      axiosInstance.put(`/utilities/${utility.utility_id}`, utility),
+    onMutate: async (updatedUtility) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        utilities: old.utilities.map((u) =>
+          u.utility_id === updatedUtility.utility_id ? updatedUtility : u
+        ),
+      }));
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error updating utility");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
+  });
+
+  const utilityDelete = useMutation({
+    mutationFn: (id) => axiosInstance.delete(`/utilities/${id}`),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        utilities: old.utilities.filter((u) => u.utility_id !== id),
+      }));
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error deleting utility");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
   });
 
   const codeCreate = useMutation({
     mutationFn: (code) =>
       axiosInstance.post(`/codes`, { ...code, property_yardi: property.yardi }),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
+    onMutate: async (newCode) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        codes: [
+          ...(old?.codes || []),
+          { ...newCode, code_id: "temp-" + Date.now() },
+        ],
+      }));
+      return { previousData };
     },
-    onError: () => alert("Error adding code"),
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error adding code");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
   });
 
-  // 2) delete mutations
-  const suiteDelete = useMutation({
-    mutationFn: (id) => axiosInstance.delete(`/suites/${id}`),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
+  const codeUpdate = useMutation({
+    mutationFn: (code) => axiosInstance.put(`/codes/${code.code_id}`, code),
+    onMutate: async (updatedCode) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        codes: old.codes.map((c) =>
+          c.code_id === updatedCode.code_id ? updatedCode : c
+        ),
+      }));
+      return { previousData };
     },
-    onError: () => alert("Error deleting suite"),
-  });
-  const serviceDelete = useMutation({
-    mutationFn: (id) => axiosInstance.delete(`/services/${id}`),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error updating code");
     },
-    onError: () => alert("Error deleting service"),
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
   });
-  const utilityDelete = useMutation({
-    mutationFn: (id) => axiosInstance.delete(`/utilities/${id}`),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
-    },
-    onError: () => alert("Error deleting utility"),
-  });
+
   const codeDelete = useMutation({
     mutationFn: (id) => axiosInstance.delete(`/codes/${id}`),
-    onSuccess: () => {
-      setShowModal(true);
-      refetch();
+    onMutate: async (id) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        codes: old.codes.filter((c) => c.code_id !== id),
+      }));
+      return { previousData };
     },
-    onError: () => alert("Error deleting code"),
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
+      alert("Error deleting code");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
   });
 
   const entityMap = {
@@ -436,6 +664,11 @@ export default function PropertyCard({ property, onUpdate }) {
     } else {
       // PUT
       await cfg.update.mutateAsync(item);
+      setForm((prev) => {
+        const next = [...(prev[section] || [])];
+        next[idx] = item;
+        return { ...prev, [section]: next };
+      });
       if (cfg.parentType && item.contacts?.length) {
         await saveContacts(item.contacts, id, cfg.parentType);
       }
