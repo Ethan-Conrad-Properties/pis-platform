@@ -691,10 +691,11 @@ export default function PropertyCard({ property, onUpdate }) {
   };
 
   // handle adding entity
-  const handleAdd = (type) => {
+  const handleAdd = (type, tempId) => {
     const empty =
       type === "suites"
         ? {
+            temp_id: tempId,
             suite_id: null,
             suite: "",
             sqft: "",
@@ -712,6 +713,7 @@ export default function PropertyCard({ property, onUpdate }) {
           }
         : type === "services"
         ? {
+            temp_id: tempId,
             service_id: null,
             service_type: "",
             vendor: "",
@@ -722,6 +724,7 @@ export default function PropertyCard({ property, onUpdate }) {
           }
         : type === "utilities"
         ? {
+            temp_id: tempId,
             utility_id: null,
             service: "",
             vendor: "",
@@ -731,6 +734,7 @@ export default function PropertyCard({ property, onUpdate }) {
             paid_by: "",
           }
         : {
+            temp_id: tempId,
             code_id: null,
             description: "",
             code: "",
@@ -987,6 +991,7 @@ export default function PropertyCard({ property, onUpdate }) {
         renderContent={() => (
           <PropertyPhotos propertyYardi={property.yardi} editing={editing} />
         )}
+        onAdd={() => {}}
       />
     </div>
   );

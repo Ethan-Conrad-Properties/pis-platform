@@ -26,7 +26,7 @@ import { useSession } from "next-auth/react";
  * - search: string — search query, used to auto-expand if results exist
  * - onContactChange: (type, idx, contact, action) → contact CRUD handler
  * - renderContent: optional custom renderer (e.g., for Photos section)
- * - onAdd: (type) → called when adding a new sub-entity
+ * - onAdd: (type, tempId) → called when adding a new sub-entity
  * - onDelete: (type, idx) → delete handler
  */
 export default function SubSection({
@@ -42,16 +42,27 @@ export default function SubSection({
   onAdd,
   onDelete,
 }) {
-  const [editingIdx, setEditingIdx] = useState(null); // track which row is being edited
+  const [editingId, setEditingId] = useState(null); // track which row is being edited (by stable ID)
   const [expanded, setExpanded] = useState(false); // expand/collapse state
   const { data: session } = useSession();
 
   /**
-   * Wraps onSave to automatically clear editing index after saving.
+   * Returns a stable identifier for a sub-entity.
+   * Falls back to temp_id for newly created (unsaved) rows.
+   */
+  const getItemId = (item) =>
+    item?.suite_id ||
+    item?.service_id ||
+    item?.utility_id ||
+    item?.code_id ||
+    item?.temp_id;
+
+  /**
+   * Wraps onSave to automatically clear editing state after saving.
    */
   const handleSaveWrapper = async (type, idx) => {
     await onSave(type, idx);
-    setEditingIdx(null);
+    setEditingId(null);
   };
 
   /**
@@ -61,10 +72,10 @@ export default function SubSection({
    * Collapse if no search and nothing being edited.
    */
   useEffect(() => {
-    if ((search && items && items.length > 0) || editingIdx !== null) {
+    if ((search && items && items.length > 0) || editingId !== null) {
       setExpanded(true);
-    } 
-  }, [search, editingIdx]);
+    }
+  }, [search, editingId, items]);
 
   return (
     <>
@@ -93,21 +104,15 @@ export default function SubSection({
           ) : items && items.length > 0 ? (
             items.map((item, idx) => (
               <SubItem
-                key={
-                  item.suite_id ||
-                  item.service_id ||
-                  item.utility_id ||
-                  item.code_id ||
-                  idx
-                }
+                key={getItemId(item) ?? idx}
                 item={item}
                 idx={idx}
                 type={type}
                 fields={fields}
-                isEditing={editingIdx === idx}
+                isEditing={getItemId(item) === editingId}
                 onChange={onChange}
                 onSave={handleSaveWrapper}
-                setEditingIdx={setEditingIdx}
+                setEditingId={setEditingId}
                 onContactChange={onContactChange}
                 onDelete={onDelete}
               />
@@ -128,8 +133,9 @@ export default function SubSection({
                 className="mt-2 text-xs text-green-700 border border-green-700 px-2 py-1 rounded hover:bg-green-50 hover:cursor-pointer inline-block"
                 type="button"
                 onClick={() => {
-                  onAdd(type);
-                  setEditingIdx(items?.length || 0); // auto-edit newly added row
+                  const tempId = `temp-${Date.now()}`;
+                  onAdd(type, tempId);
+                  setEditingId(tempId); // immediately edit the newly added row
                 }}
               >
                 + Add {label.slice(0, -1)}

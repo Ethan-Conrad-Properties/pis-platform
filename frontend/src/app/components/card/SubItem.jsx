@@ -132,7 +132,7 @@ function RenderTextWithLinks({ text }) {
  * - isEditing: Boolean — true if currently editing this record
  * - onChange: (type, idx, field, value) → update handler for text fields
  * - onSave: (type, idx) → save handler
- * - setEditingIdx: Setter for controlling which sub-item is being edited
+ * - setEditingId: Setter for controlling which sub-item is being edited
  * - onContactChange: (type, idx, contact, action) → contact CRUD handler
  * - onDelete: (type, idx) → delete handler for the sub-item
  */
@@ -144,7 +144,7 @@ const SubItem = memo(function SubItem({
   isEditing,
   onChange,
   onSave,
-  setEditingIdx,
+  setEditingId,
   onContactChange,
   onDelete,
 }) {
@@ -281,7 +281,7 @@ const SubItem = memo(function SubItem({
                 if (isNew) {
                   onDelete(type, idx);
                 }
-                setEditingIdx(null);
+                setEditingId(null);
               }}
               className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer mb-2"
             >
@@ -289,7 +289,7 @@ const SubItem = memo(function SubItem({
             </button>
           ) : (
             <button
-              onClick={() => setEditingIdx(idx)}
+              onClick={() => setEditingId(item.suite_id || item.service_id || item.utility_id || item.code_id)}
               className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer mb-2"
             >
               Edit
@@ -433,7 +433,7 @@ const SubItem = memo(function SubItem({
             <button
               onClick={() => {
                 onSave(type, idx);
-                setEditingIdx(null);
+                setEditingId(null);
               }}
               className="border border-black px-2 py-1 rounded hover:bg-blue-200 hover:cursor-pointer"
             >
