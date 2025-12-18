@@ -95,13 +95,11 @@ export default function PropertyPhotos({ propertyYardi, editing }) {
 
   return (
     <div className="mb-4">
-      {/* Upload form visible only in editing mode */}
-      {editing && (
         <form onSubmit={handleUpload} className="mb-4 flex items-center gap-2">
           {/* File input with preview */}
           <label
             htmlFor="photo-upload"
-            className="px-2 py-1 border rounded bg-gray-100 hover:bg-gray-200 cursor-pointer"
+            className="px-2 py-1 border rounded cursor-pointer"
           >
             Choose Photo
             <input
@@ -151,7 +149,6 @@ export default function PropertyPhotos({ propertyYardi, editing }) {
             </div>
           )}
         </form>
-      )}
 
       {/* Photo list */}
       {photos.length === 0 ? (
