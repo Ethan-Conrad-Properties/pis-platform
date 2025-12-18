@@ -42,7 +42,7 @@ export default function SubSection({
   onAdd,
   onDelete,
 }) {
-  const [editingIdx, setEditingIdx] = useState(null); // track which row is being edited
+  const [editingId, setEditingId] = useState(null); // track which row is being edited
   const [expanded, setExpanded] = useState(false); // expand/collapse state
   const { data: session } = useSession();
 
@@ -51,7 +51,7 @@ export default function SubSection({
    */
   const handleSaveWrapper = async (type, idx) => {
     await onSave(type, idx);
-    setEditingIdx(null);
+    setEditingId(null);
   };
 
   /**
@@ -61,10 +61,10 @@ export default function SubSection({
    * Collapse if no search and nothing being edited.
    */
   useEffect(() => {
-    if ((search && items && items.length > 0) || editingIdx !== null) {
+    if ((search && items && items.length > 0) || editingId !== null) {
       setExpanded(true);
-    } 
-  }, [search, editingIdx]);
+    }
+  }, [search, editingId]);
 
   return (
     <>
@@ -91,27 +91,29 @@ export default function SubSection({
           {renderContent ? (
             renderContent()
           ) : items && items.length > 0 ? (
-            items.map((item, idx) => (
-              <SubItem
-                key={
-                  item.suite_id ||
-                  item.service_id ||
-                  item.utility_id ||
-                  item.code_id ||
-                  idx
-                }
-                item={item}
-                idx={idx}
-                type={type}
-                fields={fields}
-                isEditing={editingIdx === idx}
-                onChange={onChange}
-                onSave={handleSaveWrapper}
-                setEditingIdx={setEditingIdx}
-                onContactChange={onContactChange}
-                onDelete={onDelete}
-              />
-            ))
+            items.map((item) => {
+              const id =
+                item.suite_id ||
+                item.service_id ||
+                item.utility_id ||
+                item.code_id;
+            
+              return (
+                <SubItem
+                  key={id}
+                  item={item}
+                  id={id}
+                  type={type}
+                  fields={fields}
+                  isEditing={editingId === id}
+                  setEditingId={setEditingId}
+                  onChange={onChange}
+                  onSave={handleSaveWrapper}
+                  onContactChange={onContactChange}
+                  onDelete={onDelete}
+                />
+              );
+            })
           ) : (
             <div className="text-gray-500">
               No {label.toLowerCase()} listed.
@@ -128,8 +130,9 @@ export default function SubSection({
                 className="mt-2 text-xs text-green-700 border border-green-700 px-2 py-1 rounded hover:bg-green-50 hover:cursor-pointer inline-block"
                 type="button"
                 onClick={() => {
-                  onAdd(type);
-                  setEditingIdx(items?.length || 0); // auto-edit newly added row
+                  const tempId = "temp-" + Date.now();
+                  onAdd(type, tempId);
+                  setEditingId(tempId);
                 }}
               >
                 + Add {label.slice(0, -1)}

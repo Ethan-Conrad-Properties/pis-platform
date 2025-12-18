@@ -46,6 +46,7 @@ export default function PropertyCard({ property, onUpdate }) {
 
   // State
   const [editing, setEditing] = useState(false);
+  const [drafting, setDrafting] = useState(false); 
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({
@@ -78,6 +79,8 @@ export default function PropertyCard({ property, onUpdate }) {
 
   // Sync local form state when query data updates
   useEffect(() => {
+    if (drafting) return;
+
     setForm({
       ...propertyData,
       suites: propertyData.suites || [],
@@ -103,75 +106,89 @@ export default function PropertyCard({ property, onUpdate }) {
         .localeCompare((keyFn(b) || "").toLowerCase())
     );
 
-  const sortedSuites = alphaSort(form.suites, (item) => item.suite);
-  const sortedServices = alphaSort(form.services, (item) => item.service_type);
-  const sortedUtilities = alphaSort(form.utilities, (item) => item.service);
-  const sortedCodes = alphaSort(form.codes, (item) => item.description);
+  const sortedSuites = drafting
+    ? form.suites
+    : alphaSort(form.suites, (item) => item.suite);
+
+  const sortedServices = drafting
+    ? form.services
+    : alphaSort(form.services, (item) => item.service_type);
+
+  const sortedUtilities = drafting
+    ? form.utilities
+    : alphaSort(form.utilities, (item) => item.service);
+
+  const sortedCodes = drafting
+    ? form.codes
+    : alphaSort(form.codes, (item) => item.description);
 
   // Preserve row order from localStorage (Excel/grid ordering takes precedence)
-  const orderedSuites = reorderFromStorage(
-    property.yardi,
-    "Suites",
-    sortedSuites,
-    getRowId
-  );
-  const orderedServices = reorderFromStorage(
-    property.yardi,
-    "Services",
-    sortedServices,
-    getRowId
-  );
-  const orderedUtilities = reorderFromStorage(
-    property.yardi,
-    "Utilities",
-    sortedUtilities,
-    getRowId
-  );
-  const orderedCodes = reorderFromStorage(
-    property.yardi,
-    "Codes",
-    sortedCodes,
-    getRowId
-  );
+  const orderedSuites = drafting
+    ? sortedSuites
+    : reorderFromStorage(property.yardi, "Suites", sortedSuites, getRowId);
+
+  const orderedServices = drafting
+    ? sortedServices
+    : reorderFromStorage(property.yardi, "Services", sortedServices, getRowId);
+
+  const orderedUtilities = drafting
+    ? sortedUtilities
+    : reorderFromStorage(
+        property.yardi,
+        "Utilities",
+        sortedUtilities,
+        getRowId
+      );
+  const orderedCodes = drafting
+    ? sortedCodes
+    : reorderFromStorage(property.yardi, "Codes", sortedCodes, getRowId);
 
   // Search filtering
-  const filteredSuites = filterBySearch(
-    orderedSuites,
-    (item) => [
-      item.suite,
-      item.name,
-      item.sqft,
-      item.hvac,
-      item.hvac_info,
-      item.notes,
-    ],
-    search
-  );
+  const filteredSuites = drafting
+    ? form.suites
+    : filterBySearch(
+        orderedSuites,
+        (item) => [
+          item.suite,
+          item.name,
+          item.sqft,
+          item.hvac,
+          item.hvac_info,
+          item.notes,
+        ],
+        search
+      );
 
-  const filteredServices = filterBySearch(
-    orderedServices,
-    (item) => [item.service_type, item.vendor, item.paid_by, item.notes],
-    search
-  );
+  const filteredServices = drafting
+    ? form.services
+    : filterBySearch(
+        orderedServices,
+        (item) => [item.service_type, item.vendor, item.paid_by, item.notes],
+        search
+      );
 
-  const filteredUtilities = filterBySearch(
-    orderedUtilities,
-    (item) => [
-      item.service,
-      item.vendor,
-      item.account_number,
-      item.meter_number,
-      item.paid_by,
-      item.notes,
-    ],
-    search
-  );
+  const filteredUtilities = drafting
+    ? form.utilities
+    : filterBySearch(
+        orderedUtilities,
+        (item) => [
+          item.service,
+          item.vendor,
+          item.account_number,
+          item.meter_number,
+          item.paid_by,
+          item.notes,
+        ],
+        search
+      );
 
-  const filteredCodes = filterBySearch(
-    orderedCodes,
-    (item) => [item.description, item.code, item.notes],
-    search
-  );
+  const filteredCodes = drafting
+    ? form.codes
+    : filterBySearch(
+        orderedCodes,
+        (item) => [item.description, item.code, item.notes],
+        search
+      );
 
   // Handle property field changes (local state for instant UI)
   const handleChange = (e) => {
@@ -179,13 +196,16 @@ export default function PropertyCard({ property, onUpdate }) {
   };
 
   // Handle suite/service/utility/code field changes (local state for instant UI)
-  const handleSubChange = (type, idx, field, value) => {
-    setForm((prevForm) => {
-      const updated = prevForm[type].map((item, i) =>
-        i === idx ? { ...item, [field]: value } : item
-      );
-      return { ...prevForm, [type]: updated };
-    });
+  const handleSubChange = (type, id, field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      [type]: prev[type].map((item) => {
+        const itemId =
+          item.suite_id || item.service_id || item.utility_id || item.code_id;
+
+        return itemId === id ? { ...item, [field]: value } : item;
+      }),
+    }));
   };
 
   // Handle contact changes for suites, services, utilities (local state for instant UI)
@@ -640,50 +660,59 @@ export default function PropertyCard({ property, onUpdate }) {
     },
   };
 
-  async function upsertEntity(section, idx) {
+  async function upsertEntity(section, id) {
     const cfg = entityMap[section];
     const list = form[section] || [];
-    const item = list[idx];
-    const id = item?.[cfg.idKey];
+
+    const item = list.find((i) => i[cfg.idKey] === id);
     if (!item) return;
 
-    if (!id) {
-      // POST
-      const { data: created } = await cfg.create.mutateAsync(item);
+    const isTemp = typeof id === "string" && id.startsWith("temp-");
 
-      setForm((prev) => {
-        const next = [...(prev[section] || [])];
-        next[idx] = created; // swap temp with server entity
-        return { ...prev, [section]: next };
-      });
+    // build payload safely
+    const payload = { ...item };
 
-      // save contacts after creation (only for suites/services/utilities)
-      if (cfg.parentType && item.contacts?.length) {
-        await saveContacts(item.contacts, created[cfg.idKey], cfg.parentType);
-      }
-    } else {
-      // PUT
-      await cfg.update.mutateAsync(item);
-      setForm((prev) => {
-        const next = [...(prev[section] || [])];
-        next[idx] = item;
-        return { ...prev, [section]: next };
-      });
-      if (cfg.parentType && item.contacts?.length) {
-        await saveContacts(item.contacts, id, cfg.parentType);
-      }
+    // NEVER send temp IDs to backend
+    if (isTemp) {
+      delete payload[cfg.idKey];
     }
+
+    // ensure FK is present (defensive)
+    if (cfg.fkKey && !payload[cfg.fkKey]) {
+      payload[cfg.fkKey] = form.yardi;
+    }
+
+    // CREATE
+    if (isTemp) {
+      const { data: created } = await cfg.create.mutateAsync(payload);
+
+      setForm((prev) => ({
+        ...prev,
+        [section]: prev[section].map((i) =>
+          i[cfg.idKey] === id ? created : i
+        ),
+      }));
+
+      return;
+    }
+
+    // ✏️ UPDATE
+    await cfg.update.mutateAsync({
+      ...payload,
+      [cfg.idKey]: id, // explicit ID for updates
+    });
   }
 
   // Save property and all sub-records
-  const handleSave = async (section, idx = null) => {
+  const handleSave = async (section, id = null) => {
     try {
       if (section === "property") {
         propertyMutation.mutate(form);
-      } else if (idx !== null) {
-        await upsertEntity(section, idx);
+      } else if (id !== null) {
+        await upsertEntity(section, id);
       }
       setEditing(false);
+      setDrafting(false);
       if (onUpdate) onUpdate(form);
     } catch (error) {
       alert("Error updating property or related records");
@@ -691,11 +720,12 @@ export default function PropertyCard({ property, onUpdate }) {
   };
 
   // handle adding entity
-  const handleAdd = (type) => {
+  const handleAdd = (type, tempId) => {
+    setDrafting(true);
     const empty =
       type === "suites"
         ? {
-            suite_id: null,
+            suite_id: tempId,
             suite: "",
             sqft: "",
             name: "",
@@ -712,7 +742,7 @@ export default function PropertyCard({ property, onUpdate }) {
           }
         : type === "services"
         ? {
-            service_id: null,
+            service_id: tempId,
             service_type: "",
             vendor: "",
             notes: "",
@@ -722,7 +752,7 @@ export default function PropertyCard({ property, onUpdate }) {
           }
         : type === "utilities"
         ? {
-            utility_id: null,
+            utility_id: tempId,
             service: "",
             vendor: "",
             account_number: "",
@@ -731,7 +761,7 @@ export default function PropertyCard({ property, onUpdate }) {
             paid_by: "",
           }
         : {
-            code_id: null,
+            code_id: tempId,
             description: "",
             code: "",
             notes: "",
@@ -743,38 +773,33 @@ export default function PropertyCard({ property, onUpdate }) {
     }));
   };
 
-  const handleDelete = async (section, idx) => {
-    const list = form[section] || [];
-    const item = list[idx];
-    if (!item) return;
-
-    const idKey = entityMap[section].idKey;
-    const id = item[idKey];
-
-    try {
-      // If not persisted yet, just remove locally
-      if (!id) {
-        setForm((prev) => {
-          const next = [...(prev[section] || [])];
-          next.splice(idx, 1);
-          return { ...prev, [section]: next };
-        });
-        setShowModal(true); // feedback for local delete
-        return;
-      }
-
-      // Persisted: call DELETE
-      await entityMap[section].remove.mutateAsync(id);
-
-      // Remove from local state
-      setForm((prev) => {
-        const next = [...(prev[section] || [])];
-        next.splice(idx, 1);
-        return { ...prev, [section]: next };
-      });
-    } catch {
-      alert("Error deleting item");
+  const handleDelete = async (section, id) => {
+    if (typeof id === "string" && id.startsWith("temp-")) {
+      setForm((prev) => ({
+        ...prev,
+        [section]: prev[section].filter((i) => {
+          const itemId =
+            i.suite_id || i.service_id || i.utility_id || i.code_id;
+          return itemId !== id;
+        }),
+      }));
+      return;
     }
+
+    // real delete
+    await entityMap[section].remove.mutateAsync(id);
+  };
+
+  const handleCancel = () => {
+    setForm({
+      ...propertyData,
+      suites: propertyData.suites || [],
+      services: propertyData.services || [],
+      utilities: propertyData.utilities || [],
+      codes: propertyData.codes || [],
+    });
+    setEditing(false);
+    setDrafting(false);
   };
 
   const handleCloseModal = () => setShowModal(false);
@@ -876,7 +901,13 @@ export default function PropertyCard({ property, onUpdate }) {
                 Export
               </button>
               <button
-                onClick={() => setEditing((e) => !e)}
+                onClick={() => {
+                  if (editing) {
+                    handleCancel();
+                  } else {
+                    setEditing(true);
+                  }
+                }}
                 className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer"
               >
                 {editing ? "Cancel" : "Edit"}
