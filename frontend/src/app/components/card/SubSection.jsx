@@ -96,8 +96,9 @@ export default function SubSection({
                 item.suite_id ||
                 item.service_id ||
                 item.utility_id ||
+                item.permit_id ||
                 item.code_id;
-            
+
               return (
                 <SubItem
                   key={id}

@@ -233,7 +233,7 @@ export default function PropertyCard({ property, onUpdate }) {
       ...prev,
       [type]: prev[type].map((item) => {
         const itemId =
-          item.suite_id || item.service_id || item.utility_id || item.code_id;
+          item.suite_id || item.service_id || item.utility_id || item.permit_id || item.code_id;
 
         return itemId === id ? { ...item, [field]: value } : item;
       }),
@@ -906,7 +906,6 @@ export default function PropertyCard({ property, onUpdate }) {
           }
         : {
             _isTemp: true,
-
             code_id: tempId,
             description: "",
             code: "",

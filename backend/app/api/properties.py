@@ -3,8 +3,16 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
 from app.models import (
-    Property, Suite, Service, Utility, Code,
-    SuiteContact, ServiceContact, UtilityContact, Contact
+    Property,
+    Suite,
+    Service,
+    Utility,
+    Permit,
+    Code,
+    SuiteContact,
+    ServiceContact,
+    UtilityContact,
+    Contact,
 )
 from app.auth import verify_token
 from app.helpers import log_edit, log_add
@@ -18,6 +26,7 @@ router = APIRouter()
 #   - Suites (linked via Suite)
 #   - Services (linked via Service)
 #   - Utilities (linked via Utility)
+#   - Permits (linked via Permit)
 #   - Codes (linked via Code)
 #   - Contacts (linked indirectly via join tables)
 #
@@ -27,6 +36,7 @@ router = APIRouter()
 #   - Creating a property
 #   - Updating a property
 # -------------------------------------------------------------------
+
 
 @router.get("/properties")
 async def get_properties(
@@ -71,45 +81,61 @@ async def get_properties(
     yardis = [p.yardi for p in props]
 
     # Bulk fetch related children
-    suites    = db.query(Suite).filter(Suite.property_yardi.in_(yardis)).all()
-    services  = db.query(Service).filter(Service.property_yardi.in_(yardis)).all()
+    suites = db.query(Suite).filter(Suite.property_yardi.in_(yardis)).all()
+    services = db.query(Service).filter(Service.property_yardi.in_(yardis)).all()
     utilities = db.query(Utility).filter(Utility.property_yardi.in_(yardis)).all()
-    codes     = db.query(Code).filter(Code.property_yardi.in_(yardis)).all()
+    permits = db.query(Permit).filter(Permit.property_yardi.in_(yardis)).all()
+    codes = db.query(Code).filter(Code.property_yardi.in_(yardis)).all()
 
     # Collect IDs for join lookups
-    suite_ids   = [s.suite_id for s in suites] or [None]
+    suite_ids = [s.suite_id for s in suites] or [None]
     service_ids = [sv.service_id for sv in services] or [None]
     utility_ids = [u.utility_id for u in utilities] or [None]
 
     # Fetch join table records
-    suite_links   = db.query(SuiteContact).filter(SuiteContact.suite_id.in_(suite_ids)).all()
-    service_links = db.query(ServiceContact).filter(ServiceContact.service_id.in_(service_ids)).all()
-    utility_links = db.query(UtilityContact).filter(UtilityContact.utility_id.in_(utility_ids)).all()
+    suite_links = (
+        db.query(SuiteContact).filter(SuiteContact.suite_id.in_(suite_ids)).all()
+    )
+    service_links = (
+        db.query(ServiceContact)
+        .filter(ServiceContact.service_id.in_(service_ids))
+        .all()
+    )
+    utility_links = (
+        db.query(UtilityContact)
+        .filter(UtilityContact.utility_id.in_(utility_ids))
+        .all()
+    )
 
     # Collect all contact IDs across join tables
     contact_ids = (
-        {l.contact_id for l in suite_links} |
-        {l.contact_id for l in service_links} |
-        {l.contact_id for l in utility_links}
+        {l.contact_id for l in suite_links}
+        | {l.contact_id for l in service_links}
+        | {l.contact_id for l in utility_links}
     )
-    contacts = db.query(Contact).filter(Contact.contact_id.in_(contact_ids or [None])).all()
+    contacts = (
+        db.query(Contact).filter(Contact.contact_id.in_(contact_ids or [None])).all()
+    )
     contacts_by_id = {c.contact_id: c.__dict__.copy() for c in contacts}
 
     # Map contacts per suite/service/utility
     suite_contacts = defaultdict(list)
     for l in suite_links:
         c = contacts_by_id.get(l.contact_id)
-        if c: suite_contacts[l.suite_id].append(c)
+        if c:
+            suite_contacts[l.suite_id].append(c)
 
     service_contacts = defaultdict(list)
     for l in service_links:
         c = contacts_by_id.get(l.contact_id)
-        if c: service_contacts[l.service_id].append(c)
+        if c:
+            service_contacts[l.service_id].append(c)
 
     utility_contacts = defaultdict(list)
     for l in utility_links:
         c = contacts_by_id.get(l.contact_id)
-        if c: utility_contacts[l.utility_id].append(c)
+        if c:
+            utility_contacts[l.utility_id].append(c)
 
     # Group children by property_yardi
     suites_by_yardi = defaultdict(list)
@@ -130,6 +156,10 @@ async def get_properties(
         d["contacts"] = utility_contacts.get(u.utility_id, [])
         utilities_by_yardi[u.property_yardi].append(d)
 
+    permits_by_yardi = defaultdict(list)
+    for p in permits:
+        permits_by_yardi[p.property_yardi].append(p.__dict__.copy())
+
     codes_by_yardi = defaultdict(list)
     for c in codes:
         codes_by_yardi[c.property_yardi].append(c.__dict__.copy())
@@ -137,39 +167,42 @@ async def get_properties(
     # Assemble final response
     result = []
     for prop in props:
-        result.append({
-            "yardi": prop.yardi,
-            "address": prop.address,
-            "prop_photo": prop.prop_photo,
-            "city": prop.city,
-            "state": prop.state,
-            "zip": prop.zip,
-            "building_type": prop.building_type,
-            "total_sq_ft": prop.total_sq_ft,
-            "prop_manager": prop.prop_manager,
-            "coe": prop.coe,
-            "year_built": prop.year_built,
-            "year_rent": prop.year_rent,
-            "num_buildings": prop.num_buildings,
-            "num_stories": prop.num_stories,
-            "apn": prop.apn,
-            "prop_tax_id": prop.prop_tax_id,
-            "parking": prop.parking,
-            "fire_sprinklers": prop.fire_sprinklers,
-            "net_rentable_area": prop.net_rentable_area,
-            "land_area": prop.land_area,
-            "structural_frame": prop.structural_frame,
-            "foundation": prop.foundation,
-            "roof_type": prop.roof_type,
-            "roof_cover": prop.roof_cover,
-            "heat_cooling_source": prop.heat_cooling_source,
-            "misc": prop.misc,
-            "active": prop.active,
-            "suites":    suites_by_yardi.get(prop.yardi, []),
-            "services":  services_by_yardi.get(prop.yardi, []),
-            "utilities": utilities_by_yardi.get(prop.yardi, []),
-            "codes":     codes_by_yardi.get(prop.yardi, []),
-        })
+        result.append(
+            {
+                "yardi": prop.yardi,
+                "address": prop.address,
+                "prop_photo": prop.prop_photo,
+                "city": prop.city,
+                "state": prop.state,
+                "zip": prop.zip,
+                "building_type": prop.building_type,
+                "total_sq_ft": prop.total_sq_ft,
+                "prop_manager": prop.prop_manager,
+                "coe": prop.coe,
+                "year_built": prop.year_built,
+                "year_rent": prop.year_rent,
+                "num_buildings": prop.num_buildings,
+                "num_stories": prop.num_stories,
+                "apn": prop.apn,
+                "prop_tax_id": prop.prop_tax_id,
+                "parking": prop.parking,
+                "fire_sprinklers": prop.fire_sprinklers,
+                "net_rentable_area": prop.net_rentable_area,
+                "land_area": prop.land_area,
+                "structural_frame": prop.structural_frame,
+                "foundation": prop.foundation,
+                "roof_type": prop.roof_type,
+                "roof_cover": prop.roof_cover,
+                "heat_cooling_source": prop.heat_cooling_source,
+                "misc": prop.misc,
+                "active": prop.active,
+                "suites": suites_by_yardi.get(prop.yardi, []),
+                "services": services_by_yardi.get(prop.yardi, []),
+                "utilities": utilities_by_yardi.get(prop.yardi, []),
+                "permits": permits_by_yardi.get(prop.yardi, []),
+                "codes": codes_by_yardi.get(prop.yardi, []),
+            }
+        )
 
     return {
         "page": page,
@@ -205,9 +238,15 @@ async def get_property_by_yardi(
     suites = db.query(Suite).filter(Suite.property_yardi == prop.yardi).all()
     suites_data = []
     for s in suites:
-        contact_links = db.query(SuiteContact).filter(SuiteContact.suite_id == s.suite_id).all()
+        contact_links = (
+            db.query(SuiteContact).filter(SuiteContact.suite_id == s.suite_id).all()
+        )
         contact_ids = [link.contact_id for link in contact_links]
-        contacts = db.query(Contact).filter(Contact.contact_id.in_(contact_ids)).all() if contact_ids else []
+        contacts = (
+            db.query(Contact).filter(Contact.contact_id.in_(contact_ids)).all()
+            if contact_ids
+            else []
+        )
         suite_dict = s.__dict__.copy()
         suite_dict["contacts"] = [c.__dict__ for c in contacts]
         suites_data.append(suite_dict)
@@ -216,9 +255,17 @@ async def get_property_by_yardi(
     services = db.query(Service).filter(Service.property_yardi == prop.yardi).all()
     services_data = []
     for sv in services:
-        contact_links = db.query(ServiceContact).filter(ServiceContact.service_id == sv.service_id).all()
+        contact_links = (
+            db.query(ServiceContact)
+            .filter(ServiceContact.service_id == sv.service_id)
+            .all()
+        )
         contact_ids = [link.contact_id for link in contact_links]
-        contacts = db.query(Contact).filter(Contact.contact_id.in_(contact_ids)).all() if contact_ids else []
+        contacts = (
+            db.query(Contact).filter(Contact.contact_id.in_(contact_ids)).all()
+            if contact_ids
+            else []
+        )
         service_dict = sv.__dict__.copy()
         service_dict["contacts"] = [c.__dict__ for c in contacts]
         services_data.append(service_dict)
@@ -227,13 +274,22 @@ async def get_property_by_yardi(
     utilities = db.query(Utility).filter(Utility.property_yardi == prop.yardi).all()
     utilities_data = []
     for u in utilities:
-        contact_links = db.query(UtilityContact).filter(UtilityContact.utility_id == u.utility_id).all()
+        contact_links = (
+            db.query(UtilityContact)
+            .filter(UtilityContact.utility_id == u.utility_id)
+            .all()
+        )
         contact_ids = [link.contact_id for link in contact_links]
-        contacts = db.query(Contact).filter(Contact.contact_id.in_(contact_ids)).all() if contact_ids else []
+        contacts = (
+            db.query(Contact).filter(Contact.contact_id.in_(contact_ids)).all()
+            if contact_ids
+            else []
+        )
         utility_dict = u.__dict__.copy()
         utility_dict["contacts"] = [c.__dict__ for c in contacts]
         utilities_data.append(utility_dict)
 
+    permits = db.query(Permit).filter(Permit.property_yardi == prop.yardi).all()   
     codes = db.query(Code).filter(Code.property_yardi == prop.yardi).all()
 
     return {
@@ -267,6 +323,7 @@ async def get_property_by_yardi(
         "suites": suites_data,
         "services": services_data,
         "utilities": utilities_data,
+        "permits": [p.__dict__ for p in permits],
         "codes": [c.__dict__ for c in codes],
     }
 
@@ -301,8 +358,14 @@ async def update_property(
                 setattr(property, key, value)
                 # Log only real changes
                 log_edit(
-                    db, user["name"], "property",
-                    property.yardi, key, old_value, value, entity_obj=property
+                    db,
+                    user["name"],
+                    "property",
+                    property.yardi,
+                    key,
+                    old_value,
+                    value,
+                    entity_obj=property,
                 )
 
     db.commit()
@@ -333,6 +396,13 @@ async def create_property(
     db.refresh(new_property)
 
     # Log creation for audit history
-    log_add(db, user["name"], "property", new_property.yardi, new_property, entity_obj=new_property)
+    log_add(
+        db,
+        user["name"],
+        "property",
+        new_property.yardi,
+        new_property,
+        entity_obj=new_property,
+    )
 
     return {k: v for k, v in new_property.__dict__.items() if not k.startswith("_")}
