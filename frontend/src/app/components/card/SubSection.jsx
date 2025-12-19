@@ -21,13 +21,13 @@ import { useSession } from "next-auth/react";
  * - items: array of entity objects to render
  * - fields: array of {id, label} for configuring SubItem fields
  * - label: string — section heading (plural form like "Suites")
- * - onChange: (type, idx, field, value) → field change handler
- * - onSave: (type, idx) → save handler
+ * - onChange: (type, id, field, value) → field change handler
+ * - onSave: (type, id) → save handler
  * - search: string — search query, used to auto-expand if results exist
  * - onContactChange: (type, idx, contact, action) → contact CRUD handler
  * - renderContent: optional custom renderer (e.g., for Photos section)
  * - onAdd: (type, tempId) → called when adding a new sub-entity
- * - onDelete: (type, idx) → delete handler
+ * - onDelete: (type, id) → delete handler
  */
 export default function SubSection({
   type,
