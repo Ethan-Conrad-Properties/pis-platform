@@ -33,7 +33,7 @@ async def get_permits(
     permits = (
         db.query(Permit)
         .filter(Permit.property_yardi == property_yardi)
-        .order_by(Permit.permit_type.asc())
+        .order_by(Permit.municipality.asc())
         .all()
     )
     return [p.__dict__ for p in permits]

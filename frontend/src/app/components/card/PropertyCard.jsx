@@ -100,6 +100,7 @@ export default function PropertyCard({ property, onUpdate }) {
         data.suite_id ??
         data.service_id ??
         data.utility_id ??
+        data.permit_id ??
         data.code_id
     );
 
@@ -124,7 +125,7 @@ export default function PropertyCard({ property, onUpdate }) {
 
   const sortedPermits = drafting
     ? form.permits
-    : alphaSort(form.permits, (item) => item.permit_type);
+    : alphaSort(form.permits, (item) => item.municipality);
 
   const sortedCodes = drafting
     ? form.codes
@@ -200,10 +201,14 @@ export default function PropertyCard({ property, onUpdate }) {
     : filterBySearch(
         orderedPermits,
         (item) => [
-          item.permit_type,
+          item.municipality,
+          item.equip,
           item.permit_number,
-          item.status,
-          item.issuing_authority,
+          item.issue_date,
+          item.exp_date,
+          item.renewal_info,
+          item.annual_report,
+          item.login_creds,
           item.notes,
         ],
         search
@@ -566,7 +571,10 @@ export default function PropertyCard({ property, onUpdate }) {
       }),
     onMutate: async (newPermit) => {
       await queryClient.cancelQueries(["property", property.yardi]);
-      const previousData = queryClient.getQueryData(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
       queryClient.setQueryData(["property", property.yardi], (old) => ({
         ...old,
         permits: [
@@ -578,7 +586,10 @@ export default function PropertyCard({ property, onUpdate }) {
     },
     onError: (err, variables, context) => {
       if (context?.previousData)
-        queryClient.setQueryData(["property", property.yardi], context.previousData);
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
       alert("Error adding permit");
     },
     onSettled: () =>
@@ -590,7 +601,10 @@ export default function PropertyCard({ property, onUpdate }) {
       axiosInstance.put(`/permits/${permit.permit_id}`, permit),
     onMutate: async (updatedPermit) => {
       await queryClient.cancelQueries(["property", property.yardi]);
-      const previousData = queryClient.getQueryData(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
       queryClient.setQueryData(["property", property.yardi], (old) => ({
         ...old,
         permits: old.permits.map((p) =>
@@ -601,7 +615,10 @@ export default function PropertyCard({ property, onUpdate }) {
     },
     onError: (err, variables, context) => {
       if (context?.previousData)
-        queryClient.setQueryData(["property", property.yardi], context.previousData);
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
       alert("Error updating permit");
     },
     onSettled: () =>
@@ -612,7 +629,10 @@ export default function PropertyCard({ property, onUpdate }) {
     mutationFn: (id) => axiosInstance.delete(`/permits/${id}`),
     onMutate: async (id) => {
       await queryClient.cancelQueries(["property", property.yardi]);
-      const previousData = queryClient.getQueryData(["property", property.yardi]);
+      const previousData = queryClient.getQueryData([
+        "property",
+        property.yardi,
+      ]);
       queryClient.setQueryData(["property", property.yardi], (old) => ({
         ...old,
         permits: old.perits.filter((p) => p.permit_id !== id),
@@ -621,7 +641,10 @@ export default function PropertyCard({ property, onUpdate }) {
     },
     onError: (err, variables, context) => {
       if (context?.previousData)
-        queryClient.setQueryData(["property", property.yardi], context.previousData);
+        queryClient.setQueryData(
+          ["property", property.yardi],
+          context.previousData
+        );
       alert("Error deleting permit");
     },
     onSettled: () =>

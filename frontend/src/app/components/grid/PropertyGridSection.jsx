@@ -74,6 +74,7 @@ export default function PropertyGridSection({
           params.data.suite_id ??
           params.data.service_id ??
           params.data.utility_id ??
+          params.data.permit_id ??
           params.data.code_id
       ),
     []
