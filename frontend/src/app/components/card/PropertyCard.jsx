@@ -635,7 +635,7 @@ export default function PropertyCard({ property, onUpdate }) {
       ]);
       queryClient.setQueryData(["property", property.yardi], (old) => ({
         ...old,
-        permits: old.perits.filter((p) => p.permit_id !== id),
+        permits: old.permits.filter((p) => p.permit_id !== id),
       }));
       return { previousData };
     },
@@ -793,10 +793,11 @@ export default function PropertyCard({ property, onUpdate }) {
     const item = list.find((i) => i[cfg.idKey] === id);
     if (!item) return;
 
-    const isTemp = typeof id === "string" && id.startsWith("temp-");
+    const isTemp = item._isTemp === true;
 
     // build payload safely
     const payload = { ...item };
+    delete payload._isTemp;
 
     // NEVER send temp IDs to backend
     if (isTemp) {
@@ -815,7 +816,7 @@ export default function PropertyCard({ property, onUpdate }) {
       setForm((prev) => ({
         ...prev,
         [section]: prev[section].map((i) =>
-          i[cfg.idKey] === id ? created : i
+          i[cfg.idKey] === id ? { ...created, _isTemp: false } : i
         ),
       }));
 
@@ -851,6 +852,7 @@ export default function PropertyCard({ property, onUpdate }) {
     const empty =
       type === "suites"
         ? {
+            _isTemp: true,
             suite_id: tempId,
             suite: "",
             sqft: "",
@@ -868,6 +870,7 @@ export default function PropertyCard({ property, onUpdate }) {
           }
         : type === "services"
         ? {
+            _isTemp: true,
             service_id: tempId,
             service_type: "",
             vendor: "",
@@ -878,6 +881,7 @@ export default function PropertyCard({ property, onUpdate }) {
           }
         : type === "utilities"
         ? {
+            _isTemp: true,
             utility_id: tempId,
             service: "",
             vendor: "",
@@ -886,7 +890,23 @@ export default function PropertyCard({ property, onUpdate }) {
             notes: "",
             paid_by: "",
           }
+        : type === "permits"
+        ? {
+            _isTemp: true,
+            permit_id: tempId,
+            municipality: "",
+            equip: "",
+            permit_number: "",
+            issue_date: "",
+            exp_date: "",
+            renewal_info: "",
+            annual_report: "",
+            login_creds: "",
+            notes: "",
+          }
         : {
+            _isTemp: true,
+
             code_id: tempId,
             description: "",
             code: "",
@@ -900,21 +920,24 @@ export default function PropertyCard({ property, onUpdate }) {
   };
 
   const handleDelete = async (section, id) => {
-    if (typeof id === "string" && id.startsWith("temp-")) {
+    const item = form[section]?.find(
+      (i) => i[entityMap[section].idKey] === id
+    );
+  
+    if (item?._isTemp) {
       setForm((prev) => ({
         ...prev,
-        [section]: prev[section].filter((i) => {
-          const itemId =
-            i.suite_id || i.service_id || i.utility_id || i.code_id;
-          return itemId !== id;
-        }),
+        [section]: prev[section].filter(
+          (i) => i[entityMap[section].idKey] !== id
+        ),
       }));
       return;
     }
-
+  
     // real delete
     await entityMap[section].remove.mutateAsync(id);
   };
+  
 
   const handleCancel = () => {
     setForm({
@@ -922,6 +945,7 @@ export default function PropertyCard({ property, onUpdate }) {
       suites: propertyData.suites || [],
       services: propertyData.services || [],
       utilities: propertyData.utilities || [],
+      permits: propertyData.permits || [],
       codes: propertyData.codes || [],
     });
     setEditing(false);
