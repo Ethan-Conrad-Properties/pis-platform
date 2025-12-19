@@ -54,6 +54,19 @@ export const utilityColumns = [
   { key: "paid_by", name: "Paid By" },
 ];
 
+// Columns for Permit entity
+export const permitColumns = [
+  { field: "municipality", headerName: "Municipality" },
+  { field: "equip", headerName: "Equipment" },
+  { field: "permit_number", headerName: "Permit #" },
+  { field: "issue_date", headerName: "Issue Date" },
+  { field: "exp_date", headerName: "Expiration Date" },
+  { field: "renewal_info", headerName: "Renewal Info" },
+  { field: "annual_report", headerName: "Annual Report" },
+  { field: "login_creds", headerName: "Login Credentials" },
+  { field: "notes", headerName: "Notes" },
+];
+
 // Columns for Code entity
 export const codeColumns = [
   { key: "code", name: "Code" },

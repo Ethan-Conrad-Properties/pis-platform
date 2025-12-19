@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import (
     properties, suites, services, utilities,
-    codes, contacts, edit_history, property_photos,
+    codes, permits, contacts, edit_history, property_photos,
 )
 import time
 import sentry_sdk
@@ -81,6 +81,7 @@ app.include_router(suites.router)
 app.include_router(services.router)
 app.include_router(utilities.router)
 app.include_router(codes.router)
+app.include_router(permits.router)
 app.include_router(contacts.router)
 app.include_router(edit_history.router)
 app.include_router(property_photos.router)

@@ -145,6 +145,27 @@ class Code(Base):
     code = Column(String)
     notes = Column(Text)
 
+class Permit(Base):
+    """
+    Permit record for a property.
+    
+    Stores things like issue date, exp date, renewal info, etc.
+    """
+
+    __tablename__ = "permits"
+
+    permit_id = Column(Integer, primary_key=True, autoincrement=True)
+    property_yardi = Column(String, ForeignKey("properties.yardi"), nullable=False)
+    municipality = Column(String, index=True)
+    equip = Column(String, index=True)
+    permit_number = Column(String)
+    issue_date = Column(String)
+    exp_date = Column(String)
+    renewal_info = Column(Text)
+    annual_report = Column(Text)
+    login_creds = Column(Text)
+    notes = Column(Text)
+
 
 class PropertyPhoto(Base):
     """

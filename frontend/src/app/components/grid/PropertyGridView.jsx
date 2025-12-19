@@ -9,6 +9,7 @@ import {
   suiteColumns,
   serviceColumns,
   utilityColumns,
+  permitColumns,
   codeColumns,
 } from "./GridColumns";
 import axiosInstance from "@/app/utils/axiosInstance";
@@ -79,6 +80,14 @@ export default function PropertyGridView({ property, isLoading, error }) {
     queryKey: ["utilities", property.yardi],
     queryFn: async () =>
       (await axiosInstance.get(`/utilities?property_yardi=${property.yardi}`))
+        .data,
+    enabled: !!property.yardi,
+  });
+
+  const { data: permits = [], refetch: refetchPermits } = useQuery({
+    queryKey: ["permits", property.yardi],
+    queryFn: async () =>
+      (await axiosInstance.get(`/permits?property_yardi=${property.yardi}`))
         .data,
     enabled: !!property.yardi,
   });
@@ -155,6 +164,24 @@ export default function PropertyGridView({ property, isLoading, error }) {
     onError: () => alert("Error deleting utility"),
   });
 
+  // Permits
+  const addPermitMutation = useMutation({
+    mutationFn: (payload) => axiosInstance.post("/permits", payload),
+    onSuccess: () => refetchPermits(),
+    onError: () => alert("Error adding permit"),
+  });
+  const updatePermitMutation = useMutation({
+    mutationFn: (payload) =>
+      axiosInstance.put(`/permits/${payload.permit_id}`, payload),
+    onSuccess: () => refetchPermits(),
+    onError: () => alert("Error updating permit"),
+  });
+  const deletePermitMutation = useMutation({
+    mutationFn: (id) => axiosInstance.delete(`/permits/${id}`),
+    onSuccess: () => refetchPermits(),
+    onError: () => alert("Error deleting permit"),
+  });
+
   // Codes
   const addCodeMutation = useMutation({
     mutationFn: (payload) => axiosInstance.post("/codes", payload),
@@ -224,12 +251,24 @@ export default function PropertyGridView({ property, isLoading, error }) {
     item.paid_by,
     item.notes,
   ];
+  const getPermitFields = (item) => [
+    item.municipality,
+    item.equip,
+    item.permit_number,
+    item.issue_date,
+    item.exp_date,
+    item.renewal_info,
+    item.annual_report,
+    item.login_creds,
+    item.notes,
+  ];
   const getCodeFields = (item) => [item.description, item.code, item.notes];
 
   // Apply search filter
   const filteredSuites = filterBySearch(suites, getSuiteFields, search);
   const filteredServices = filterBySearch(services, getServiceFields, search);
   const filteredUtilities = filterBySearch(utilities, getUtilityFields, search);
+  const filteredPermits = filterBySearch(permits, getPermitFields, search);
   const filteredCodes = filterBySearch(codes, getCodeFields, search);
 
   // -----------------------------
@@ -253,6 +292,12 @@ export default function PropertyGridView({ property, isLoading, error }) {
       update: updateUtilityMutation,
       del: deleteUtilityMutation,
       idField: "utility_id",
+    },
+    permits: {
+      add: addPermitMutation,
+      update: updatePermitMutation,
+      del: deletePermitMutation,
+      idField: "permit_id",
     },
     codes: {
       add: addCodeMutation,
@@ -290,6 +335,7 @@ export default function PropertyGridView({ property, isLoading, error }) {
   const suitesRef = useRef(null);
   const servicesRef = useRef(null);
   const utilitiesRef = useRef(null);
+  const permitsRef = useRef(null);
   const codesRef = useRef(null);
 
   useEffect(() => {
@@ -424,6 +470,23 @@ export default function PropertyGridView({ property, isLoading, error }) {
           onCellValueChanged={(params) =>
             onCellValueChanged("utilities", params)
           }
+        />
+      </div>
+
+      {/* Permits grid */}
+      <div ref={permitsRef}>
+        <PropertyGridSection
+          title="Permits"
+          yardi={property.yardi}
+          columns={makeColumns(permitColumns)}
+          rows={filteredPermits}
+          search={search}
+          autoExpand
+          onAddRow={() =>
+            addPermitMutation.mutate({ property_yardi: property.yardi })
+          }
+          onDeleteRows={(rows) => handleDeleteRows("permits", rows)}
+          onCellValueChanged={(params) => onCellValueChanged("permits", params)}
         />
       </div>
 

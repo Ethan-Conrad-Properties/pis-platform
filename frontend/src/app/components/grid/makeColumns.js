@@ -20,9 +20,9 @@ export function makeColumns(columns) {
     editable: col.key !== "contacts", // disable editing on contacts
     cellRenderer: col.key === "contacts" ? ContactsCell : ExpandingCell,
     autoHeight: true, // adjust row height to fit wrapped text
-    wrapText: true,   // allow long text to wrap
-    resizable: true,  // allow column resizing
-    flex: 1,          // flexible width
+    wrapText: true, // allow long text to wrap
+    resizable: true, // allow column resizing
+    flex: 1, // flexible width
     headerStyle: {
       backgroundColor: "#b2e3f5", // light blue headers
     },

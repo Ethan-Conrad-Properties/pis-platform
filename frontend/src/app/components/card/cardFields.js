@@ -78,6 +78,18 @@ export const utilityFields = [
   { id: "paid_by", label: "Paid By" },
 ];
 
+export const permitFields = [
+  { id: "municipality", label: "Municipality" },
+  { id: "equip", label: "Equipment" },
+  { id: "permit_number", label: "Permit #" },
+  { id: "issue_date", label: "Issue Date" },
+  { id: "exp_date", label: "Expiration Date" },
+  { id: "renewal_info", label: "Renewal Info" },
+  { id: "annual_report", label: "Annual Report" },
+  { id: "login_creds", label: "Login Credentials" },
+  { id: "notes", label: "Notes" },
+];
+
 export const codeFields = [
   { id: "description", label: "Description" },
   { id: "code", label: "Code" },

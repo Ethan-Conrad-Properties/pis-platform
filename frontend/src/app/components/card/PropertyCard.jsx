@@ -33,6 +33,7 @@ import {
   suiteFields,
   serviceFields,
   utilityFields,
+  permitFields,
   codeFields,
 } from "./cardFields";
 import Image from "next/image";
@@ -54,6 +55,7 @@ export default function PropertyCard({ property, onUpdate }) {
     suites: property.suites || [],
     services: property.services || [],
     utilities: property.utilities || [],
+    permits: property.permits || [],
     codes: property.codes || [],
   });
 
@@ -61,6 +63,7 @@ export default function PropertyCard({ property, onUpdate }) {
   const suitesRef = useRef(null);
   const servicesRef = useRef(null);
   const utilitiesRef = useRef(null);
+  const permitsRef = useRef(null);
   const codesRef = useRef(null);
 
   /**
@@ -86,6 +89,7 @@ export default function PropertyCard({ property, onUpdate }) {
       suites: propertyData.suites || [],
       services: propertyData.services || [],
       utilities: propertyData.utilities || [],
+      permits: propertyData.permits || [],
       codes: propertyData.codes || [],
     });
   }, [propertyData]);
@@ -118,6 +122,10 @@ export default function PropertyCard({ property, onUpdate }) {
     ? form.utilities
     : alphaSort(form.utilities, (item) => item.service);
 
+  const sortedPermits = drafting
+    ? form.permits
+    : alphaSort(form.permits, (item) => item.permit_type);
+
   const sortedCodes = drafting
     ? form.codes
     : alphaSort(form.codes, (item) => item.description);
@@ -139,6 +147,11 @@ export default function PropertyCard({ property, onUpdate }) {
         sortedUtilities,
         getRowId
       );
+
+  const orderedPermits = drafting
+    ? sortedPermits
+    : reorderFromStorage(property.yardi, "Permits", sortedPermits, getRowId);
+
   const orderedCodes = drafting
     ? sortedCodes
     : reorderFromStorage(property.yardi, "Codes", sortedCodes, getRowId);
@@ -177,6 +190,20 @@ export default function PropertyCard({ property, onUpdate }) {
           item.account_number,
           item.meter_number,
           item.paid_by,
+          item.notes,
+        ],
+        search
+      );
+
+  const filteredPermits = drafting
+    ? form.permits
+    : filterBySearch(
+        orderedPermits,
+        (item) => [
+          item.permit_type,
+          item.permit_number,
+          item.status,
+          item.issuing_authority,
           item.notes,
         ],
         search
@@ -263,6 +290,7 @@ export default function PropertyCard({ property, onUpdate }) {
     },
   });
 
+  // Mutations for suites
   const suiteCreate = useMutation({
     mutationFn: (suite) =>
       axiosInstance.post(`/suites`, {
@@ -351,6 +379,7 @@ export default function PropertyCard({ property, onUpdate }) {
       queryClient.invalidateQueries(["property", property.yardi]),
   });
 
+  // Mutations for services
   const serviceCreate = useMutation({
     mutationFn: (service) =>
       axiosInstance.post(`/services`, {
@@ -439,6 +468,7 @@ export default function PropertyCard({ property, onUpdate }) {
       queryClient.invalidateQueries(["property", property.yardi]),
   });
 
+  // Mutations for utilities
   const utilityCreate = useMutation({
     mutationFn: (utility) =>
       axiosInstance.post(`/utilities`, {
@@ -527,6 +557,77 @@ export default function PropertyCard({ property, onUpdate }) {
       queryClient.invalidateQueries(["property", property.yardi]),
   });
 
+  // Mutations for permits
+  const permitCreate = useMutation({
+    mutationFn: (permit) =>
+      axiosInstance.post(`/permits`, {
+        ...permit,
+        property_yardi: property.yardi,
+      }),
+    onMutate: async (newPermit) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData(["property", property.yardi]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        permits: [
+          ...(old?.permits || []),
+          { ...newPermit, permit_id: "temp-" + Date.now() },
+        ],
+      }));
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(["property", property.yardi], context.previousData);
+      alert("Error adding permit");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
+  });
+
+  const permitUpdate = useMutation({
+    mutationFn: (permit) =>
+      axiosInstance.put(`/permits/${permit.permit_id}`, permit),
+    onMutate: async (updatedPermit) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData(["property", property.yardi]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        permits: old.permits.map((p) =>
+          p.permit_id === updatedPermit.permit_id ? updatedPermit : p
+        ),
+      }));
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(["property", property.yardi], context.previousData);
+      alert("Error updating permit");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
+  });
+
+  const permitDelete = useMutation({
+    mutationFn: (id) => axiosInstance.delete(`/permits/${id}`),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries(["property", property.yardi]);
+      const previousData = queryClient.getQueryData(["property", property.yardi]);
+      queryClient.setQueryData(["property", property.yardi], (old) => ({
+        ...old,
+        permits: old.perits.filter((p) => p.permit_id !== id),
+      }));
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData)
+        queryClient.setQueryData(["property", property.yardi], context.previousData);
+      alert("Error deleting permit");
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
+  });
+
   const codeCreate = useMutation({
     mutationFn: (code) =>
       axiosInstance.post(`/codes`, { ...code, property_yardi: property.yardi }),
@@ -557,6 +658,7 @@ export default function PropertyCard({ property, onUpdate }) {
       queryClient.invalidateQueries(["property", property.yardi]),
   });
 
+  // Mutations for codes
   const codeUpdate = useMutation({
     mutationFn: (code) => axiosInstance.put(`/codes/${code.code_id}`, code),
     onMutate: async (updatedCode) => {
@@ -642,6 +744,14 @@ export default function PropertyCard({ property, onUpdate }) {
       update: utilityUpdate,
       remove: utilityDelete,
       parentType: "utility",
+    },
+    permits: {
+      idKey: "permit_id",
+      fkKey: "property_yardi",
+      create: permitCreate,
+      update: permitUpdate,
+      remove: permitDelete,
+      parentType: "permit",
     },
     codes: {
       idKey: "code_id",
@@ -984,6 +1094,20 @@ export default function PropertyCard({ property, onUpdate }) {
           onSave={handleSave}
           search={search}
           onContactChange={handleContactChange}
+          onAdd={handleAdd}
+          onDelete={handleDelete}
+        />
+      </div>
+      {/* Permits */}
+      <div ref={permitsRef}>
+        <SubSection
+          type="permits"
+          items={filteredPermits}
+          fields={permitFields}
+          label="Permits"
+          onChange={handleSubChange}
+          onSave={handleSave}
+          search={search}
           onAdd={handleAdd}
           onDelete={handleDelete}
         />
