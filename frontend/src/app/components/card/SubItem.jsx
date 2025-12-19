@@ -126,19 +126,19 @@ function RenderTextWithLinks({ text }) {
  *
  * Props:
  * - item: The entity data object (suite, service, etc.)
- * - idx: Index of this item in parent list
+ * - id: id of this item in parent list
  * - type: Section type ("suites" | "services" | "utilities" | "codes")
  * - fields: List of field configs {id, label}
  * - isEditing: Boolean — true if currently editing this record
- * - onChange: (type, idx, field, value) → update handler for text fields
- * - onSave: (type, idx) → save handler
+ * - onChange: (type, id, field, value) → update handler for text fields
+ * - onSave: (type, id) → save handler
  * - setEditingId: Setter for controlling which sub-item is being edited
- * - onContactChange: (type, idx, contact, action) → contact CRUD handler
- * - onDelete: (type, idx) → delete handler for the sub-item
+ * - onContactChange: (type, id, contact, action) → contact CRUD handler
+ * - onDelete: (type, id) → delete handler for the sub-item
  */
 const SubItem = memo(function SubItem({
   item,
-  idx,
+  id,
   type,
   fields,
   isEditing,
@@ -148,9 +148,6 @@ const SubItem = memo(function SubItem({
   onContactChange,
   onDelete,
 }) {
-  const uniqueKey =
-    item.suite_id || item.service_id || item.utility_id || item.code_id;
-
   const [selectedContact, setSelectedContact] = useState(null);
   const [editMode, setEditMode] = useState(false); // toggle between view vs edit contact
   const [showSuccess, setShowSuccess] = useState(false);
@@ -196,10 +193,10 @@ const SubItem = memo(function SubItem({
     let res;
     if (isNew) {
       res = await addContactMutation.mutateAsync(payload);
-      onContactChange(type, idx, res.data, "add");
+      onContactChange(type, id, res.data, "add");
     } else {
       res = await editContactMutation.mutateAsync(payload);
-      onContactChange(type, idx, res.data, "edit");
+      onContactChange(type, id, res.data, "edit");
     }
     setShowSuccess(true);
     setSelectedContact(null);
@@ -213,7 +210,7 @@ const SubItem = memo(function SubItem({
     if (!window.confirm("Delete this contact?")) return;
     try {
       await deleteContactMutation.mutateAsync(contactId);
-      onContactChange(type, idx, { contact_id: contactId }, "delete");
+      onContactChange(type, id, { contact_id: contactId }, "delete");
       setShowSuccess(true);
     } catch {
       // Errors handled by mutation's onError
@@ -226,7 +223,7 @@ const SubItem = memo(function SubItem({
   const handleDeleteClick = () => {
     const singular = type.slice(0, -1); // crude singularization
     if (!window.confirm(`Delete this ${singular}?`)) return;
-    onDelete(type, idx);
+    onDelete(type, id);
   };
 
   useEffect(() => {
@@ -241,7 +238,7 @@ const SubItem = memo(function SubItem({
 
   return (
     <div
-      key={uniqueKey}
+      key={id}
       className="flex flex-col border rounded-lg p-4 shadow-sm bg-gray-50 relative"
       style={{
         background: "var(--surface)",
@@ -272,15 +269,14 @@ const SubItem = memo(function SubItem({
           {isEditing ? (
             <button
               onClick={() => {
-                // If new item (no ID), remove it on cancel
-                const isNew =
-                  !item.suite_id &&
-                  !item.service_id &&
-                  !item.utility_id &&
-                  !item.code_id;
-                if (isNew) {
-                  onDelete(type, idx);
+                const isTemp = typeof id === "string" && id.startsWith("temp-");
+
+                if (isTemp) {
+                  // 🧹 Unsaved row → remove from UI only
+                  onDelete(type, id);
                 }
+
+                // 🛑 Saved row → just exit edit mode
                 setEditingId(null);
               }}
               className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer mb-2"
@@ -289,7 +285,7 @@ const SubItem = memo(function SubItem({
             </button>
           ) : (
             <button
-              onClick={() => setEditingId(item.suite_id || item.service_id || item.utility_id || item.code_id)}
+              onClick={() => setEditingId(id)}
               className="border border-black px-2 py-1 rounded hover:bg-gray-100 hover:cursor-pointer mb-2"
             >
               Edit
@@ -397,7 +393,7 @@ const SubItem = memo(function SubItem({
                         ...prev,
                         [field.id]: e.target.value,
                       }));
-                      onChange(type, idx, field.id, e.target.value);
+                      onChange(type, id, field.id, e.target.value);
                     }}
                   />
                 ) : (
@@ -432,7 +428,7 @@ const SubItem = memo(function SubItem({
           <div>
             <button
               onClick={() => {
-                onSave(type, idx);
+                onSave(type, id);
                 setEditingId(null);
               }}
               className="border border-black px-2 py-1 rounded hover:bg-blue-200 hover:cursor-pointer"
