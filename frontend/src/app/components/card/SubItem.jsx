@@ -238,7 +238,6 @@ const SubItem = memo(function SubItem({
 
   return (
     <div
-      key={id}
       className="flex flex-col border rounded-lg p-4 shadow-sm bg-gray-50 relative"
       style={{
         background: "var(--surface)",

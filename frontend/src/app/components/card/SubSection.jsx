@@ -47,21 +47,10 @@ export default function SubSection({
   const { data: session } = useSession();
 
   /**
-   * Returns a stable identifier for a sub-entity.
-   * Falls back to temp_id for newly created (unsaved) rows.
-   */
-  const getItemId = (item) =>
-    item?.suite_id ||
-    item?.service_id ||
-    item?.utility_id ||
-    item?.code_id ||
-    item?.temp_id;
-
-  /**
    * Wraps onSave to automatically clear editing state after saving.
    */
-  const handleSaveWrapper = async (type, idx) => {
-    await onSave(type, idx);
+  const handleSaveWrapper = async (type, id) => {
+    await onSave(type, id);
     setEditingId(null);
   };
 

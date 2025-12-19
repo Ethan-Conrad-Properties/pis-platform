@@ -46,7 +46,7 @@ export default function PropertyCard({ property, onUpdate }) {
 
   // State
   const [editing, setEditing] = useState(false);
-  const [drafting, setDrafting] = useState(false); 
+  const [drafting, setDrafting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({
@@ -231,20 +231,6 @@ export default function PropertyCard({ property, onUpdate }) {
       return { ...prevForm, [type]: updatedItems };
     });
   };
-
-  // Save contacts
-  async function saveContacts(contacts, parentId, parentType) {
-    for (const contact of contacts) {
-      if (!contact.contact_id) {
-        await axiosInstance.post(`/contacts`, {
-          ...contact,
-          [`${parentType}_id`]: parentId,
-        });
-      } else {
-        await axiosInstance.put(`/contacts/${contact.contact_id}`, contact);
-      }
-    }
-  }
 
   // Mutations for saving property and sub-records
   const propertyMutation = useMutation({
@@ -622,6 +608,13 @@ export default function PropertyCard({ property, onUpdate }) {
       alert("Error deleting code");
     },
     onSettled: () =>
+      queryClient.invalidateQueries(["property", property.yardi]),
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: (active) =>
+      axiosInstance.put(`/properties/${property.yardi}`, { active }),
+    onSuccess: () =>
       queryClient.invalidateQueries(["property", property.yardi]),
   });
 
